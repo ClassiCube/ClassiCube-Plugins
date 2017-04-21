@@ -9,7 +9,7 @@ using BlockID = System.Byte;
 
 namespace ClassicalSharp.Map {
 
-	public sealed partial class FailLighting : IWorldLighting {
+	public sealed partial class BasicLighting : IWorldLighting {
 		
 		int oneY, shadow, shadowZSide, shadowXSide, shadowYBottom;
 		BlockInfo info;
@@ -84,22 +84,39 @@ namespace ClassicalSharp.Map {
                     //pushing y and x and z back to the edge of the map
                     y -= maxOver;
                     xD -= maxOver;
-                    zD -= maxOver; 
+                    zD -= maxOver;
                     
                     xD -= height;
                     zD -= height;
+                    
+                    int ySafe = y;//(y > 0) ? y - 1 : y;
+                    int ySafe2 = (y > 0) ? y - 1 : y;
+                    
+                    int xSafe = (xD > 0) ? xD - 1 : xD;
+                    int zSafe = (zD > 0) ? zD - 1 : zD;
                     
                     while (y > 0 &&
                            xD >= 0 &&
                            xD < width &&
                            zD >= 0 &&
                            zD < length &&
-                           !info.BlocksLight[map.GetBlock(xD, y, zD)]
+                           !info.BlocksLight[map.GetBlock(xD, ySafe, zD)] &&
+                           !info.BlocksLight[map.GetBlock(xD, ySafe2, zD)] &&
+                           
+                           !(info.BlocksLight[map.GetBlock(xSafe, ySafe, zD)] && info.BlocksLight[map.GetBlock(xD, ySafe, zSafe)]) &&
+                           !(info.BlocksLight[map.GetBlock(xSafe, ySafe2, zD)] && info.BlocksLight[map.GetBlock(xD, ySafe2, zSafe)])
                           ) {
+                        
                         
                         --y;
                         --xD;
                         --zD;
+                        
+                        //ySafe = (y > 0) ? y - 1 : y;
+                        ySafe2 = (y > 0) ? y - 1 : y;
+                        
+                        xSafe = (xD > 0) ? xD - 1 : xD;
+                        zSafe = (zD > 0) ? zD - 1 : zD;
                     }
                     
                     if (xD < 0 || zD < 0) {
@@ -163,7 +180,7 @@ namespace ClassicalSharp.Map {
 
 		public override int LightCol(int x, int y, int z) {
 			//return y > GetLightHeight(x, z) ? Outside : shadow;
-			if (IsLit(x, y + 1, z)) {
+			if (IsLit(x, y, z)) {
 			    return Outside;
 			}
 			return shadowZSide;
@@ -181,7 +198,7 @@ namespace ClassicalSharp.Map {
 			if (IsLit(x, y, z)) {
 			    return Outside;
 			}
-			return shadowXSide;
+			return shadow;
 		}
 		
 		public override int LightCol_YTop_Fast(int x, int y, int z) {
@@ -214,6 +231,9 @@ namespace ClassicalSharp.Map {
 		
 		
 		public override void UpdateLight(int x, int y, int z, BlockID oldBlock, BlockID newBlock) {
+		    
+		    //CalcLightDepths(x - y, z - y, 1, 1);
+		    
 		}
 	}
 }
