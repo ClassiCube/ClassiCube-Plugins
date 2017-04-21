@@ -14,7 +14,7 @@ namespace ClassicalSharp.Map {
 		int oneY, shadow, shadowZSide, shadowXSide, shadowYBottom;
 		BlockInfo info;
 		Game game;
-		
+		int[] blockers; 
 		public override void Reset(Game game) { heightmap = null; blockers = null; }
 		
 		public override void OnNewMap(Game game) {
@@ -166,7 +166,7 @@ namespace ClassicalSharp.Map {
 
 		public override int LightCol(int x, int y, int z) {
 			//return y > GetLightHeight(x, z) ? Outside : shadow;
-			if (IsLit(x, y, z)) {
+			if (IsLit(x, y + 1, z)) {
 			    return Outside;
 			}
 			return shadow;
@@ -174,9 +174,9 @@ namespace ClassicalSharp.Map {
 		
 		public override int LightCol_ZSide(int x, int y, int z) {
 			if (IsLit(x, y, z)) {
-			    return Outside;
+			    return OutsideZSide;
 			}
-			return shadow;
+			return shadowZSide;
 		}
 		
 
@@ -188,7 +188,7 @@ namespace ClassicalSharp.Map {
 		}
 		
 		public override int LightCol_YTop_Fast(int x, int y, int z) {
-			if (IsLit(x, y, z)) {
+			if (IsLit(x, y + 1, z)) {
 			    return Outside;
 			}
 			return shadow;
@@ -196,23 +196,23 @@ namespace ClassicalSharp.Map {
 		
 		public override int LightCol_YBottom_Fast(int x, int y, int z) {
 			if (IsLit(x, y, z)) {
-			    return Outside;
+			    return OutsideYBottom;
 			}
-			return shadow;
+			return shadowYBottom;
 		}
 		
 		public override int LightCol_XSide_Fast(int x, int y, int z) {
 			if (IsLit(x, y, z)) {
-			    return Outside;
+			    return OutsideXSide;
 			}
-			return shadow;
+			return shadowXSide;
 		}
 		
 		public override int LightCol_ZSide_Fast(int x, int y, int z) {
 			if (IsLit(x, y, z)) {
-			    return Outside;
+			    return OutsideZSide;
 			}
-			return shadow;
+			return shadowZSide;
 		}
 		
 		
