@@ -89,8 +89,7 @@ namespace ClassicalSharp.Map {
                     xD -= height;
                     zD -= height;
                     
-                    int ySafe = y;//(y > 0) ? y - 1 : y;
-                    int ySafe2 = (y > 0) ? y - 1 : y;
+                    int ySafe = (y > 0) ? y - 1 : y;
                     
                     int xSafe = (xD > 0) ? xD - 1 : xD;
                     int zSafe = (zD > 0) ? zD - 1 : zD;
@@ -100,21 +99,18 @@ namespace ClassicalSharp.Map {
                            xD < width &&
                            zD >= 0 &&
                            zD < length &&
+                           !info.BlocksLight[map.GetBlock(xD, y, zD)] &&
                            !info.BlocksLight[map.GetBlock(xD, ySafe, zD)] &&
-                           !info.BlocksLight[map.GetBlock(xD, ySafe2, zD)] &&
                            
-                           !(info.BlocksLight[map.GetBlock(xSafe, ySafe, zD)] && info.BlocksLight[map.GetBlock(xD, ySafe, zSafe)]) &&
-                           !(info.BlocksLight[map.GetBlock(xSafe, ySafe2, zD)] && info.BlocksLight[map.GetBlock(xD, ySafe2, zSafe)])
+                           !(info.BlocksLight[map.GetBlock(xSafe, y, zD)] && info.BlocksLight[map.GetBlock(xD, y, zSafe)]) &&
+                           !(info.BlocksLight[map.GetBlock(xSafe, ySafe, zD)] && info.BlocksLight[map.GetBlock(xD, ySafe, zSafe)])
                           ) {
-                        
                         
                         --y;
                         --xD;
                         --zD;
                         
-                        //ySafe = (y > 0) ? y - 1 : y;
-                        ySafe2 = (y > 0) ? y - 1 : y;
-                        
+                        ySafe = (y > 0) ? y - 1 : y;
                         xSafe = (xD > 0) ? xD - 1 : xD;
                         zSafe = (zD > 0) ? zD - 1 : zD;
                     }
