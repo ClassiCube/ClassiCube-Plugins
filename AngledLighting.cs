@@ -1,4 +1,3 @@
-// Copyright 2014-2017 ClassicalSharp | Licensed under BSD-3
 using System;
 using ClassicalSharp.Events;
 
@@ -16,12 +15,13 @@ namespace ClassicalSharp.Map {
 		BlockInfo info;
 		Game game;
 		
-		public override void Reset(Game game) { heightmap = null; }
+		public override void Reset(Game game) { heightmap = null; blockers = null; }
 		
 		public override void OnNewMap(Game game) {
 			SetSun(WorldEnv.DefaultSunlight);
 			SetShadow(WorldEnv.DefaultShadowlight);
 			heightmap = null;
+			blockers = null;
 		}
 		
 		public override void OnNewMapLoaded(Game game) {
@@ -33,10 +33,64 @@ namespace ClassicalSharp.Map {
 			oneY = width * length;
 			
 			heightmap = new short[width * length];
-			CalcLightDepths();
+			blockers = new int[(width + height) * length];
+			CalcLightDepths(0, 0, width, length);
 		}
 		
-		void CalcLightDepths() {
+		
+        public void CalcLightDepths(int xStart, int zStart, int xWidth, int zDepth) { //flag1
+        	//if (xWidth > 0){
+            //	return;	
+        	//}
+            
+        	World map = game.World;
+        	
+        	xStart += height;
+        	if (xWidth == width) {
+        		xWidth += height;
+        		xStart -= height;
+        	}
+        	int widthRow = width + height;
+            for (int x = xStart; x < xStart + xWidth; ++x) {
+                for (int z = zStart; z < zStart + zDepth; ++z) {
+                    int oldY = blockers[x + z * widthRow];
+     
+                    int y = height -1;
+                    int xD = x + height -1;
+                    if (xD >= widthRow) {
+                    	int xOver = xD - (widthRow -1);
+                    	y -= xOver;
+                    	xD -= xOver;
+                    }
+                    xD -= height;
+                    while (y > 0 && xD >= 0 && xD < width && !info.BlocksLight[map.GetBlock(xD, y, z)]) {
+                        --y;
+                        --xD;
+                    }
+                    if (xD < 0) {
+                    	y = oldY;
+                    }
+                    //System.out.println("blockers[ x =" + x + " z =" + z + "] =" + y);
+                    blockers[x + z * widthRow] = y; //blockers becomes y
+                    if (oldY != y && x >= height) { //
+                    	int xQ = x -height;
+                        int yMin = oldY < y ? oldY : y; //if blockers1 is less than y, input blockers1, otherwise input y
+                        int yMax = oldY > y ? oldY : y;
+                        if (xQ < 0 || xQ >= width) {
+                        	yMax = yMin;
+                        }
+                        else {
+    	                    //for (int i = 0; i < listeners.size(); ++i) {
+    	                       // listeners.get(i).queueChunks(xQ - 1, yMin - 1, z - 1, xQ + 1, yMax + 1, z + 1);
+    	                        //listeners.get(i).queueChunks(0 - 1, 0 - 1, 0 - 1, width + 1, height + 1, length + 1);
+    	                    //}
+                        }
+                    }
+                }
+            }
+        }
+		
+		/*void CalcLightDepths() {
 			int i = 0;
 			World map = game.World;
 			for (int z = 0; z < length; z++)
@@ -44,7 +98,7 @@ namespace ClassicalSharp.Map {
 			{
 				for (int y = height - 1; y >= heightmap[i]; y--) {
 					if (info.BlocksLight[map.GetBlock(x, y, z)]) {
-						CastShadow(x, y - 1, z);
+						CastShadow(x, y, z);
 						break;
 					}
 				}				
@@ -53,7 +107,7 @@ namespace ClassicalSharp.Map {
 		}
 		
 		void CastShadow(int x, int y, int z) {
-			const int dirX = -1, dirZ = 1;
+			const int dirX = 1, dirZ = 1;
 			
 			while (x >= 0 && z >= 0 && x < width && z < length) {
 				int hIndex = z * width + x;
@@ -62,7 +116,7 @@ namespace ClassicalSharp.Map {
 				y--;
 				x += dirX; z += dirZ;
 			}
-		}
+		}*/
 		
 		public override void Init(Game game) {
 			game.WorldEvents.EnvVariableChanged += EnvVariableChanged;
@@ -106,36 +160,59 @@ namespace ClassicalSharp.Map {
 		
 		// Outside colour is same as sunlight colour, so we reuse when possible
 		public override bool IsLit(int x, int y, int z) {
-			return y > GetLightHeight(x, z);
+            return !(x >= 0 && y >= 0 && z >= 0 && x < width && y < height
+            && z < length) || y >= blockers[(x +height -y) + z * (width + height)]; //flag2
 		}
 
 		public override int LightCol(int x, int y, int z) {
-			return y > GetLightHeight(x, z) ? Outside : shadow;
+			//return y > GetLightHeight(x, z) ? Outside : shadow;
+			if (IsLit(x, y, z)) {
+			    return Outside;
+			}
+			return shadow;
 		}
 		
 		public override int LightCol_ZSide(int x, int y, int z) {
-			return y > GetLightHeight(x, z) ? OutsideZSide : shadowZSide;
+			if (IsLit(x, y, z)) {
+			    return Outside;
+			}
+			return shadow;
 		}
 		
 
 		public override int LightCol_Sprite_Fast(int x, int y, int z) {
-			return y > heightmap[(z * width) + x] ? Outside : shadow;
+			if (IsLit(x, y, z)) {
+			    return Outside;
+			}
+			return shadow;
 		}
 		
 		public override int LightCol_YTop_Fast(int x, int y, int z) {
-			return y >= heightmap[(z * width) + x] ? Outside : shadow;
+			if (IsLit(x, y, z)) {
+			    return Outside;
+			}
+			return shadow;
 		}
 		
 		public override int LightCol_YBottom_Fast(int x, int y, int z) {
-			return y > heightmap[(z * width) + x] ? OutsideYBottom : shadowYBottom;
+			if (IsLit(x, y, z)) {
+			    return Outside;
+			}
+			return shadow;
 		}
 		
 		public override int LightCol_XSide_Fast(int x, int y, int z) {
-			return y > heightmap[(z * width) + x] ? OutsideXSide : shadowXSide;
+			if (IsLit(x, y, z)) {
+			    return Outside;
+			}
+			return shadow;
 		}
 		
 		public override int LightCol_ZSide_Fast(int x, int y, int z) {
-			return y > heightmap[(z * width) + x] ? OutsideZSide : shadowZSide;
+			if (IsLit(x, y, z)) {
+			    return Outside;
+			}
+			return shadow;
 		}
 		
 		
