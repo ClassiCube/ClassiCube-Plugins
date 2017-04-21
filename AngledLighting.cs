@@ -39,9 +39,6 @@ namespace ClassicalSharp.Map {
 		
 		
         public void CalcLightDepths(int xStart, int zStart, int xWidth, int zDepth) { //flag1
-        	//if (xWidth > 0){
-            //	return;	
-        	//}
             
         	World map = game.World;
         	
@@ -70,22 +67,7 @@ namespace ClassicalSharp.Map {
                     if (xD < 0) {
                     	y = oldY;
                     }
-                    //System.out.println("blockers[ x =" + x + " z =" + z + "] =" + y);
                     blockers[x + z * widthRow] = y; //blockers becomes y
-                    if (oldY != y && x >= height) { //
-                    	int xQ = x -height;
-                        int yMin = oldY < y ? oldY : y; //if blockers1 is less than y, input blockers1, otherwise input y
-                        int yMax = oldY > y ? oldY : y;
-                        if (xQ < 0 || xQ >= width) {
-                        	yMax = yMin;
-                        }
-                        else {
-    	                    //for (int i = 0; i < listeners.size(); ++i) {
-    	                       // listeners.get(i).queueChunks(xQ - 1, yMin - 1, z - 1, xQ + 1, yMax + 1, z + 1);
-    	                        //listeners.get(i).queueChunks(0 - 1, 0 - 1, 0 - 1, width + 1, height + 1, length + 1);
-    	                    //}
-                        }
-                    }
                 }
             }
         }
@@ -169,14 +151,14 @@ namespace ClassicalSharp.Map {
 			if (IsLit(x, y + 1, z)) {
 			    return Outside;
 			}
-			return shadow;
+			return shadowZSide;
 		}
 		
 		public override int LightCol_ZSide(int x, int y, int z) {
 			if (IsLit(x, y, z)) {
 			    return OutsideZSide;
 			}
-			return shadowZSide;
+			return shadowXSide;
 		}
 		
 
@@ -184,14 +166,14 @@ namespace ClassicalSharp.Map {
 			if (IsLit(x, y, z)) {
 			    return Outside;
 			}
-			return shadow;
+			return shadowXSide;
 		}
 		
 		public override int LightCol_YTop_Fast(int x, int y, int z) {
 			if (IsLit(x, y + 1, z)) {
 			    return Outside;
 			}
-			return shadow;
+			return shadowXSide;
 		}
 		
 		public override int LightCol_YBottom_Fast(int x, int y, int z) {
@@ -212,7 +194,7 @@ namespace ClassicalSharp.Map {
 			if (IsLit(x, y, z)) {
 			    return OutsideZSide;
 			}
-			return shadowZSide;
+			return shadowXSide;
 		}
 		
 		
