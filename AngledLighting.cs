@@ -230,23 +230,38 @@ namespace ClassicalSharp.Map {
 		
 		public override void OnBlockChanged(int x, int y, int z, BlockID oldBlock, BlockID newBlock) {
 		    
+		    int xWidth = 2;
+		    int zLength = 2;
+		    if (x + xWidth >= width) { xWidth--; }
+		    if (z + zLength >= length) { zLength--; }
 		    
+		    CalcLightDepths((x -1) - y, (z -1) - y, xWidth, zLength);
+		    CalcLightDepths((x) - y, (z) - y, xWidth, zLength);
 		    
-		    CalcLightDepths(x - y, z - y, 3, 3);
-		    //CalcLightDepths(x - y, z - y, width, length);
-		    //CalcLightDepths(0, 0, width, length);
+		    int cx = x /16;
+		    int cy = y /16;
+		    int cz = z /16;
 		    
-		    const int safeOffset = -2;
-		    int xSafe = x +safeOffset;
-		    int ySafe = y +safeOffset;
-		    int zSafe = z +safeOffset;
+		    do {
 		        
-		    xSafe = (xSafe < 1 +safeOffset) ? x : x -safeOffset;
-		    ySafe = (ySafe < 1 +safeOffset) ? y : y -safeOffset;
-		    zSafe = (zSafe < 1 +safeOffset) ? z : z -safeOffset;
+		        game.MapRenderer.RefreshChunk(cx, cy, cz);
+		        
+		        if (cx > 0) {
+                    game.MapRenderer.RefreshChunk(cx -1, cy, cz);
+		        }
+		        if (cz > 0) {
+                    game.MapRenderer.RefreshChunk(cx, cy, cz -1);
+		        }
+		        if (cx > 0 && cz > 0) {
+                    game.MapRenderer.RefreshChunk(cx -1, cy, cz -1);
+		        }
+
+		        cx--;
+		        cy--;
+		        cz--;
+		    } while (cx >= 0 && cz >= 0 && cy >= 0);
 		    
-		    game.MapRenderer.RefreshChunk(x /16, y /16, z /16);
-		    //game.Chat.Add("Updated light.");
 		}
+		
 	}
 }
