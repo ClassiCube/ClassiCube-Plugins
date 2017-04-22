@@ -1,4 +1,4 @@
-﻿// ClassicalSharp copyright 2014-2016 UnknownShadow200 | Licensed under MIT
+// ClassicalSharp copyright 2014-2016 UnknownShadow200 | Licensed under MIT
 using System;
 using System.Drawing;
 using System.IO;
@@ -125,10 +125,7 @@ namespace VolumeLightingPlugin {
 		
 		
 		public unsafe override void LightHint(int startX, int startZ, byte* mapPtr) {
-		}
-		
-		public override int GetLightHeight(int x, int z) { return 0; }
-		
+		}		
 		
 		// Outside colour is same as sunlight colour, so we reuse when possible
 		public override bool IsLit(int x, int y, int z) {
@@ -151,7 +148,7 @@ namespace VolumeLightingPlugin {
 		}
 		
 		public override int LightCol_YTop_Fast(int x, int y, int z) {
-			y += 2;
+			y += 1;
 			if (y >= height) return Outside;
 			return lightmap[lightLevels[x, y, z]];
 		}
@@ -169,7 +166,8 @@ namespace VolumeLightingPlugin {
 		}
 		
 		
-		public override void UpdateLight(int x, int y, int z, byte oldBlock, byte newBlock) {
+		public override void OnBlockChanged(int x, int y, int z, byte oldBlock, byte newBlock) {
+			
 		}
 	}
 }
