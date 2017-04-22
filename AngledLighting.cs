@@ -235,7 +235,9 @@ namespace ClassicalSharp.Map {
 		
 		public override void UpdateLight(int x, int y, int z, BlockID oldBlock, BlockID newBlock) {
 		    
-		    CalcLightDepths(x - y, z - y, 2, 2);
+		    
+		    
+		    CalcLightDepths(x - y, z - y, 3, 3);
 		    //CalcLightDepths(x - y, z - y, width, length);
 		    //CalcLightDepths(0, 0, width, length);
 		    
@@ -248,7 +250,7 @@ namespace ClassicalSharp.Map {
 		    ySafe = (ySafe < 1 +safeOffset) ? y : y -safeOffset;
 		    zSafe = (zSafe < 1 +safeOffset) ? z : z -safeOffset;
 		    
-		    game.MapRenderer.RefreshChunk(xSafe /16, ySafe /16, zSafe /16);
+		    game.MapRenderer.RefreshChunk(x /16, y /16, z /16);
 		    //game.Chat.Add("Updated light.");
 		}
 	}
