@@ -1,4 +1,4 @@
-﻿// ClassicalSharp copyright 2014-2016 UnknownShadow200 | Licensed under MIT
+// ClassicalSharp copyright 2014-2016 UnknownShadow200 | Licensed under MIT
 using System;
 using ClassicalSharp;
 using ClassicalSharp.Events;
@@ -9,15 +9,16 @@ namespace VolumeLightingPlugin {
 	/// <summary> Manages lighting through a simple heightmap, where each block is either in sun or shadow. </summary>
 	public sealed partial class VolumeLighting : IWorldLighting {
 		
-		void CastInitial() {
+		void CastInitial(int startX, int startZ, int endX, int endZ) {
 			//initial loop for making fullbright spots
-			int offset = 0, oneY = width * length, maxY = height - 1;
+			int oneY = width * length, maxY = height - 1;
 			byte[] blocks = game.World.blocks;
 			
-			for( int z = 0; z < length; z++ ) {
-				for( int x = 0; x < width; x++ ) {
-					int index = (maxY * oneY) + offset;
-					offset++; // increase horizontal position
+			for( int z = startZ; z < endZ; z++ ) {
+				int horOffset = startX + (z * width);
+				for( int x = startX; x < endX; x++ ) {
+					int index = (maxY * oneY) + horOffset;
+					horOffset++; // increase horizontal position
 					int lightHeight = CalcHeightAt(x, z);
 						
 					for( int y = maxY; y >= 0; y-- ) {
@@ -48,7 +49,7 @@ namespace VolumeLightingPlugin {
 			return -10;
 		}
 		
-		void DoPass( int pass ) {
+		void DoPass(int pass, int startX, int startY, int startZ, int endX, int endY, int endZ) {
 			int index = 0;
 			bool[] lightPasses = new bool[Block.Count];
 			byte[] blocks = game.World.blocks;
@@ -62,10 +63,11 @@ namespace VolumeLightingPlugin {
 					game.BlockInfo.MaxBB[i] != OpenTK.Vector3.One;
 			}
 			
-			for( int y = 0; y < height; y++ )
-				for( int z = 0; z < length; z++ )
-					for( int x = 0; x < width; x++ )
+			for( int y = startY; y < endY; y++ )
+				for( int z = startZ; z < endZ; z++ )
+					for( int x = startX; x < endX; x++ )
 			{
+				index = x + width * (z + length * y);
 				byte curBlock = blocks[index];
 				
 				int skyLight = lightLevels[x, y, z] >> 4;
