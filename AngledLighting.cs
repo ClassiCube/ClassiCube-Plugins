@@ -160,11 +160,6 @@ namespace ClassicalSharp.Map {
 		public unsafe override void LightHint(int startX, int startZ, BlockID* mapPtr) {
 		}
 		
-		public override int GetLightHeight(int x, int z) {
-			int index = (z * width) + x;
-			return heightmap[index];
-		}
-		
 		
 		// Outside colour is same as sunlight colour, so we reuse when possible
 		public override bool IsLit(int x, int y, int z) {
@@ -233,7 +228,7 @@ namespace ClassicalSharp.Map {
 				heightmap[i] = short.MaxValue;
 		}
 		
-		public override void UpdateLight(int x, int y, int z, BlockID oldBlock, BlockID newBlock) {
+		public override void OnBlockChanged(int x, int y, int z, BlockID oldBlock, BlockID newBlock) {
 		    
 		    
 		    
