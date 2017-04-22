@@ -14,6 +14,7 @@ namespace ClassicalSharp.Map {
 		int oneY, shadow, shadowZSide, shadowXSide, shadowYBottom;
 		BlockInfo info;
 		Game game;
+		//Renderers.MapRenderer mapRenderer;
 		int[] blockers; 
 		public override void Reset(Game game) { heightmap = null; blockers = null; }
 		
@@ -30,6 +31,7 @@ namespace ClassicalSharp.Map {
 			length = game.World.Length;
 			info = game.BlockInfo;
 			this.game = game;
+			//mapRenderer = game.MapRenderer;
 			oneY = width * length;
 			
 			heightmap = new short[width * length];
@@ -99,11 +101,11 @@ namespace ClassicalSharp.Map {
                            xD < width &&
                            zD >= 0 &&
                            zD < length &&
-                           !info.BlocksLight[map.GetBlock(xD, y, zD)] &&
-                           !info.BlocksLight[map.GetBlock(xD, ySafe, zD)] &&
+                           !(info.BlocksLight[map.GetBlock(xD, y, zD)] ||
+                             info.BlocksLight[map.GetBlock(xD, ySafe, zD)]) &&
                            
-                           !(info.BlocksLight[map.GetBlock(xSafe, y, zD)] && info.BlocksLight[map.GetBlock(xD, y, zSafe)]) &&
-                           !(info.BlocksLight[map.GetBlock(xSafe, ySafe, zD)] && info.BlocksLight[map.GetBlock(xD, ySafe, zSafe)])
+                           !(info.BlocksLight[map.GetBlock(xSafe, y, zD)] || info.BlocksLight[map.GetBlock(xD, y, zSafe)]) &&
+                           !(info.BlocksLight[map.GetBlock(xSafe, ySafe, zD)] || info.BlocksLight[map.GetBlock(xD, ySafe, zSafe)])
                           ) {
                         
                         --y;
@@ -226,10 +228,28 @@ namespace ClassicalSharp.Map {
 		}
 		
 		
+		public override void Refresh() {
+			for (int i = 0; i < heightmap.Length; i++)
+				heightmap[i] = short.MaxValue;
+		}
+		
 		public override void UpdateLight(int x, int y, int z, BlockID oldBlock, BlockID newBlock) {
 		    
-		    //CalcLightDepths(x - y, z - y, 1, 1);
+		    CalcLightDepths(x - y, z - y, 2, 2);
+		    //CalcLightDepths(x - y, z - y, width, length);
+		    //CalcLightDepths(0, 0, width, length);
 		    
+		    const int safeOffset = -2;
+		    int xSafe = x +safeOffset;
+		    int ySafe = y +safeOffset;
+		    int zSafe = z +safeOffset;
+		        
+		    xSafe = (xSafe < 1 +safeOffset) ? x : x -safeOffset;
+		    ySafe = (ySafe < 1 +safeOffset) ? y : y -safeOffset;
+		    zSafe = (zSafe < 1 +safeOffset) ? z : z -safeOffset;
+		    
+		    game.MapRenderer.RefreshChunk(xSafe /16, ySafe /16, zSafe /16);
+		    //game.Chat.Add("Updated light.");
 		}
 	}
 }
