@@ -31,11 +31,10 @@ namespace VolumeLightingPlugin {
 			this.game = game;
 			
 			lightLevels = new byte[width, height, length];
-			CastInitial();
-			
+			CastInitial(0, 0, width, length);			
 			for( int pass = maxLight; pass > 1; pass-- ) {
 				Console.WriteLine("Starting pass " + pass + "." );
-				DoPass(pass);
+				DoPass(pass, 0, 0, 0, width, height, length);
 			}
 		}
 		
@@ -125,7 +124,7 @@ namespace VolumeLightingPlugin {
 		
 		
 		public unsafe override void LightHint(int startX, int startZ, byte* mapPtr) {
-		}		
+		}
 		
 		// Outside colour is same as sunlight colour, so we reuse when possible
 		public override bool IsLit(int x, int y, int z) {
@@ -167,7 +166,36 @@ namespace VolumeLightingPlugin {
 		
 		
 		public override void OnBlockChanged(int x, int y, int z, byte oldBlock, byte newBlock) {
+			x &= ~0x0F; y &= ~0x0F; z &= ~0x0F;
+			int minX = Math.Max(x - 16, 0), minY = Math.Max(y - 16, 0), minZ = Math.Max(z - 16, 0);
+			int maxX = Math.Min(x + 16, width), maxY = Math.Min(y + 16, height), maxZ = Math.Min(z + 16, length);
 			
+			for (int yy = minY; yy < maxY; yy++)
+				for (int zz = minZ; zz < maxZ; zz++)
+					for (int xx = minX; xx < maxX; xx++)
+			{
+				lightLevels[xx, yy, zz] = 0;
+			}
+			
+			CastInitial(minX, minZ, maxX, maxZ);
+			for( int pass = maxLight; pass > 1; pass-- ) {
+				DoPass(pass, minX, minY, minZ, maxX, maxY, maxZ);
+			}
+			
+			x >>= 4; y >>= 4; z >>= 4;
+			for (int yy = y - 1; yy <= y + 1; yy++) {
+				game.MapRenderer.RefreshChunk(x - 1, yy, z - 1);
+				game.MapRenderer.RefreshChunk(x + 0, yy, z - 1);
+				game.MapRenderer.RefreshChunk(x + 1, yy, z - 1);
+				
+				game.MapRenderer.RefreshChunk(x - 1, yy, z);
+				game.MapRenderer.RefreshChunk(x + 0, yy, z);
+				game.MapRenderer.RefreshChunk(x + 1, yy, z);
+				
+				game.MapRenderer.RefreshChunk(x - 1, yy, z + 1);
+				game.MapRenderer.RefreshChunk(x + 0, yy, z + 1);
+				game.MapRenderer.RefreshChunk(x + 1, yy, z + 1);
+			}
 		}
 	}
 }
