@@ -148,12 +148,12 @@ namespace ClassicalSharp.Map {
 		
 		void SetSun(FastColour col) {
 			Outside = col.Pack();
-			FastColour.GetShaded(col, out OutsideXSide, out OutsideZSide, out OutsideYBottom);
+			FastColour.GetShadedAngleSun(col, out OutsideXSide, out OutsideZSide, out OutsideYBottom);
 		}
 		
 		void SetShadow(FastColour col) {
 			shadow = col.Pack();
-			FastColour.GetShaded(col, out shadowXSide, out shadowZSide, out shadowYBottom);
+			FastColour.GetShadedAngleShadow(col, out shadowXSide, out shadowZSide, out shadowYBottom);
 		}
 		
 		
@@ -176,14 +176,14 @@ namespace ClassicalSharp.Map {
 			if (IsLit(x, y, z)) {
 			    return Outside;
 			}
-			return shadowZSide;
+			return shadow;
 		}
 		
 		public override int LightCol_ZSide(int x, int y, int z) {
 			if (IsLit(x, y, z)) {
 			    return OutsideZSide;
 			}
-			return shadowXSide;
+			return shadowZSide;
 		}
 		
 
@@ -198,7 +198,7 @@ namespace ClassicalSharp.Map {
 			if (IsLit(x, y + 1, z)) {
 			    return Outside;
 			}
-			return shadowZSide;
+			return shadow;
 		}
 		
 		public override int LightCol_YBottom_Fast(int x, int y, int z) {
@@ -219,7 +219,7 @@ namespace ClassicalSharp.Map {
 			if (IsLit(x, y, z)) {
 			    return OutsideZSide;
 			}
-			return shadowXSide;
+			return shadowZSide;
 		}
 		
 		
@@ -230,7 +230,7 @@ namespace ClassicalSharp.Map {
 		
 		public override void OnBlockChanged(int x, int y, int z, BlockID oldBlock, BlockID newBlock) {
 		    
-		    if (!game.BlockInfo.BlocksLight[oldBlock]) { return; }
+		    if (!game.BlockInfo.BlocksLight[newBlock] && !game.BlockInfo.BlocksLight[oldBlock]) { return; }
 		    
 		    int cx = x >> 4;
 		    int cy = y >> 4;
@@ -251,25 +251,31 @@ namespace ClassicalSharp.Map {
     		        int cyM = y % 16;
     		        int czM = z % 16;
     		        
-    		        int chunksWidth  = (width  + 15) >> 4;
-    		        int chunksHeight = (height + 15) >> 4;
-    		        int chunksLength = (length + 15) >> 4;
     		        
-    		        if (cxM == 15 && cx < chunksWidth -1) {
+    		        if (cxM == 15) {
     		            game.MapRenderer.RefreshChunk(cx +1, cy, cz);
     		        }
-    		        if (cyM == 15 && cy < chunksHeight -1) {
+    		        if (cyM == 15) {
     		            game.MapRenderer.RefreshChunk(cx, cy +1, cz);
     		        }
-    		        if (czM == 15 && cz < chunksLength -1) {
+    		        if (czM == 15) {
     		            game.MapRenderer.RefreshChunk(cx, cy, cz +1);
     		        }
     		        
-    		        if ((cxM == 15 && cx < chunksWidth -1) && (czM == 15 && cz < chunksLength -1)) {
+    		        //corner chunks
+    		        if ((cxM == 15) && (czM == 15)) {
     		            game.MapRenderer.RefreshChunk(cx +1, cy, cz +1);
     		        }
-    		        if ((cxM == 15 && cx < chunksWidth -1) && (cyM == 15 && cy < chunksHeight -1) && (czM == 15 && cz < chunksLength -1)) {
+    		        if ((cxM == 15) && (cyM == 15) && (czM == 15)) {
     		            game.MapRenderer.RefreshChunk(cx +1, cy +1, cz +1);
+    		        }
+    		        
+    		        
+    		        if (cxM == 15 && czM == 0) {
+    		            game.MapRenderer.RefreshChunk(cx +1, cy, cz -1);
+    		        }
+    		        if (czM == 15 && cxM == 0) {
+    		            game.MapRenderer.RefreshChunk(cx -1, cy, cz +1);
     		        }
 		        }
 		        
