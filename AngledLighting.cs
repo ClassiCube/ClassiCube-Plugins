@@ -230,9 +230,11 @@ namespace ClassicalSharp.Map {
 		
 		public override void OnBlockChanged(int x, int y, int z, BlockID oldBlock, BlockID newBlock) {
 		    
-		    int cx = x /16;
-		    int cy = y /16;
-		    int cz = z /16;
+		    if (!game.BlockInfo.BlocksLight[oldBlock]) { return; }
+		    
+		    int cx = x >> 4;
+		    int cy = y >> 4;
+		    int cz = z >> 4;
 		    
 		    int xWidth = 2;
 		    int zLength = 2;
@@ -243,9 +245,35 @@ namespace ClassicalSharp.Map {
 		    CalcLightDepths((x) - y, (z) - y, xWidth, zLength);
 
 		    do {
+		        //todo: bit mask lower four bits 0x0f
+		        if (game.SmoothLighting) {
+    		        int cxM = x % 16;
+    		        int cyM = y % 16;
+    		        int czM = z % 16;
+    		        
+    		        int chunksWidth  = (width  + 15) >> 4;
+    		        int chunksHeight = (height + 15) >> 4;
+    		        int chunksLength = (length + 15) >> 4;
+    		        
+    		        if (cxM == 15 && cx < chunksWidth -1) {
+    		            game.MapRenderer.RefreshChunk(cx +1, cy, cz);
+    		        }
+    		        if (cyM == 15 && cy < chunksHeight -1) {
+    		            game.MapRenderer.RefreshChunk(cx, cy +1, cz);
+    		        }
+    		        if (czM == 15 && cz < chunksLength -1) {
+    		            game.MapRenderer.RefreshChunk(cx, cy, cz +1);
+    		        }
+    		        
+    		        if ((cxM == 15 && cx < chunksWidth -1) && (czM == 15 && cz < chunksLength -1)) {
+    		            game.MapRenderer.RefreshChunk(cx +1, cy, cz +1);
+    		        }
+    		        if ((cxM == 15 && cx < chunksWidth -1) && (cyM == 15 && cy < chunksHeight -1) && (czM == 15 && cz < chunksLength -1)) {
+    		            game.MapRenderer.RefreshChunk(cx +1, cy +1, cz +1);
+    		        }
+		        }
 		        
 		        game.MapRenderer.RefreshChunk(cx, cy, cz);
-		        
 		        if (cx > 0) {
                     game.MapRenderer.RefreshChunk(cx -1, cy, cz);
 		        }
