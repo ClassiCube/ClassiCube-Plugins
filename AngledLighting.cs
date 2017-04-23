@@ -40,6 +40,20 @@ namespace ClassicalSharp.Map {
 			CalcLightDepths(0, 0, width, length);
 		}
 		
+		public const float ShadeASX = 0.8f, ShadeASZ = 0.9f, ShadeASYBottom = 0.7f;
+		public static void GetShadedAngleSun(FastColour normal, out int xSide, out int zSide, out int yBottom) {
+			xSide = FastColour.Scale(normal, ShadeASX).Pack();
+			zSide = FastColour.Scale(normal, ShadeASZ).Pack();
+			yBottom = FastColour.Scale(normal, ShadeASYBottom).Pack();
+		}
+		
+		public const float ShadeAHX = 0.6f, ShadeAHZ = 0.8f, ShadeAHYBottom = 0.5f;
+		public static void GetShadedAngleShadow(FastColour normal, out int xSide, out int zSide, out int yBottom) {
+			xSide = FastColour.Scale(normal, ShadeAHX).Pack();
+			zSide = FastColour.Scale(normal, ShadeAHZ).Pack();
+			yBottom = FastColour.Scale(normal, ShadeAHYBottom).Pack();
+		}
+		
 		
         public void CalcLightDepths(int xStart, int zStart, int xWidth, int zLength) {
             //xStart and zStart are zero.
@@ -148,12 +162,12 @@ namespace ClassicalSharp.Map {
 		
 		void SetSun(FastColour col) {
 			Outside = col.Pack();
-			FastColour.GetShadedAngleSun(col, out OutsideXSide, out OutsideZSide, out OutsideYBottom);
+			GetShadedAngleSun(col, out OutsideXSide, out OutsideZSide, out OutsideYBottom);
 		}
 		
 		void SetShadow(FastColour col) {
 			shadow = col.Pack();
-			FastColour.GetShadedAngleShadow(col, out shadowXSide, out shadowZSide, out shadowYBottom);
+			GetShadedAngleShadow(col, out shadowXSide, out shadowZSide, out shadowYBottom);
 		}
 		
 		
