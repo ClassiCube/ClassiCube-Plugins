@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InteropPatcher", "CS\Intero
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PonyModel", "PonyModel\PonyModel.csproj", "{87FA5F0E-101F-451D-9AB0-04181E66DCC4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OffsetCamera", "OffsetCamera\OffsetCamera.csproj", "{48A5D9BC-C724-48E5-A90E-496A12E61759}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,5 +34,9 @@ Global
 		{87FA5F0E-101F-451D-9AB0-04181E66DCC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{87FA5F0E-101F-451D-9AB0-04181E66DCC4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{87FA5F0E-101F-451D-9AB0-04181E66DCC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48A5D9BC-C724-48E5-A90E-496A12E61759}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48A5D9BC-C724-48E5-A90E-496A12E61759}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48A5D9BC-C724-48E5-A90E-496A12E61759}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48A5D9BC-C724-48E5-A90E-496A12E61759}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 EndGlobal

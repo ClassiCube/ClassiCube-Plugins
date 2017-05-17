@@ -2,7 +2,7 @@
 using ClassicalSharp;
 using ClassicalSharp.GraphicsAPI;
 
-namespace Pony {
+namespace PonyPlugin {
 
 	public sealed class Core : Plugin {
 		

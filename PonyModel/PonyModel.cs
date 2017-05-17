@@ -5,7 +5,7 @@ using ClassicalSharp.Model;
 using ClassicalSharp.Physics;
 using OpenTK;
 
-namespace Pony {
+namespace PonyPlugin {
 	
 	public class PonyModel : IModel {
 		
