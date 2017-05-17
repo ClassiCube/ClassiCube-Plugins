@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+# SharpDevelop 4.4
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClassicalSharp", "CS\ClassicalSharp\ClassicalSharp.csproj", "{BEB1C785-5CAD-48FF-A886-876BF0A318D4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTK", "CS\OpenTK\OpenTK.csproj", "{35FEE071-2DE6-48A1-9343-B5C1F202A12B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InteropPatcher", "CS\InteropPatcher\InteropPatcher.csproj", "{4A4110EE-21CA-4715-AF67-0C8B7CE0642F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PonyModel", "PonyModel\PonyModel.csproj", "{87FA5F0E-101F-451D-9AB0-04181E66DCC4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BEB1C785-5CAD-48FF-A886-876BF0A318D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEB1C785-5CAD-48FF-A886-876BF0A318D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEB1C785-5CAD-48FF-A886-876BF0A318D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEB1C785-5CAD-48FF-A886-876BF0A318D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35FEE071-2DE6-48A1-9343-B5C1F202A12B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35FEE071-2DE6-48A1-9343-B5C1F202A12B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35FEE071-2DE6-48A1-9343-B5C1F202A12B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35FEE071-2DE6-48A1-9343-B5C1F202A12B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A4110EE-21CA-4715-AF67-0C8B7CE0642F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A4110EE-21CA-4715-AF67-0C8B7CE0642F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A4110EE-21CA-4715-AF67-0C8B7CE0642F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A4110EE-21CA-4715-AF67-0C8B7CE0642F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87FA5F0E-101F-451D-9AB0-04181E66DCC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87FA5F0E-101F-451D-9AB0-04181E66DCC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87FA5F0E-101F-451D-9AB0-04181E66DCC4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87FA5F0E-101F-451D-9AB0-04181E66DCC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+EndGlobal
