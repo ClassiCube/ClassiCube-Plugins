@@ -12,6 +12,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PonyModel", "PonyModel\Pony
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OffsetCamera", "OffsetCamera\OffsetCamera.csproj", "{48A5D9BC-C724-48E5-A90E-496A12E61759}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AngledLighting", "AngledLighting\AngledLighting.csproj", "{4766951E-D83F-4927-A002-5E8D33D63F9E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VolumeLighting", "VolumeLighting\VolumeLighting.csproj", "{8D699016-EBC4-440F-8A03-3E557C230166}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,5 +42,13 @@ Global
 		{48A5D9BC-C724-48E5-A90E-496A12E61759}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{48A5D9BC-C724-48E5-A90E-496A12E61759}.Release|Any CPU.Build.0 = Release|Any CPU
 		{48A5D9BC-C724-48E5-A90E-496A12E61759}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4766951E-D83F-4927-A002-5E8D33D63F9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4766951E-D83F-4927-A002-5E8D33D63F9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4766951E-D83F-4927-A002-5E8D33D63F9E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4766951E-D83F-4927-A002-5E8D33D63F9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D699016-EBC4-440F-8A03-3E557C230166}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D699016-EBC4-440F-8A03-3E557C230166}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D699016-EBC4-440F-8A03-3E557C230166}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D699016-EBC4-440F-8A03-3E557C230166}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 EndGlobal

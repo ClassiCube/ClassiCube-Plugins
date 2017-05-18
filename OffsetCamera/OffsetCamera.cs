@@ -1,11 +1,15 @@
 ﻿using ClassicalSharp;
+using ClassicalSharp.Entities;
 using OpenTK;
 using System;
 
 namespace OffsetCameraPlugin {
 
 	public class GoodlyayCamera : PerspectiveCamera {
-		public GoodlyayCamera( Game window ) : base( window ) { }
+		public GoodlyayCamera( Game window ) : base( window ) {
+			window.AddScheduledTask(1.0 / 60, TickCallback);
+		}
+
 		public override bool IsThirdPerson { get { return true; } }
 		
 		float dist = 3;
@@ -13,6 +17,11 @@ namespace OffsetCameraPlugin {
 			dist = Math.Max( dist - deltaPrecise, 2 );
 			return true;
 		}
+		
+		float bobbingVer { get {
+				Player p = game.LocalPlayer;
+				return (p.anim.bobbingVer * 0.6f) * p.anim.bobStrength; 
+			} }
 		
 		public override Matrix4 GetView() {
 			Vector3 eyePos = player.EyePosition;
@@ -26,7 +35,9 @@ namespace OffsetCameraPlugin {
 		}
 		
 		int ticks = 0;
-		public override void UpdateMouse() {
+		public override void UpdateMouse() { }
+		
+		void TickCallback(ScheduledTask task) {
 			ticks++;
 			// 3 camera ticks = 1 physics tick
 			if (ticks == 3) { last = cur; ticks = 0; }
