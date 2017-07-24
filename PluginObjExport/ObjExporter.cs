@@ -1,0 +1,238 @@
+﻿using System;
+using System.IO;
+using ClassicalSharp;
+using ClassicalSharp.Commands;
+using ClassicalSharp.Map;
+using OpenTK;
+
+namespace PluginObjExport {
+
+	/// <summary> Command that displays information about the user's GPU. </summary>
+	public sealed class ObjExporterCommand : Command {
+		
+		public ObjExporterCommand() {
+			Name = "ObjExport";
+			Help = new string[] {
+				"&a/client objexport [filename]",
+				"&eExports the current map to the OBJ file format, as [filename].obj.",
+				"&eThis can then be imported into 3D modelling software such as Blender.",
+			};
+		}
+		
+		public override void Execute(string[] args) {
+			if (args.Length == 1) { game.Chat.Add("&cFilename required."); return; }
+			
+			string file = Path.Combine("maps", args[1]);
+			file = Path.ChangeExtension(file, ".obj");
+			
+			using (FileStream src = File.Create(file)) {
+				new ObjExporter().Save(src, game);
+			}
+			game.Chat.Add("&eExported map to " + file);
+		}
+	}
+	
+	public sealed class ObjExporter : IMapFormatExporter {
+		
+		World map;
+		BlockInfo info;
+		int maxX, maxY, maxZ;
+		int oneX, oneY, oneZ;
+		byte[] blocks;
+		StreamWriter w;
+		int[] texI = new int[256];
+		
+		public void Save(Stream stream, Game game) {
+			SetVars(game);
+			using (StreamWriter w = new StreamWriter(stream)) {
+				this.w = w;
+				DumpNormals();
+				DumpTextures();
+				DumpVertices();
+				DumpFaces();
+			}
+		}
+		
+		void SetVars(Game game) {
+			map = game.World;
+			info = game.BlockInfo;
+			maxX = map.Width - 1; maxY = map.Height - 1; maxZ = map.Length - 1;
+			oneX = 1; oneY = map.Width * map.Length; oneZ = map.Width;
+			blocks = map.blocks;
+		}
+		
+		void DumpNormals() {
+			w.WriteLine("#normals");
+			w.WriteLine("vn -1.0 0.0 0.0");
+			w.WriteLine("vn 1.0 0.0 0.0");
+			w.WriteLine("vn 0.0 0.0 -1.0");
+			w.WriteLine("vn 0.0 0.0 1.0");
+			w.WriteLine("vn 0.0 -1.0 0.0");
+			w.WriteLine("vn 0.0 1.0 0.0");
+		}
+		
+		void DumpTextures() {
+			w.WriteLine("#textures");
+			int i = 1;
+			float x, y;
+			
+			for (byte b = 0; b < 255; b++) {
+				if (info.Name[b] == "Invalid") continue;
+				
+				Vector3 min = info.MinBB[b] / 16.0f, max = info.MaxBB[b] / 16.0f;
+				w.WriteLine("#" + info.Name[b]);
+				texI[b] = i;
+				
+				Unpack(info.GetTextureLoc(b, Side.Left), out x, out y);
+				w.WriteLine("vt " + (x + min.Z) + " " + (y + min.Y));
+				w.WriteLine("vt " + (x + min.Z) + " " + (y + max.Y));
+				w.WriteLine("vt " + (x + max.Z) + " " + (y + max.Y));
+				w.WriteLine("vt " + (x + max.Z) + " " + (y + min.Y));
+				
+				Unpack(info.GetTextureLoc(b, Side.Right), out x, out y);
+				w.WriteLine("vt " + (x + max.Z) + " " + (y + min.Y));
+				w.WriteLine("vt " + (x + max.Z) + " " + (y + max.Y));
+				w.WriteLine("vt " + (x + min.Z) + " " + (y + max.Y));
+				w.WriteLine("vt " + (x + min.Z) + " " + (y + min.Y));
+				
+				Unpack(info.GetTextureLoc(b, Side.Front), out x, out y);
+				w.WriteLine("vt " + (x + max.X) + " " + (y + min.Y));
+				w.WriteLine("vt " + (x + max.X) + " " + (y + max.Y));
+				w.WriteLine("vt " + (x + min.X) + " " + (y + max.Y));
+				w.WriteLine("vt " + (x + min.X) + " " + (y + min.Y));
+				
+				Unpack(info.GetTextureLoc(b, Side.Back), out x, out y);
+				w.WriteLine("vt " + (x + min.X) + " " + (y + min.Y));
+				w.WriteLine("vt " + (x + min.X) + " " + (y + max.Y));
+				w.WriteLine("vt " + (x + max.X) + " " + (y + max.Y));
+				w.WriteLine("vt " + (x + max.X) + " " + (y + min.Y));
+				
+				Unpack(info.GetTextureLoc(b, Side.Bottom), out x, out y);
+				w.WriteLine("vt " + (x + min.X) + " " + (y + max.Z));
+				w.WriteLine("vt " + (x + min.X) + " " + (y + min.Z));
+				w.WriteLine("vt " + (x + max.X) + " " + (y + min.Z));
+				w.WriteLine("vt " + (x + max.X) + " " + (y + max.Z));
+				
+				Unpack(info.GetTextureLoc(b, Side.Top), out x, out y);
+				w.WriteLine("vt " + (x + min.X) + " " + (y + max.Z));
+				w.WriteLine("vt " + (x + min.X) + " " + (y + min.Z));
+				w.WriteLine("vt " + (x + max.X) + " " + (y + min.Z));
+				w.WriteLine("vt " + (x + max.X) + " " + (y + max.Z));
+				i += 4 * 6;
+			}
+		}
+		
+		static void Unpack(int texId, out float x, out float y) {
+			x = (texId & 0x0F) / 16.0f;
+			y = 1 - (texId >> 4) / 16.0f - (1 / 16.0f);
+		}
+		
+		void DumpVertices() {
+			w.WriteLine("#vertices");
+			int i = -1;
+			for (int y = 0; y < map.Height; y++)
+				for (int z = 0; z < map.Length; z++)
+					for (int x = 0; x < map.Width; x++)
+			{
+				++i; byte block = blocks[i];
+				if (info.Draw[block] == DrawType.Gas || info.Draw[block] == DrawType.Sprite) continue;
+				
+				Vector3 min = new Vector3(x, y, z) + info.RenderMinBB[block];
+				Vector3 max = new Vector3(x, y, z) + info.RenderMaxBB[block];
+				
+				// minx
+				if (x == 0 || !info.IsFaceHidden(block, blocks[i - oneX], Side.Left)) {
+					w.WriteLine("v " + min.X + " " + min.Y + " " + min.Z);
+					w.WriteLine("v " + min.X + " " + max.Y + " " + min.Z);
+					w.WriteLine("v " + min.X + " " + max.Y + " " + max.Z);
+					w.WriteLine("v " + min.X + " " + min.Y + " " + max.Z);
+				}
+				
+				// maxx
+				if (x == maxX || !info.IsFaceHidden(block, blocks[i + oneX], Side.Right)) {
+					w.WriteLine("v " + max.X + " " + min.Y + " " + min.Z);
+					w.WriteLine("v " + max.X + " " + max.Y + " " + min.Z);
+					w.WriteLine("v " + max.X + " " + max.Y + " " + max.Z);
+					w.WriteLine("v " + max.X + " " + min.Y + " " + max.Z);
+				}
+				
+				// minz
+				if (z == 0 || !info.IsFaceHidden(block, blocks[i - oneZ], Side.Front)) {
+					w.WriteLine("v " + min.X + " " + min.Y + " " + min.Z);
+					w.WriteLine("v " + min.X + " " + max.Y + " " + min.Z);
+					w.WriteLine("v " + max.X + " " + max.Y + " " + min.Z);
+					w.WriteLine("v " + max.X + " " + min.Y + " " + min.Z);
+				}
+				
+				// maxz
+				if (z == maxZ || !info.IsFaceHidden(block, blocks[i + oneZ], Side.Back)) {
+					w.WriteLine("v " + min.X + " " + min.Y + " " + max.Z);
+					w.WriteLine("v " + min.X + " " + max.Y + " " + max.Z);
+					w.WriteLine("v " + max.X + " " + max.Y + " " + max.Z);
+					w.WriteLine("v " + max.X + " " + min.Y + " " + max.Z);
+				}
+				
+				// miny
+				if (y == 0 || !info.IsFaceHidden(block, blocks[i - oneY], Side.Bottom)) {
+					w.WriteLine("v " + min.X + " " + min.Y + " " + min.Z);
+					w.WriteLine("v " + min.X + " " + min.Y + " " + max.Z);
+					w.WriteLine("v " + max.X + " " + min.Y + " " + max.Z);
+					w.WriteLine("v " + max.X + " " + min.Y + " " + min.Z);
+				}
+				
+				// maxy
+				if (y == maxY || !info.IsFaceHidden(block, blocks[i + oneY], Side.Top)) {
+					w.WriteLine("v " + min.X + " " + max.Y + " " + min.Z);
+					w.WriteLine("v " + min.X + " " + max.Y + " " + max.Z);
+					w.WriteLine("v " + max.X + " " + max.Y + " " + max.Z);
+					w.WriteLine("v " + max.X + " " + max.Y + " " + min.Z);
+				}
+			}
+		}
+		
+		void DumpFaces() {
+			w.WriteLine("#faces");
+			int i = -1, j = 1;
+			for (int y = 0; y < map.Height; y++)
+				for (int z = 0; z < map.Length; z++)
+					for (int x = 0; x < map.Width; x++)
+			{
+				++i; byte block = blocks[i];
+				if (info.Draw[block] == DrawType.Gas || info.Draw[block] == DrawType.Sprite) continue;
+				
+				Vector3 min = new Vector3(x, y, z) + info.RenderMinBB[block];
+				Vector3 max = new Vector3(x, y, z) + info.RenderMaxBB[block];
+				int k = texI[block], n = 1;
+				// minx
+				if (x == 0 || !info.IsFaceHidden(block, blocks[i - oneX], Side.Left)) {
+					w.WriteLine("f " + (j+3)+"/"+(k+3)+"/"+n + " " + (j+2)+"/"+(k+2)+"/"+n + " " + (j+1)+"/"+(k+1)+"/"+n + " " + (j+0)+"/"+(k+0)+"/"+n); j += 4;
+				} k += 4; n++;
+				
+				// maxx
+				if (x == maxX || !info.IsFaceHidden(block, blocks[i + oneX], Side.Right)) {
+					w.WriteLine("f " + (j+0)+"/"+(k+0)+"/"+n + " " + (j+1)+"/"+(k+1)+"/"+n + " " + (j+2)+"/"+(k+2)+"/"+n + " " + (j+3)+"/"+(k+3)+"/"+n); j += 4;
+				} k += 4; n++;
+				
+				// minz
+				if (z == 0 || !info.IsFaceHidden(block, blocks[i - oneZ], Side.Front)) {
+					w.WriteLine("f " + (j+0)+"/"+(k+0)+"/"+n + " " + (j+1)+"/"+(k+1)+"/"+n + " " + (j+2)+"/"+(k+2)+"/"+n + " " + (j+3)+"/"+(k+3)+"/"+n); j += 4;
+				} k += 4; n++;
+				
+				// maxz
+				if (z == maxZ || !info.IsFaceHidden(block, blocks[i + oneZ], Side.Back)) {
+					w.WriteLine("f " + (j+3)+"/"+(k+3)+"/"+n + " " + (j+2)+"/"+(k+2)+"/"+n + " " + (j+1)+"/"+(k+1)+"/"+n + " " + (j+0)+"/"+(k+0)+"/"+n); j += 4;
+				} k += 4; n++;
+				
+				// miny
+				if (y == 0 || !info.IsFaceHidden(block, blocks[i - oneY], Side.Bottom)) {
+					w.WriteLine("f " + (j+3)+"/"+(k+3)+"/"+n + " " + (j+2)+"/"+(k+2)+"/"+n + " " + (j+1)+"/"+(k+1)+"/"+n + " " + (j+0)+"/"+(k+0)+"/"+n); j += 4;
+				} k += 4; n++;
+				
+				// maxy
+				if (y == maxY || !info.IsFaceHidden(block, blocks[i + oneY], Side.Top)) {
+					w.WriteLine("f " + (j+0)+"/"+(k+0)+"/"+n + " " + (j+1)+"/"+(k+1)+"/"+n + " " + (j+2)+"/"+(k+2)+"/"+n + " " + (j+3)+"/"+(k+3)+"/"+n); j += 4;
+				} k += 4; n++;
+			}
+		}
+	}
+}

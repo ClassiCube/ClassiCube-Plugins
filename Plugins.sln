@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VolumeLighting", "VolumeLig
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AO", "AO\AO.csproj", "{9FC3708B-B9B1-4716-8A92-252C565378B7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginObjExport", "PluginObjExport\PluginObjExport.csproj", "{F8D8F106-4876-445E-93EB-E6789F579F2B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,5 +58,9 @@ Global
 		{9FC3708B-B9B1-4716-8A92-252C565378B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9FC3708B-B9B1-4716-8A92-252C565378B7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9FC3708B-B9B1-4716-8A92-252C565378B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8D8F106-4876-445E-93EB-E6789F579F2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8D8F106-4876-445E-93EB-E6789F579F2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8D8F106-4876-445E-93EB-E6789F579F2B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8D8F106-4876-445E-93EB-E6789F579F2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 EndGlobal
