@@ -69,6 +69,11 @@ namespace PluginObjExport {
 			w.WriteLine("vn 0.0 0.0 1.0");
 			w.WriteLine("vn 0.0 -1.0 0.0");
 			w.WriteLine("vn 0.0 1.0 0.0");
+			w.WriteLine("#sprite normals");
+			w.WriteLine("vn -0.70710678 0 0.70710678");			
+			w.WriteLine("vn 0.70710678 0 -0.70710678");			
+			w.WriteLine("vn 0.70710678 0 0.70710678");
+			w.WriteLine("vn -0.70710678 0 -0.70710678");
 		}
 		
 		void DumpTextures() {
@@ -81,6 +86,10 @@ namespace PluginObjExport {
 				
 				Vector3 min = info.MinBB[b] / 16.0f, max = info.MaxBB[b] / 16.0f;
 				w.WriteLine("#" + info.Name[b]);
+				if (info.Draw[b] == DrawType.Sprite) {
+					min = Vector3.Zero;
+					max = Vector3.One / 16.0f;
+				}
 				texI[b] = i;
 				
 				Unpack(info.GetTextureLoc(b, Side.Left), out x, out y);
@@ -130,15 +139,49 @@ namespace PluginObjExport {
 		void DumpVertices() {
 			w.WriteLine("#vertices");
 			int i = -1;
+			Vector3 min, max;
+			
 			for (int y = 0; y < map.Height; y++)
 				for (int z = 0; z < map.Length; z++)
 					for (int x = 0; x < map.Width; x++)
 			{
 				++i; byte block = blocks[i];
-				if (info.Draw[block] == DrawType.Gas || info.Draw[block] == DrawType.Sprite) continue;
+				if (info.Draw[block] == DrawType.Gas) continue;
+				min.X = x; min.Y = y; min.Z = z;
+				max.X = x; max.Y = y; max.Z = z;
 				
-				Vector3 min = new Vector3(x, y, z) + info.RenderMinBB[block];
-				Vector3 max = new Vector3(x, y, z) + info.RenderMaxBB[block];
+				if (info.Draw[block] == DrawType.Sprite) {
+					min.X += 2.50f/16f; min.Z += 2.50f/16f;
+					max.X += 13.5f/16f; max.Z += 13.5f/16f; max.Y += 1.0f;
+
+					// Draw Z axis
+					w.WriteLine("v " + min.X + " " + min.Y + " " + min.Z);
+					w.WriteLine("v " + min.X + " " + max.Y + " " + min.Z);
+					w.WriteLine("v " + max.X + " " + max.Y + " " + max.Z);
+					w.WriteLine("v " + max.X + " " + min.Y + " " + max.Z);
+					
+					// Draw Z axis mirrored
+					w.WriteLine("v " + max.X + " " + min.Y + " " + max.Z);
+					w.WriteLine("v " + max.X + " " + max.Y + " " + max.Z);
+					w.WriteLine("v " + min.X + " " + max.Y + " " + min.Z);
+					w.WriteLine("v " + min.X + " " + min.Y + " " + min.Z);
+
+					// Draw X axis
+					w.WriteLine("v " + min.X + " " + min.Y + " " + max.Z);
+					w.WriteLine("v " + min.X + " " + max.Y + " " + max.Z);
+					w.WriteLine("v " + max.X + " " + max.Y + " " + min.Z);
+					w.WriteLine("v " + max.X + " " + min.Y + " " + min.Z);
+					
+					// Draw X axis mirrored
+					w.WriteLine("v " + max.X + " " + min.Y + " " + min.Z);
+					w.WriteLine("v " + max.X + " " + max.Y + " " + min.Z);
+					w.WriteLine("v " + min.X + " " + max.Y + " " + max.Z);
+					w.WriteLine("v " + min.X + " " + min.Y + " " + max.Z);
+					continue;
+				}
+				
+				min += info.RenderMinBB[block];
+				max += info.RenderMaxBB[block];
 				
 				// minx
 				if (x == 0 || !info.IsFaceHidden(block, blocks[i - oneX], Side.Left)) {
@@ -193,16 +236,27 @@ namespace PluginObjExport {
 		void DumpFaces() {
 			w.WriteLine("#faces");
 			int i = -1, j = 1;
+			
 			for (int y = 0; y < map.Height; y++)
 				for (int z = 0; z < map.Length; z++)
 					for (int x = 0; x < map.Width; x++)
 			{
 				++i; byte block = blocks[i];
-				if (info.Draw[block] == DrawType.Gas || info.Draw[block] == DrawType.Sprite) continue;
+				if (info.Draw[block] == DrawType.Gas) continue;
+				int k = texI[block], n = 1;
+				
+				if (info.Draw[block] == DrawType.Sprite) {
+					n += 6;
+					w.WriteLine("f " + (j+3)+"/"+(k+3)+"/"+n + " " + (j+2)+"/"+(k+2)+"/"+n + " " + (j+1)+"/"+(k+1)+"/"+n + " " + (j+0)+"/"+(k+0)+"/"+n); j += 4; n++;
+					w.WriteLine("f " + (j+3)+"/"+(k+3)+"/"+n + " " + (j+2)+"/"+(k+2)+"/"+n + " " + (j+1)+"/"+(k+1)+"/"+n + " " + (j+0)+"/"+(k+0)+"/"+n); j += 4; n++;
+					w.WriteLine("f " + (j+3)+"/"+(k+3)+"/"+n + " " + (j+2)+"/"+(k+2)+"/"+n + " " + (j+1)+"/"+(k+1)+"/"+n + " " + (j+0)+"/"+(k+0)+"/"+n); j += 4; n++;
+					w.WriteLine("f " + (j+3)+"/"+(k+3)+"/"+n + " " + (j+2)+"/"+(k+2)+"/"+n + " " + (j+1)+"/"+(k+1)+"/"+n + " " + (j+0)+"/"+(k+0)+"/"+n); j += 4; n++;
+					continue;
+				}
 				
 				Vector3 min = new Vector3(x, y, z) + info.RenderMinBB[block];
 				Vector3 max = new Vector3(x, y, z) + info.RenderMaxBB[block];
-				int k = texI[block], n = 1;
+				
 				// minx
 				if (x == 0 || !info.IsFaceHidden(block, blocks[i - oneX], Side.Left)) {
 					w.WriteLine("f " + (j+3)+"/"+(k+3)+"/"+n + " " + (j+2)+"/"+(k+2)+"/"+n + " " + (j+1)+"/"+(k+1)+"/"+n + " " + (j+0)+"/"+(k+0)+"/"+n); j += 4;
