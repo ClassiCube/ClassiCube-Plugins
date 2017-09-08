@@ -333,16 +333,20 @@ namespace ClassicalSharp {
 			DrawInfo part = isTranslucent ? translucentParts[i] : normalParts[i];
 			int col = fullBright ? FastColour.WhitePacked : light.LightCol_YTop_Fast(X, (Y + 1) - offset, Z);
 			if (tinted) col = TintBlock(curBlock, col);
-			
+
 			float y2_x1z1 = y2, y2_x1z2 = y2, y2_x2z1 = y2, y2_x2z2 = y2;
 			if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownXMax) {
 				y2_x2z1 = y1; y2_x2z2 = y1;
+				if (!fullBright) col = FastColour.ScalePacked(col, 0.8f);
 			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownXMin) {
 				y2_x1z1 = y1; y2_x1z2 = y1;
+				if (!fullBright) col = FastColour.ScalePacked(col, 0.8f);
 			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownZMin) {
 				y2_x1z1 = y1; y2_x2z1 = y1;
+				if (!fullBright) col = FastColour.ScalePacked(col, 0.9f);
 			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownZMax) {
 				y2_x1z2 = y1; y2_x2z2 = y1;
+				if (!fullBright) col = FastColour.ScalePacked(col, 0.9f);
 			}
 			
 			part.vertices[part.vIndex[Side.Top]++] = new VertexP3fT2fC4b(x2 + (count - 1), y2_x2z1, z1, u2, v1, col);
