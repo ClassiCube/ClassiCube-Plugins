@@ -15,7 +15,7 @@ namespace ClassicalSharp {
 		public const byte SlopeDownXMin = 10;
 		public const byte SlopeDownXMax = 11;
 		public const byte SlopeDownZMin = 12;
-		public const byte SlopeDownZMax = 12;
+		public const byte SlopeDownZMax = 13;
 	}
 	
 	public unsafe sealed class WedgeMeshBuilder : ChunkMeshBuilder  {
