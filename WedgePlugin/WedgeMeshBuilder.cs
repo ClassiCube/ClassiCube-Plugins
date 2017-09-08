@@ -115,6 +115,32 @@ namespace ClassicalSharp {
 			
 			if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownXMin || BlockInfo.Draw[curBlock] == DrawType2.SlopeUpXMin) return;
 			
+			if (BlockInfo.Draw[curBlock] == DrawType2.SlopeUpZMin) {
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y2, z2 + (count - 1), u2, v1, col);
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y2, z1, u1, v1, col);
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y2, z1, u1, v1, col);
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y1, z2 + (count - 1), u2, v2, col);
+				return;
+			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeUpZMax) {
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y2, z2 + (count - 1), u2, v1, col);
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y2, z1, u1, v1, col);
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y1, z1, u1, v2, col);
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y2, z2 + (count - 1), u2, v1, col);
+				return;
+			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownZMin) {
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y2, z2 + (count - 1), u2, v1, col);
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y1, z1, u1, v2, col);
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y1, z1, u1, v2, col);
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y1, z2 + (count - 1), u2, v2, col);
+				return;
+			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownZMax) {
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y1, z2 + (count - 1), u2, v2, col);
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y2, z1, u1, v1, col);
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y1, z1, u1, v2, col);
+				part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y1, z2 + (count - 1), u2, v2, col);
+				return;
+			}
+			
 			part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y2, z2 + (count - 1), u2, v1, col);
 			part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y2, z1, u1, v1, col);
 			part.vertices[part.vIndex[Side.Left]++] = new VertexP3fT2fC4b(x1, y1, z1, u1, v2, col);
@@ -137,6 +163,32 @@ namespace ClassicalSharp {
 			if (tinted) col = TintBlock(curBlock, col);
 			
 			if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownXMax || BlockInfo.Draw[curBlock] == DrawType2.SlopeUpXMax) return;
+			
+			if (BlockInfo.Draw[curBlock] == DrawType2.SlopeUpZMin) {
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y2, z1, u1, v1, col);
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y2, z2 + (count - 1), u2, v1, col);
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y1, z2 + (count - 1), u2, v2, col);
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y2, z1, u1, v1, col);
+				return;
+			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeUpZMax) {
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y2, z1, u1, v1, col);
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y2, z2 + (count - 1), u2, v1, col);
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y2, z2 + (count - 1), u2, v1, col);
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y1, z1, u1, v2, col);
+				return;
+			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownZMin) {
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y1, z1, u1, v2, col);
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y2, z2 + (count - 1), u2, v1, col);
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y1, z2 + (count - 1), u2, v2, col);
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y1, z1, u1, v2, col);
+				return;
+			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownZMax) {
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y2, z1, u1, v1, col);
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y1, z2 + (count - 1), u2, v2, col);
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y1, z2 + (count - 1), u2, v2, col);
+				part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y1, z1, u1, v2, col);
+				return;
+			}
 			
 			part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y2, z1, u1, v1, col);
 			part.vertices[part.vIndex[Side.Right]++] = new VertexP3fT2fC4b(x2, y2, z2 + (count - 1), u2, v1, col);
@@ -161,11 +213,29 @@ namespace ClassicalSharp {
 			
 			if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownZMin || BlockInfo.Draw[curBlock] == DrawType2.SlopeUpZMin) return;
 			
-			if (BlockInfo.Draw[curBlock] == DrawType2.SlopeUpXMax) {
+			if (BlockInfo.Draw[curBlock] == DrawType2.SlopeUpXMin) {
+				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x2 + (count - 1), y1, z1, u2, v2, col);
+				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x1, y2, z1, u1, v1, col);
+				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x1, y2, z1, u1, v1, col);
+				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x2 + (count - 1), y2, z1, u2, v1, col);
+				return;
+			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeUpXMax) {
 				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x2 + (count - 1), y2, z1, u2, v1, col);
 				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x1, y1, z1, u1, v2, col);
 				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x1, y2, z1, u1, v1, col);
 				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x2 + (count - 1), y2, z1, u2, v1, col);
+				return;
+			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownXMin) {
+				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x2 + (count - 1), y1, z1, u2, v2, col);
+				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x1, y1, z1, u1, v2, col);
+				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x1, y1, z1, u1, v2, col);
+				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x2 + (count - 1), y2, z1, u2, v1, col);
+				return;
+			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownXMax) {
+				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x2 + (count - 1), y1, z1, u2, v2, col);
+				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x1, y1, z1, u1, v2, col);
+				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x1, y2, z1, u1, v1, col);
+				part.vertices[part.vIndex[Side.Front]++] = new VertexP3fT2fC4b(x2 + (count - 1), y1, z1, u2, v1, col);
 				return;
 			}
 			
@@ -192,11 +262,36 @@ namespace ClassicalSharp {
 			
 			if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownZMax || BlockInfo.Draw[curBlock] == DrawType2.SlopeUpZMax) return;
 			
-			if (BlockInfo.Draw[curBlock] == DrawType2.SlopeUpXMax) {
+			/*if (BlockInfo.Draw[curBlock] == DrawType2.SlopeUpXMax) {
 				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x2 + (count - 1), y2, z2, u2, v1, col);
 				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x1, y2, z2, u1, v1, col);
 				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x1, y1, z2, u1, v2, col);
 				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x2 + (count - 1), y2, z2, u2, v1, col);
+				return;
+			}*/
+			if (BlockInfo.Draw[curBlock] == DrawType2.SlopeUpXMin) {
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x2 + (count - 1), y2, z2, u2, v1, col);
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x1, y2, z2, u1, v1, col);
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x1, y2, z2, u1, v1, col);
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x2 + (count - 1), y1, z2, u2, v2, col);
+				return;
+			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeUpXMax) {
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x2 + (count - 1), y2, z2, u2, v1, col);
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x1, y2, z2, u1, v1, col);
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x1, y1, z2, u1, v2, col);
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x2 + (count - 1), y2, z2, u2, v1, col);
+				return;
+			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownXMin) {
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x2 + (count - 1), y2, z2, u2, v1, col);
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x1, y1, z2, u1, v2, col);
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x1, y1, z2, u1, v2, col);
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x2 + (count - 1), y1, z2, u2, v2, col);
+				return;
+			} else if (BlockInfo.Draw[curBlock] == DrawType2.SlopeDownXMax) {
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x2 + (count - 1), y1, z2, u2, v2, col);
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x1, y2, z2, u1, v1, col);
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x1, y1, z2, u1, v2, col);
+				part.vertices[part.vIndex[Side.Back]++] = new VertexP3fT2fC4b(x2 + (count - 1), y1, z2, u2, v2, col);
 				return;
 			}
 			
@@ -276,7 +371,7 @@ namespace ClassicalSharp {
 			this.fullBright = BlockInfo.FullBright[curBlock];
 			this.tinted = BlockInfo.Tinted[curBlock];
 			
-			if (BlockInfo.Draw[curBlock] == DrawType.Sprite) {				
+			if (BlockInfo.Draw[curBlock] == DrawType.Sprite) {
 				int count = counts[index + Side.Top];
 				if (count != 0) DrawSprite(count);
 				return;
