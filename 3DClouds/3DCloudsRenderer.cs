@@ -38,14 +38,14 @@ namespace ClassicalSharp.Renderers {
 			gfx.SetBatchFormat(VertexFormat.P3fC4b);
 			gfx.BindVb(skyVb);
 			if (skyY == normalY) {
-				gfx.DrawIndexedVb(DrawMode.Triangles, skyVertices * 6 / 4, 0);
+				gfx.DrawVb_IndexedTris(skyVertices, 0);
 			} else {
 				Matrix4 m = Matrix4.Identity;
 				m.Row3.Y = skyY - normalY; // Y translation matrix
 				
 				gfx.PushMatrix();
 				gfx.MultiplyMatrix(ref m);
-				gfx.DrawIndexedVb(DrawMode.Triangles, skyVertices * 6 / 4, 0);
+				gfx.DrawVb_IndexedTris(skyVertices, 0);
 				gfx.PopMatrix();
 			}
 			RenderClouds(deltaTime);
@@ -143,7 +143,7 @@ namespace ClassicalSharp.Renderers {
 			if (map.blocks == null) return;
 			FastColour fogCol = FastColour.White;
 			float fogDensity = 0;
-			BlockID block = BlockOn(out fogDensity, out fogCol);
+			BlockOn(out fogDensity, out fogCol);
 			
 			if (fogDensity != 0) {
 				gfx.SetFogMode(Fog.Exp);
