@@ -17,10 +17,10 @@ namespace AO {
 			base.PostStretchTiles(x1, y1, z1);
 			for (int i = 0; i < isOccluder.Length; i++) {
 				isOccluder[i] =
-					info.BlocksLight[i] &&
-					info.MinBB[i] == Vector3.Zero &&
-					info.MaxBB[i] == Vector3.One &&
-					info.Draw[i] != DrawType.TransparentThick; // goodlyay, did you hack this for leaves?
+					BlockInfo.BlocksLight[i] &&
+					BlockInfo.MinBB[i] == Vector3.Zero &&
+					BlockInfo.MaxBB[i] == Vector3.One &&
+					BlockInfo.Draw[i] != DrawType.TransparentThick; // goodlyay, did you hack this for leaves?
 			}
 			
 			sun = env.Sunlight;
@@ -57,9 +57,9 @@ namespace AO {
 		
 		
 		protected override void RenderTile(int index) {
-			if (info.Draw[curBlock] == DrawType.Sprite) {
-				fullBright = info.FullBright[curBlock];
-				tinted = info.Tinted[curBlock];
+			if (BlockInfo.Draw[curBlock] == DrawType.Sprite) {
+				fullBright = BlockInfo.FullBright[curBlock];
+				tinted = BlockInfo.Tinted[curBlock];
 				int count = counts[index + Side.Top];
 				if (count != 0) DrawSprite(count);
 				return;
@@ -71,16 +71,16 @@ namespace AO {
 			if (leftCount == 0 && rightCount == 0 && frontCount == 0 &&
 			    backCount == 0 && bottomCount == 0 && topCount == 0) return;
 			
-			fullBright = info.FullBright[curBlock];
-			isTranslucent = info.Draw[curBlock] == DrawType.Translucent;
-			lightFlags = info.LightOffset[curBlock];
-			tinted = info.Tinted[curBlock];
+			fullBright = BlockInfo.FullBright[curBlock];
+			isTranslucent = BlockInfo.Draw[curBlock] == DrawType.Translucent;
+			lightFlags = BlockInfo.LightOffset[curBlock];
+			tinted =  BlockInfo.Tinted[curBlock];
 			
-			Vector3 min = info.RenderMinBB[curBlock], max = info.RenderMaxBB[curBlock];
+			Vector3 min = BlockInfo.RenderMinBB[curBlock], max = BlockInfo.RenderMaxBB[curBlock];
 			x1 = X + min.X; y1 = Y + min.Y; z1 = Z + min.Z;
 			x2 = X + max.X; y2 = Y + max.Y; z2 = Z + max.Z;
 			
-			this.minBB = info.MinBB[curBlock]; this.maxBB = info.MaxBB[curBlock];
+			this.minBB = BlockInfo.MinBB[curBlock]; this.maxBB = BlockInfo.MaxBB[curBlock];
 			minBB.Y = 1 - minBB.Y; maxBB.Y = 1 - maxBB.Y;
 			
 			if (leftCount != 0) DrawLeftFace(leftCount);
@@ -93,7 +93,7 @@ namespace AO {
 		
 		
 		void DrawLeftFace(int count) {
-			int texId = info.textures[curBlock * Side.Sides + Side.Left];
+			int texId = BlockInfo.textures[curBlock * Side.Sides + Side.Left];
 			int i = texId / elementsPerAtlas1D;
 			float vOrigin = (texId % elementsPerAtlas1D) * invVerElementSize;
 			int offset = (lightFlags >> Side.Left) & 1;
@@ -122,7 +122,7 @@ namespace AO {
 		}
 		
 		void DrawRightFace(int count) {
-			int texId = info.textures[curBlock * Side.Sides + Side.Right];
+			int texId = BlockInfo.textures[curBlock * Side.Sides + Side.Right];
 			int i = texId / elementsPerAtlas1D;
 			float vOrigin = (texId % elementsPerAtlas1D) * invVerElementSize;
 			int offset = (lightFlags >> Side.Right) & 1;
@@ -151,7 +151,7 @@ namespace AO {
 		}
 		
 		void DrawFrontFace(int count) {
-			int texId = info.textures[curBlock * Side.Sides + Side.Front];
+			int texId = BlockInfo.textures[curBlock * Side.Sides + Side.Front];
 			int i = texId / elementsPerAtlas1D;
 			float vOrigin = (texId % elementsPerAtlas1D) * invVerElementSize;
 			int offset = (lightFlags >> Side.Front) & 1;
@@ -180,7 +180,7 @@ namespace AO {
 		}
 		
 		void DrawBackFace(int count) {
-			int texId = info.textures[curBlock * Side.Sides + Side.Back];
+			int texId = BlockInfo.textures[curBlock * Side.Sides + Side.Back];
 			int i = texId / elementsPerAtlas1D;
 			float vOrigin = (texId % elementsPerAtlas1D) * invVerElementSize;
 			int offset = (lightFlags >> Side.Back) & 1;
@@ -209,7 +209,7 @@ namespace AO {
 		}
 		
 		void DrawBottomFace(int count) {
-			int texId = info.textures[curBlock * Side.Sides + Side.Bottom];
+			int texId = BlockInfo.textures[curBlock * Side.Sides + Side.Bottom];
 			int i = texId / elementsPerAtlas1D;
 			float vOrigin = (texId % elementsPerAtlas1D) * invVerElementSize;
 			int offset = (lightFlags >> Side.Bottom) & 1;
@@ -238,7 +238,7 @@ namespace AO {
 		}
 		
 		void DrawTopFace(int count) {
-			int texId = info.textures[curBlock * Side.Sides + Side.Top];
+			int texId = BlockInfo.textures[curBlock * Side.Sides + Side.Top];
 			int i = texId / elementsPerAtlas1D;
 			float vOrigin = (texId % elementsPerAtlas1D) * invVerElementSize;
 			int offset = (lightFlags >> Side.Top) & 1;
@@ -249,7 +249,7 @@ namespace AO {
 			DrawInfo part = isTranslucent ? translucentParts[i] : normalParts[i];
 			
 			
-			if (info.MinBB[curBlock].Y > 0 && info.MaxBB[curBlock].Y == 1) { offset = 1; }
+			if (BlockInfo.MinBB[curBlock].Y > 0 && BlockInfo.MaxBB[curBlock].Y == 1) { offset = 1; }
 			
 			int col0_0 = AverageColorsTop(X, Y+offset, Z, -1, -1);
 			int col0_1 = AverageColorsTop(X, Y+offset, Z, -1, +1);
@@ -304,7 +304,7 @@ namespace AO {
 				if (isOccluder[thisBlock]) blocksLight = true;
 				
 				FastColour col = blocksLight ? dark : FastColour.Unpack(light.LightCol(X, Y, Z));
-				if (info.FullBright[thisBlock]) col = sun;
+				if (BlockInfo.FullBright[thisBlock]) col = sun;
 				return col;
 			}
 			return sun;
@@ -345,7 +345,7 @@ namespace AO {
 				if (isOccluder[thisBlock]) blocksLight = true;
 				
 				FastColour col = blocksLight ? darkYBottom : FastColour.Unpack(light.LightCol_YBottom_Fast(X, Y, Z));
-				if (info.FullBright[thisBlock]) col = sun;
+				if (BlockInfo.FullBright[thisBlock]) col = sun;
 				return col;
 			}
 			return sunYBottom;
@@ -387,7 +387,7 @@ namespace AO {
 				if (isOccluder[thisBlock]) blocksLight = true;
 				
 				FastColour col = blocksLight ? darkZ : FastColour.Unpack(light.LightCol_ZSide_Fast(X, Y, Z));
-				if (info.FullBright[thisBlock]) col = sun;
+				if (BlockInfo.FullBright[thisBlock]) col = sun;
 				return col;
 			}
 			return sunZ;
@@ -429,7 +429,7 @@ namespace AO {
 				if (isOccluder[thisBlock]) blocksLight = true;
 				
 				FastColour col = blocksLight ? darkX : FastColour.Unpack(light.LightCol_XSide_Fast(X, Y, Z));
-				if (info.FullBright[thisBlock]) col = sun;
+				if (BlockInfo.FullBright[thisBlock]) col = sun;
 				return col;
 			}
 			return sunX;
