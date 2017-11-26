@@ -9,9 +9,7 @@ namespace AngledLightingPlugin {
 	public sealed class AngledLighting : IWorldLighting {
 		
 		int oneY, shadow, shadowZSide, shadowXSide, shadowYBottom;
-		BlockInfo info;
 		Game game;
-		//Renderers.MapRenderer mapRenderer;
 		int[] blockers;
 		public override void Reset(Game game) { heightmap = null; blockers = null; }
 		
@@ -26,9 +24,7 @@ namespace AngledLightingPlugin {
 			width = game.World.Width;
 			height = game.World.Height;
 			length = game.World.Length;
-			info = game.BlockInfo;
 			this.game = game;
-			//mapRenderer = game.MapRenderer;
 			oneY = width * length;
 			
 			heightmap = new short[width * length];
@@ -74,64 +70,56 @@ namespace AngledLightingPlugin {
 			int xExtent = width + height;
 			int zExtent = length + height;
 			
+			bool[] blocksLight = BlockInfo.BlocksLight;
+			
 			for (int x = xStart; x < xStart + xWidth; ++x) { //from 0 to the width + height of the map
 				for (int z = zStart; z < zStart + zLength; ++z) { //from 0 to the length of the map
 					
 					int oldY = blockers[x + z * xExtent];
 					
-					int y = height -1; //-1 because it starts at 0
-					int xD = x + height -1;
-					int zD = z + height -1;
+					int yCur = height -1; //-1 because it starts at 0
+					int xCur = x + height -1;
+					int zCur = z + height -1;
 					
 					int xOver = 0; //how far past the edge of the map is it?
 					int zOver = 0;
 					
 
-					if (xD >= xExtent) {
-						xOver = xD - (xExtent -1);
+					if (xCur >= xExtent) {
+						xOver = xCur - (xExtent -1);
 					}
-					if (zD >= zExtent) {
-						zOver = zD - (zExtent -1);//how far past the edge of the map is it?
+					if (zCur >= zExtent) {
+						zOver = zCur - (zExtent -1);//how far past the edge of the map is it?
 					}
 					int maxOver = Math.Max(xOver, zOver);
 					//pushing y and x and z back to the edge of the map
-					y -= maxOver;
-					xD -= maxOver;
-					zD -= maxOver;
+					yCur -= maxOver;
+					xCur -= maxOver;
+					zCur -= maxOver;
 					
-					xD -= height;
-					zD -= height;
+					xCur -= height;
+					zCur -= height;
 					
-					int ySafe = (y > 0) ? y - 1 : y;
+					int yNext = (yCur > 0) ? yCur - 1 : yCur;					
+					int xNext = (xCur > 0) ? xCur - 1 : xCur;
+					int zNext = (zCur > 0) ? zCur - 1 : zCur;
 					
-					int xSafe = (xD > 0) ? xD - 1 : xD;
-					int zSafe = (zD > 0) ? zD - 1 : zD;
-					
-					while (y > 0 &&
-					       xD >= 0 &&
-					       xD < width &&
-					       zD >= 0 &&
-					       zD < length &&
-					       !(info.BlocksLight[map.GetBlock(xD, y, zD)] ||
-					         info.BlocksLight[map.GetBlock(xD, ySafe, zD)]) &&
-					       
-					       !(info.BlocksLight[map.GetBlock(xSafe, y, zD)] || info.BlocksLight[map.GetBlock(xD, y, zSafe)]) &&
-					       !(info.BlocksLight[map.GetBlock(xSafe, ySafe, zD)] || info.BlocksLight[map.GetBlock(xD, ySafe, zSafe)])
+					while (yCur > 0 && xCur >= 0 && xCur < width && zCur >= 0 && zCur < length &&
+					       !(blocksLight[map.GetBlock(xCur,  yCur,  zCur)] || blocksLight[map.GetBlock(xCur, yNext, zCur)])  &&					       
+					       !(blocksLight[map.GetBlock(xNext, yCur,  zCur)] || blocksLight[map.GetBlock(xCur, yCur,  zNext)]) &&
+					       !(blocksLight[map.GetBlock(xNext, yNext, zCur)] || blocksLight[map.GetBlock(xCur, yNext, zNext)])
 					      ) {
 						
-						--y;
-						--xD;
-						--zD;
-						
-						ySafe = (y > 0) ? y - 1 : y;
-						xSafe = (xD > 0) ? xD - 1 : xD;
-						zSafe = (zD > 0) ? zD - 1 : zD;
+						--yCur; --xCur; --zCur;						
+						yNext = (yCur > 0) ? yCur - 1 : yCur;
+						xNext = (xCur > 0) ? xCur - 1 : xCur;
+						zNext = (zCur > 0) ? zCur - 1 : zCur;
 					}
 					
-					if (xD < 0 || zD < 0) {
-						y = oldY;
+					if (xCur < 0 || zCur < 0) {
+						yCur = oldY;
 					}
-					blockers[x + z * xExtent] = y;
+					blockers[x + z * xExtent] = yCur;
 					
 				}
 			}
@@ -184,53 +172,31 @@ namespace AngledLightingPlugin {
 
 		public override int LightCol(int x, int y, int z) {
 			//return y > GetLightHeight(x, z) ? Outside : shadow;
-			if (IsLit(x, y, z)) {
-				return Outside;
-			}
-			return shadow;
+			return IsLit(x, y, z) ? Outside : shadow;
 		}
 		
 		public override int LightCol_ZSide(int x, int y, int z) {
-			if (IsLit(x, y, z)) {
-				return OutsideZSide;
-			}
-			return shadowZSide;
-		}
-		
+			return IsLit(x, y, z) ? OutsideZSide : shadowZSide;
+		}		
 
 		public override int LightCol_Sprite_Fast(int x, int y, int z) {
-			if (IsLit(x, y, z)) {
-				return Outside;
-			}
-			return shadow;
+			return IsLit(x, y, z) ? Outside : shadow;
 		}
 		
 		public override int LightCol_YTop_Fast(int x, int y, int z) {
-			if (IsLit(x, y + 1, z)) {
-				return Outside;
-			}
-			return shadow;
+			return IsLit(x, y, z) ? Outside : shadow;
 		}
 		
 		public override int LightCol_YBottom_Fast(int x, int y, int z) {
-			if (IsLit(x, y, z)) {
-				return OutsideYBottom;
-			}
-			return shadowYBottom;
+			return IsLit(x, y, z) ? OutsideYBottom : shadowYBottom;
 		}
 		
 		public override int LightCol_XSide_Fast(int x, int y, int z) {
-			if (IsLit(x, y, z)) {
-				return OutsideXSide;
-			}
-			return shadowXSide;
+			return IsLit(x, y, z) ? OutsideXSide : shadowXSide;
 		}
 		
 		public override int LightCol_ZSide_Fast(int x, int y, int z) {
-			if (IsLit(x, y, z)) {
-				return OutsideZSide;
-			}
-			return shadowZSide;
+			return IsLit(x, y, z) ? OutsideZSide : shadowZSide;
 		}
 		
 		
@@ -240,12 +206,8 @@ namespace AngledLightingPlugin {
 		}
 		
 		public override void OnBlockChanged(int x, int y, int z, BlockID oldBlock, BlockID newBlock) {
-			
-			if (!game.BlockInfo.BlocksLight[newBlock] && !game.BlockInfo.BlocksLight[oldBlock]) { return; }
-			
-			int cx = x >> 4;
-			int cy = y >> 4;
-			int cz = z >> 4;
+			if (!BlockInfo.BlocksLight[newBlock] && !BlockInfo.BlocksLight[oldBlock]) return;		
+			int cX = x >> 4, cY = y >> 4, cZ = z >> 4;
 			
 			int xWidth = 2;
 			int zLength = 2;
@@ -256,71 +218,62 @@ namespace AngledLightingPlugin {
 			CalcLightDepths((x) - y, (z) - y, xWidth, zLength);
 
 			do {
-				//todo: bit mask lower four bits 0x0f
 				if (game.SmoothLighting) {
-					int cxM = x % 16;
-					int cyM = y % 16;
-					int czM = z % 16;
+					int bX = x & 0xF, bY = y & 0xF, bZ = z & 0xF;				
 					
-					
-					if (cxM == 15) {
-						game.MapRenderer.RefreshChunk(cx +1, cy, cz);
+					if (bX == 15) {
+						game.MapRenderer.RefreshChunk(cX +1, cY, cZ);
 					}
-					if (cyM == 15) {
-						game.MapRenderer.RefreshChunk(cx, cy +1, cz);
+					if (bY == 15) {
+						game.MapRenderer.RefreshChunk(cX, cY +1, cZ);
 					}
-					if (czM == 15) {
-						game.MapRenderer.RefreshChunk(cx, cy, cz +1);
+					if (bZ == 15) {
+						game.MapRenderer.RefreshChunk(cX, cY, cZ +1);
 					}
 					
-					//corner chunks
-					if ((cxM == 15) && (czM == 15)) {
-						game.MapRenderer.RefreshChunk(cx +1, cy, cz +1);
+					// corner chunks
+					if (bX == 15 && bZ == 15) {
+						game.MapRenderer.RefreshChunk(cX +1, cY, cZ +1);
 					}
-					if ((cxM == 15) && (cyM == 15) && (czM == 15)) {
-						game.MapRenderer.RefreshChunk(cx +1, cy +1, cz +1);
+					if (bX == 15 && bY == 15 && bZ == 15) {
+						game.MapRenderer.RefreshChunk(cX +1, cY +1, cZ +1);
 					}
 					
-					
-					if (cxM == 15 && czM == 0) {
-						game.MapRenderer.RefreshChunk(cx +1, cy, cz -1);
+					if (bX == 15 && bZ == 0) {
+						game.MapRenderer.RefreshChunk(cX +1, cY, cZ -1);
 					}
-					if (czM == 15 && cxM == 0) {
-						game.MapRenderer.RefreshChunk(cx -1, cy, cz +1);
+					if (bZ == 15 && bX == 0) {
+						game.MapRenderer.RefreshChunk(cX -1, cY, cZ +1);
 					}
 				}
 				
-				game.MapRenderer.RefreshChunk(cx, cy, cz);
-				if (cx > 0) {
-					game.MapRenderer.RefreshChunk(cx -1, cy, cz);
+				game.MapRenderer.RefreshChunk(cX, cY, cZ);
+				if (cX > 0) {
+					game.MapRenderer.RefreshChunk(cX -1, cY, cZ);
 				}
-				if (cz > 0) {
-					game.MapRenderer.RefreshChunk(cx, cy, cz -1);
+				if (cZ > 0) {
+					game.MapRenderer.RefreshChunk(cX, cY, cZ -1);
 				}
-				if (cx > 0 && cz > 0) {
-					game.MapRenderer.RefreshChunk(cx -1, cy, cz -1);
+				if (cX > 0 && cZ > 0) {
+					game.MapRenderer.RefreshChunk(cX -1, cY, cZ -1);
 				}
 				
 				if (y > 0) {
-					game.MapRenderer.RefreshChunk(cx, cy -1, cz);
+					game.MapRenderer.RefreshChunk(cX, cY -1, cZ);
 					
-					if (cx > 0) {
-						game.MapRenderer.RefreshChunk(cx -1, cy -1, cz);
+					if (cX > 0) {
+						game.MapRenderer.RefreshChunk(cX -1, cY -1, cZ);
 					}
-					if (cz > 0) {
-						game.MapRenderer.RefreshChunk(cx, cy -1, cz -1);
+					if (cZ > 0) {
+						game.MapRenderer.RefreshChunk(cX, cY -1, cZ -1);
 					}
-					if (cx > 0 && cz > 0) {
-						game.MapRenderer.RefreshChunk(cx -1, cy -1, cz -1);
+					if (cX > 0 && cZ > 0) {
+						game.MapRenderer.RefreshChunk(cX -1, cY -1, cZ -1);
 					}
 				}
 
-				cx--;
-				cy--;
-				cz--;
-			} while (cx >= 0 && cz >= 0 && cy >= 0);
-			
+				cX--; cY--; cZ--;
+			} while (cX >= 0 && cZ >= 0 && cY >= 0);			
 		}
-		
 	}
 }

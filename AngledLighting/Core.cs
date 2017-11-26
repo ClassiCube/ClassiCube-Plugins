@@ -1,6 +1,5 @@
 ﻿using System;
 using ClassicalSharp;
-using ClassicalSharp.GraphicsAPI;
 
 namespace AngledLightingPlugin {
 
@@ -11,7 +10,12 @@ namespace AngledLightingPlugin {
 		public void Dispose() { }
 		
 		public void Init(Game game) {
-			game.ReplaceComponent(ref game.Lighting, new AngledLighting());
+			game.Lighting.Dispose();
+			game.Components.Remove(game.Lighting);
+			
+			game.Lighting = new AngledLighting();
+			game.Lighting.Init(game);
+			game.Components.Add(game.Lighting);
 		}
 		
 		public void Ready(Game game) { }
