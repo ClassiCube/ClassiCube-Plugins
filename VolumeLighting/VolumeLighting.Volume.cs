@@ -1,7 +1,6 @@
 ﻿// ClassicalSharp copyright 2014-2016 UnknownShadow200 | Licensed under MIT
 using System;
 using ClassicalSharp;
-using ClassicalSharp.Events;
 using ClassicalSharp.Map;
 
 namespace VolumeLightingPlugin {
@@ -28,7 +27,7 @@ namespace VolumeLightingPlugin {
 						//if the current block is in sunlight assign the fullest sky brightness to the higher 4 bits
 						if( (y - 1) > lightHeight ) { lightLevels[x, y, z] = (byte)(maxLight << 4); }
 						//if the current block is fullbright assign the fullest block brightness to the higher 4 bits
-						if( info.FullBright[curBlock] ) { lightLevels[x, y, z] |= maxLight; }
+						if( BlockInfo.FullBright[curBlock] ) { lightLevels[x, y, z] |= maxLight; }
 					}
 				}
 			}
@@ -40,8 +39,8 @@ namespace VolumeLightingPlugin {
 			
 			for (int y = height - 1; y >= 0; y--) {
 				byte block = blocks[mapIndex];
-				if (info.BlocksLight[block]) {
-					int offset = (info.LightOffset[block] >> Side.Top) & 1;
+				if (BlockInfo.BlocksLight[block]) {
+					int offset = (BlockInfo.LightOffset[block] >> Side.Top) & 1;
 					return y - offset;
 				}
 				mapIndex -= width * length;
@@ -58,9 +57,9 @@ namespace VolumeLightingPlugin {
 			for (int i = 0; i < lightPasses.Length; i++) {
 				// Light passes through a block if a) doesn't block light b) block isn't full block
 				lightPasses[i] =
-					!game.BlockInfo.BlocksLight[i] ||
-					game.BlockInfo.MinBB[i] != OpenTK.Vector3.Zero ||
-					game.BlockInfo.MaxBB[i] != OpenTK.Vector3.One;
+					!BlockInfo.BlocksLight[i] ||
+					BlockInfo.MinBB[i] != OpenTK.Vector3.Zero ||
+					BlockInfo.MaxBB[i] != OpenTK.Vector3.One;
 			}
 			
 			for( int y = startY; y < endY; y++ )
@@ -72,7 +71,7 @@ namespace VolumeLightingPlugin {
 				
 				int skyLight = lightLevels[x, y, z] >> 4;
 				//if the current block is not a light blocker AND the current spot is less than i
-				if( !info.BlocksLight[curBlock] && skyLight == pass ) {
+				if( !BlockInfo.BlocksLight[curBlock] && skyLight == pass ) {
 					//check the six neighbors sky light value,
 					if( y < maxY && skyLight > (lightLevels[x, y+1, z] >> 4) ) {
 						if( lightPasses[blocks[index + width * length]] ){
@@ -114,7 +113,7 @@ namespace VolumeLightingPlugin {
 				
 				int blockLight = lightLevels[x, y, z] & 0x0F;
 				//if the current block is not a light blocker AND the current spot is less than i
-				if( (info.FullBright[curBlock] || !info.BlocksLight[curBlock]) && blockLight == pass ) {
+				if( (BlockInfo.FullBright[curBlock] || !BlockInfo.BlocksLight[curBlock]) && blockLight == pass ) {
 					//check the six neighbors sky light value,
 					if( y < maxY && blockLight > (lightLevels[x, y+1, z] & 0x0F) ) {
 						if( lightPasses[blocks[index + width * length]] ){

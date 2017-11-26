@@ -10,8 +10,7 @@ namespace VolumeLightingPlugin {
 	
 	/// <summary> Manages lighting through a simple heightmap, where each block is either in sun or shadow. </summary>
 	public sealed partial class VolumeLighting : IWorldLighting {
-		
-		BlockInfo info;
+
 		Game game;
 		public const byte lightExtent = 16, maxLight = (byte)(lightExtent - 1);
 		byte[, ,] lightLevels;
@@ -27,7 +26,6 @@ namespace VolumeLightingPlugin {
 			width = game.World.Width;
 			height = game.World.Height;
 			length = game.World.Length;
-			info = game.BlockInfo;
 			this.game = game;
 			
 			lightLevels = new byte[width, height, length];

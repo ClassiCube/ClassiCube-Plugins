@@ -1,6 +1,5 @@
 ﻿using System;
 using ClassicalSharp;
-using ClassicalSharp.GraphicsAPI;
 
 namespace VolumeLightingPlugin {
 
@@ -10,8 +9,13 @@ namespace VolumeLightingPlugin {
 		
 		public void Dispose() { }
 		
-		public void Init(Game game) {
-			game.ReplaceComponent(ref game.Lighting, new VolumeLighting());
+		public void Init(Game game) {	
+			game.Lighting.Dispose();
+			game.Components.Remove(game.Lighting);
+			
+			game.Lighting = new VolumeLighting();
+			game.Lighting.Init(game);
+			game.Components.Add(game.Lighting);
 		}
 		
 		public void Ready(Game game) { }
