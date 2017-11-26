@@ -184,7 +184,7 @@ namespace AngledLightingPlugin {
 		}
 		
 		public override int LightCol_YTop_Fast(int x, int y, int z) {
-			return IsLit(x, y, z) ? Outside : shadow;
+			return IsLit(x, y + 1, z) ? Outside : shadow;
 		}
 		
 		public override int LightCol_YBottom_Fast(int x, int y, int z) {
