@@ -126,11 +126,12 @@ namespace ClassicalSharp.GraphicsAPI {
 		
 		#region Fog
 		
-		public override bool AlphaArgBlend {
-			set { }
-		}		
+		public override bool AlphaArgBlend { set { } }
+		
+		bool fog;
 		public override bool Fog {
-			set { }
+			get { return fog; } 
+			set { fog = value; }
 		}
 		
 		internal override void MakeApiInfo() { }
@@ -215,7 +216,7 @@ namespace ClassicalSharp.GraphicsAPI {
 			}
 
 			public void MultiplyTop( ref Matrix4 matrix ) {
-				stack[stackIndex] = matrix * stack[stackIndex];
+				Matrix4.Mult(out stack[stackIndex], ref matrix, ref stack[stackIndex]); // top = matrix * top
 				Top = stack[stackIndex];
 			}
 
@@ -251,7 +252,7 @@ namespace ClassicalSharp.GraphicsAPI {
 			texId = -1;
 		}
 		
-		protected unsafe override int CreateTexture( int width, int height, IntPtr scan0, bool managedPool) {
+		protected unsafe override int CreateTexture(int width, int height, IntPtr scan0, bool managedPool, bool mipmaps) {
 			int[] pixels = new int[width * height];
 			fixed( int* texPtr = pixels ) {
 				memcpy( scan0, (IntPtr)texPtr, width * height * 4 );
@@ -263,7 +264,7 @@ namespace ClassicalSharp.GraphicsAPI {
 			return GetOrExpand( ref textures, obj, texBufferSize );
 		}
 		
-		public override void UpdateTexturePart(int texId, int texX, int texY, FastBitmap part) {
+		public override void UpdateTexturePart(int texId, int texX, int texY, FastBitmap part, bool mipmaps) {
 			TexObject tex = textures[texId];
 			fixed( int* texPtr = tex.Pixels ) {
 				int* dst = texPtr + (texY * tex.Width) + texX;
@@ -273,6 +274,10 @@ namespace ClassicalSharp.GraphicsAPI {
 				}
 			}	
 		}
+		
+		public override void EnableMipmaps() { }
+		
+		public override void DisableMipmaps() { }
 		
 		#endregion
 		
@@ -314,13 +319,11 @@ namespace ClassicalSharp.GraphicsAPI {
 			curIBuffer = iBuffers[ib];
 		}
 		
-		public override void SetDynamicVbData<T>(int vb, T[] vertices, int vCount) {
+		public override void SetDynamicVbData(int vb, IntPtr vertices, int vCount) {
 			curVBuffer = vBuffers[vb];
-			GCHandle handle = GCHandle.Alloc(vertices, GCHandleType.Pinned);
 			fixed( byte* dst = curVBuffer ) {
-				memcpy( handle.AddrOfPinnedObject(), (IntPtr)dst, vCount * drawStride );
+				memcpy( vertices, (IntPtr)dst, vCount * drawStride );
 			}
-			handle.Free();
 		}
 		
 		public override void DrawVb_Lines(int verticesCount) {
