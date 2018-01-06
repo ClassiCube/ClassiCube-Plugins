@@ -1,4 +1,4 @@
-﻿using ClassicalSharp;
+using ClassicalSharp;
 using ClassicalSharp.Entities;
 using OpenTK;
 using System;
@@ -17,17 +17,15 @@ namespace OffsetCameraPlugin {
 			dist = Math.Max( dist - deltaPrecise, 2 );
 			return true;
 		}
-		
-		float bobbingVer { get {
-				Player p = game.LocalPlayer;
-				return (p.anim.bobbingVer * 0.6f) * p.anim.bobStrength; 
-			} }
-		
-		public override Matrix4 GetView() {
+
+		public override void GetView( out Matrix4 m ) {
 			Vector3 eyePos = player.EyePosition;
 			eyePos.Y += bobbingVer;
-			Vector3 cameraPos = game.CurrentCameraPos;
-			return Matrix4.LookAt( cameraPos, eyePos, Vector3.UnitY ) * tiltM;
+			Vector3 camPos = game.CurrentCameraPos;
+			
+			Matrix4 lookAt;
+			Matrix4.LookAt( camPos, eyePos, Vector3.UnitY, out lookAt );
+			Matrix4.Mult( out m, ref lookAt, ref tiltM );
 		}
 		
 		public override Vector2 GetCameraOrientation() {
