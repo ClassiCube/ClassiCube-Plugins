@@ -16,7 +16,6 @@ namespace ClassicalSharp.Renderers {
 	public unsafe class Clouds3DEnvRenderer : EnvRenderer {
 		
 		int cloudsVb = -1, cloudVertices, skyVb = -1, skyVertices;
-		internal bool legacy;
 		
 		public override void UseLegacyMode(bool legacy) {
 			this.legacy = legacy;
@@ -40,13 +39,13 @@ namespace ClassicalSharp.Renderers {
 			if (skyY == normalY) {
 				gfx.DrawVb_IndexedTris(skyVertices, 0);
 			} else {
-				Matrix4 m = Matrix4.Identity;
+				Matrix4 res, m = Matrix4.Identity;
 				m.Row3.Y = skyY - normalY; // Y translation matrix
+				Matrix4.Mult(out res, ref game.Graphics.View, ref m);
 				
-				gfx.PushMatrix();
-				gfx.MultiplyMatrix(ref m);
+				gfx.LoadMatrix(ref m);
 				gfx.DrawVb_IndexedTris(skyVertices, 0);
-				gfx.PopMatrix();
+				gfx.LoadMatrix(ref game.Graphics.View);
 			}
 			RenderClouds(deltaTime);
 		}
@@ -79,8 +78,7 @@ namespace ClassicalSharp.Renderers {
 		
 		public override void OnNewMap(Game game) {
 			gfx.Fog = false;
-			gfx.DeleteVb(ref skyVb);
-			gfx.DeleteVb(ref cloudsVb);
+			ContextLost();
 		}
 		
 		public override void OnNewMapLoaded(Game game) {
@@ -108,8 +106,8 @@ namespace ClassicalSharp.Renderers {
 			double time = game.accumulator;
 			float offset = (float)(time / 2048f * 0.6f * map.Env.CloudsSpeed);
 			gfx.SetMatrixMode(MatrixType.Texture);
-			Matrix4 matrix = Matrix4.Identity; matrix.Row3.X = offset; // translate X axis
-			gfx.LoadMatrix(ref matrix);
+			Matrix4 m = Matrix4.Identity; m.Row3.X = offset; // translate X axis
+			gfx.LoadMatrix(ref m);
 			gfx.SetMatrixMode(MatrixType.Modelview);
 			
 			gfx.AlphaTest = true;
@@ -122,16 +120,17 @@ namespace ClassicalSharp.Renderers {
 			gfx.Texturing = false;
 			
 			if (cloudsJoinVb > 0) {
-				Matrix4.Translate(out matrix, -offset * 2048f, 0, 0);
-				gfx.PushMatrix();
-				gfx.MultiplyMatrix(ref matrix);
+				Matrix4.Translate(out m, -offset * 2048f, 0, 0);
+				Matrix4 res;
+				Matrix4.Mult(out res, ref m, ref game.Graphics.View);
+				gfx.LoadMatrix(ref res);
 				
 				gfx.SetBatchFormat(VertexFormat.P3fC4b);
 				gfx.BindVb(cloudsJoinVb);
-				gfx.DrawIndexedVb_TrisT2fC4b(cloudsJoinVertices * 6 / 4, 0);
+				gfx.DrawIndexedVb_TrisT2fC4b(cloudsJoinVertices, 0);
 				
 				gfx.SetBatchFormat(VertexFormat.P3fT2fC4b);
-				gfx.PopMatrix();
+				gfx.LoadMatrix(ref game.Graphics.View);
 			}
 			
 			gfx.SetMatrixMode(MatrixType.Texture);
@@ -169,6 +168,7 @@ namespace ClassicalSharp.Renderers {
 		void ResetClouds() {
 			if (map.blocks == null || game.Graphics.LostContext) return;
 			gfx.DeleteVb(ref cloudsVb);
+			gfx.DeleteVb(ref cloudsJoinVb);
 			RebuildClouds((int)game.ViewDistance, legacy ? 128 : 65536);
 		}
 		
@@ -185,6 +185,7 @@ namespace ClassicalSharp.Renderers {
 		}
 		
 		void ContextRecreated() {
+			ContextLost();
 			ResetClouds();
 			ResetSky();
 		}
@@ -328,6 +329,7 @@ namespace ClassicalSharp.Renderers {
 				}
 			}
 			
+			gfx.DeleteVb(ref cloudsJoinVb);
 			fixed (VertexP3fC4b* ptr = vertices) {
 				cloudsJoinVb = gfx.CreateVb( (IntPtr)ptr, VertexFormat.P3fC4b, cloudsJoinVertices );
 			}
