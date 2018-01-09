@@ -2,12 +2,12 @@ using System;
 using System.IO;
 using ClassicalSharp;
 using ClassicalSharp.Commands;
+using ClassicalSharp.Generator;
 using ClassicalSharp.Map;
 using OpenTK;
 
 namespace PluginObjExport {
 
-	/// <summary> Command that displays information about the user's GPU. </summary>
 	public sealed class ObjExporterCommand : Command {
 		
 		public ObjExporterCommand() {
@@ -68,8 +68,8 @@ namespace PluginObjExport {
 			w.WriteLine("vn 0.0 -1.0 0.0");
 			w.WriteLine("vn 0.0 1.0 0.0");
 			w.WriteLine("#sprite normals");
-			w.WriteLine("vn -0.70710678 0 0.70710678");			
-			w.WriteLine("vn 0.70710678 0 -0.70710678");			
+			w.WriteLine("vn -0.70710678 0 0.70710678");
+			w.WriteLine("vn 0.70710678 0 -0.70710678");
 			w.WriteLine("vn 0.70710678 0 0.70710678");
 			w.WriteLine("vn -0.70710678 0 -0.70710678");
 		}
@@ -134,6 +134,7 @@ namespace PluginObjExport {
 			y = 1 - (texId >> 4) / 16.0f - (1 / 16.0f);
 		}
 		
+		static JavaRandom spriteRng = new JavaRandom(0);
 		void DumpVertices() {
 			w.WriteLine("#vertices");
 			int i = -1;
@@ -151,6 +152,19 @@ namespace PluginObjExport {
 				if (BlockInfo.Draw[block] == DrawType.Sprite) {
 					min.X += 2.50f/16f; min.Z += 2.50f/16f;
 					max.X += 13.5f/16f; max.Z += 13.5f/16f; max.Y += 1.0f;
+					
+					byte offsetType = BlockInfo.SpriteOffset[block];
+					if (offsetType >= 6 && offsetType <= 7) {
+						spriteRng.SetSeed((x + 1217 * z) & 0x7fffffff);
+						float valX = spriteRng.Next(-3, 3 + 1) / 16.0f;
+						float valY = spriteRng.Next(0,  3 + 1) / 16.0f;
+						float valZ = spriteRng.Next(-3, 3 + 1) / 16.0f;
+						
+						const float stretch = 1.7f / 16.0f;
+						min.X += valX - stretch; max.X += valX + stretch;
+						min.Z += valZ - stretch; max.Z += valZ + stretch;
+						if (offsetType == 7) { min.Y -= valY; max.Y -= valY; }
+					}
 
 					// Draw Z axis
 					w.WriteLine("v " + min.X + " " + min.Y + " " + min.Z);
