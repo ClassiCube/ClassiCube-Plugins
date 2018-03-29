@@ -1,3 +1,5 @@
+// https://minecraft.gamepedia.com/index.php?title=Chunk_format&oldid=26072
+// https://minecraft.gamepedia.com/index.php?title=Java_Edition_data_values&oldid=6992
 using System;
 using System.IO;
 using System.IO.Compression;
