@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using ClassicalSharp;
 using ClassicalSharp.Entities;
 using ClassicalSharp.Model;
@@ -99,7 +99,7 @@ namespace PonyPlugin {
 		
 		public override void DrawModel(Entity p) {
 			vScale = 1 / 64f;
-			game.Graphics.BindTexture(GetTexture(p.TextureId));
+			game.Graphics.BindTexture(GetTexture(p));
 			float headTilt = -p.HeadX;
 			if(headTilt >= -180)
 				headTilt *= 0.5f;
@@ -153,7 +153,7 @@ namespace PonyPlugin {
 			AABB bb = AABB.Make(p.Position, p.Size * 2);
 			bb.Max.Y = p.Position.Y - 0.5f;
 			bb.Min.Y = p.Position.Y - 1.5f;
-			return p.TouchesAny(bb, b => game.BlockInfo.Draw[b] != DrawType.Gas);
+			return p.TouchesAny(bb, (ushort b) => BlockInfo.Draw[b] != DrawType.Gas);
 		}
 		
 		ModelPart Head, Horn, LeftEar, RightEar, Hat, Neck, Snout, Torso, LeftWing, RightWing, Tail, 
