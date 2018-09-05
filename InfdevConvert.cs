@@ -1,4 +1,4 @@
-// https://minecraft.gamepedia.com/index.php?title=Chunk_format&oldid=26072
+﻿// https://minecraft.gamepedia.com/index.php?title=Chunk_format&oldid=26072
 // https://minecraft.gamepedia.com/index.php?title=Java_Edition_data_values&oldid=6992
 using System;
 using System.IO;
@@ -10,8 +10,8 @@ using ClassicalSharp.Network;
 using NbtCompound = System.Collections.Generic.Dictionary<string, ClassicalSharp.Map.NbtTag>;
 
 namespace InfDevImportPlugin {
-	public sealed class Core : Plugin {		
-		public string ClientVersion { get { return "0.99.4"; } }		
+	public sealed class InfdevConverter : Plugin {		
+		public int APIVersion { get { return 1; } }		
 		public void Dispose() { }
 		
 		public void Init(Game game) {

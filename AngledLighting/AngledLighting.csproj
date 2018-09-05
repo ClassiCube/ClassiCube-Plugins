@@ -49,7 +49,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CS\ClassicalSharp\ClassicalSharp.csproj">
+    <ProjectReference Include="..\..\ClassicalSharp\ClassicalSharp\ClassicalSharp.csproj">
       <Project>{BEB1C785-5CAD-48FF-A886-876BF0A318D4}</Project>
       <Name>ClassicalSharp</Name>
     </ProjectReference>
