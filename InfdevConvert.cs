@@ -11,7 +11,7 @@ using NbtCompound = System.Collections.Generic.Dictionary<string, ClassicalSharp
 
 namespace InfDevImportPlugin {
 	public sealed class InfdevConverter : Plugin {		
-		public int APIVersion { get { return 1; } }		
+		public int APIVersion { get { return 2; } }		
 		public void Dispose() { }
 		
 		public void Init(Game game) {

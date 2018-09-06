@@ -10,7 +10,7 @@ using OpenTK;
 namespace PluginObjExport {
 
 	public sealed class ObjExporter : Plugin {
-		public int APIVersion { get { return 200; } }
+		public int APIVersion { get { return 2; } }
 		public void Dispose() { }
 		
 		public void Init(Game game) {
@@ -43,7 +43,7 @@ namespace PluginObjExport {
 			path = Path.ChangeExtension(path, ".obj");
 			
 			using (FileStream fs = File.Create(path)) {
-				ObjExporter obj = new ObjExporter();
+				ObjFormatExporter obj = new ObjFormatExporter();
 				
 				obj.all = args.Length > 2 && Utils.CaselessEq(args[2], "ALL");
 				if (obj.all) {
@@ -61,7 +61,7 @@ namespace PluginObjExport {
 		}
 	}
 
-	public sealed class ObjExporter : IMapFormatExporter {
+	public sealed class ObjFormatExporter : IMapFormatExporter {
 		
 		World map;
 		int maxX, maxY, maxZ;

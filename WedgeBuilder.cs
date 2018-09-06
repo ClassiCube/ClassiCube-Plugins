@@ -19,8 +19,8 @@ namespace WedgeBuilder {
 		public const byte SlopeDownZMax = 13;
 	}	
 	
-	public sealed class WedgeBuilderPlugin : Plugin {		
-		public int APIVersion { get { return 1; } }
+	public sealed class WedgeBuilderPlugin : Plugin {
+		public int APIVersion { get { return 2; } }
 
 		public void Init(Game game) {
 			game.ChunkUpdater.SetMeshBuilder(new WedgeMeshBuilder());

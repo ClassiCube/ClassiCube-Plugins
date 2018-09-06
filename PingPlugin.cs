@@ -4,7 +4,7 @@ using ClassicalSharp;
 
 namespace PingPlugin {
 	public sealed class Pinger : Plugin {
-		public int APIVersion { get { return 1; } }
+		public int APIVersion { get { return 2; } }
 		public void Dispose() { }
 		
 		string[] words, endings;
@@ -28,14 +28,14 @@ namespace PingPlugin {
 			}
 		}
 
-		void CheckPing(object sender, ChatEventArgs e) {
-			if (String.IsNullOrEmpty(e.Text)) return;
-			if (e.Type != MessageType.Normal) return;
-			string message = Utils.StripColours(e.Text).ToLower();
+		void CheckPing(ref string raw, MessageType type) {
+			if (String.IsNullOrEmpty(raw))  return;
+			if (type != MessageType.Normal) return;
+			string msg = Utils.StripColours(raw).ToLower();
 			
 			for (int i = 0; i < words.Length; i++) {
-				bool has  = message.IndexOf(words[i]) >= 0;
-				bool ends = message.EndsWith(endings[i]);
+				bool has  = msg.IndexOf(words[i]) >= 0;
+				bool ends = msg.EndsWith(endings[i]);
 				if (!has && !ends) continue;
 				
 				Console.Beep(); 

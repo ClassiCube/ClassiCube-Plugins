@@ -7,9 +7,8 @@ using OpenTK;
 
 namespace AO {
 
-	public sealed class Core : Plugin {
-		
-		public int APIVersion { get { return 1; } }
+	public sealed class Core : Plugin {		
+		public int APIVersion { get { return 2; } }
 		
 		public static int[] RepeatX = new int[768];
 		public static int[] RepeatY = new int[768];
@@ -18,11 +17,7 @@ namespace AO {
 		
 		public void Init(Game game) {
 			game.ChunkUpdater.SetMeshBuilder(new RepeatTextureMeshBuilder());
-			Events.BlockDefinitionChanged += BlockDefinitionChanged;
-		}
-
-		void BlockDefinitionChanged(object sender, EventArgs e) {
-			CalcRepeats();
+			Events.BlockDefinitionChanged += CalcRepeats;
 		}
 		
 		public void Ready(Game game) {
