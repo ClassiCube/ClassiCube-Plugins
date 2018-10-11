@@ -4,6 +4,8 @@ using ClassicalSharp;
 
 namespace PluginTemplate {
 	public sealed class TestPlugin : Plugin {
+		Game game;
+		
 		// Which version of the ClassicalSharp API this plugin is compatible with.
 		// Note that only plugins with the exact same API version as the client get loaded.
 		public int APIVersion { get { return 2; } }
@@ -13,7 +15,7 @@ namespace PluginTemplate {
 		// Called at game load
 		public void Init(Game game) {
 			this.game = game;
-        }
+		}
 
 		// Called at game load (after texture pack has been loaded)
 		public void Ready(Game game) { }
