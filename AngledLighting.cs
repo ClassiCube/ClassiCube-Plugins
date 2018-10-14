@@ -1,14 +1,40 @@
-﻿using System;
+﻿// Idea and original code designed by goodly's dad
+
+using System;
 using ClassicalSharp;
 using ClassicalSharp.Map;
-using ClassicalSharp.Events;
-using BlockID = System.Byte;
+using BlockID = System.UInt16;
 
 namespace AngledLightingPlugin {
 
+	public sealed class Core : Plugin {
+		
+		public int APIVersion { get { return 2; } }
+		
+		public void Dispose() { }
+		
+		public void Init(Game game) {
+			game.Lighting.Dispose();
+			game.Components.Remove(game.Lighting);
+			
+			game.Lighting = new AngledLighting();
+			game.Lighting.Init(game);
+			game.Components.Add(game.Lighting);
+		}
+		
+		public void Ready(Game game) { }
+		
+		public void Reset(Game game) { }
+		
+		public void OnNewMap(Game game) { }
+		
+		public void OnNewMapLoaded(Game game) { }
+	}
+
 	public sealed class AngledLighting : IWorldLighting {
 		
-		int oneY, shadow, shadowZSide, shadowXSide, shadowYBottom;
+		int oneY;
+		PackedCol shadow, shadowZSide, shadowXSide, shadowYBottom;
 		Game game;
 		int[] blockers;
 		public override void Reset(Game game) { heightmap = null; blockers = null; }
@@ -33,18 +59,18 @@ namespace AngledLightingPlugin {
 			CalcLightDepths(0, 0, width, length);
 		}
 		
-		public const float ShadeASX = 0.8f, ShadeASZ = 0.9f, ShadeASYBottom = 0.7f;
-		public static void GetShadedAngleSun(FastColour normal, out int xSide, out int zSide, out int yBottom) {
-			xSide = FastColour.Scale(normal, ShadeASX).Pack();
-			zSide = FastColour.Scale(normal, ShadeASZ).Pack();
-			yBottom = FastColour.Scale(normal, ShadeASYBottom).Pack();
+		const float ShadeASX = 0.8f, ShadeASZ = 0.9f, ShadeASYBottom = 0.7f;
+		static void GetShadedAngleSun(PackedCol normal, out PackedCol xSide, out PackedCol zSide, out PackedCol yBottom) {
+			xSide   = PackedCol.Scale(normal, ShadeASX);
+			zSide   = PackedCol.Scale(normal, ShadeASZ);
+			yBottom = PackedCol.Scale(normal, ShadeASYBottom);
 		}
 		
-		public const float ShadeAHX = 0.6f, ShadeAHZ = 0.8f, ShadeAHYBottom = 0.5f;
-		public static void GetShadedAngleShadow(FastColour normal, out int xSide, out int zSide, out int yBottom) {
-			xSide = FastColour.Scale(normal, ShadeAHX).Pack();
-			zSide = FastColour.Scale(normal, ShadeAHZ).Pack();
-			yBottom = FastColour.Scale(normal, ShadeAHYBottom).Pack();
+		const float ShadeAHX = 0.6f, ShadeAHZ = 0.8f, ShadeAHYBottom = 0.5f;
+		static void GetShadedAngleShadow(PackedCol normal, out PackedCol xSide, out PackedCol zSide, out PackedCol yBottom) {
+			xSide   = PackedCol.Scale(normal, ShadeAHX);
+			zSide   = PackedCol.Scale(normal, ShadeAHZ);
+			yBottom = PackedCol.Scale(normal, ShadeAHYBottom);
 		}
 		
 		
@@ -126,37 +152,37 @@ namespace AngledLightingPlugin {
 		}
 		
 		public override void Init(Game game) {
-			game.WorldEvents.EnvVariableChanged += EnvVariableChanged;
+			Events.EnvVariableChanged += EnvVariableChanged;
 			SetSun(WorldEnv.DefaultSunlight);
 			SetShadow(WorldEnv.DefaultShadowlight);
 		}
 		
 		public override void Dispose() {
 			if (game != null)
-				game.WorldEvents.EnvVariableChanged -= EnvVariableChanged;
+				Events.EnvVariableChanged -= EnvVariableChanged;
 			heightmap = null;
 		}
 
-		void EnvVariableChanged(object sender, EnvVarEventArgs e) {
-			if (e.Var == EnvVar.SunlightColour) {
-				SetSun(game.World.Env.Sunlight);
-			} else if (e.Var == EnvVar.ShadowlightColour) {
-				SetShadow(game.World.Env.Shadowlight);
+		void EnvVariableChanged(EnvVar envVar) {
+			if (envVar == EnvVar.SunCol) {
+				SetSun(game.World.Env.Sun);
+			} else if (envVar == EnvVar.ShadowCol) {
+				SetShadow(game.World.Env.Shadow);
 			}
 		}
 		
-		void SetSun(FastColour col) {
-			Outside = col.Pack();
+		void SetSun(PackedCol col) {
+			Outside = col;
 			GetShadedAngleSun(col, out OutsideXSide, out OutsideZSide, out OutsideYBottom);
 		}
 		
-		void SetShadow(FastColour col) {
-			shadow = col.Pack();
+		void SetShadow(PackedCol col) {
+			shadow = col;
 			GetShadedAngleShadow(col, out shadowXSide, out shadowZSide, out shadowYBottom);
 		}
 		
 		
-		public unsafe override void LightHint(int startX, int startZ, BlockID* mapPtr) {
+		public unsafe override void LightHint(int startX, int startZ, byte* mapPtr) {
 		}
 		
 		
@@ -170,32 +196,32 @@ namespace AngledLightingPlugin {
 			         z < length) || y >= blockers[(x +height -y) + (z +height -y) * (width + height)];
 		}
 
-		public override int LightCol(int x, int y, int z) {
+		public override PackedCol LightCol(int x, int y, int z) {
 			//return y > GetLightHeight(x, z) ? Outside : shadow;
 			return IsLit(x, y, z) ? Outside : shadow;
 		}
 		
-		public override int LightCol_ZSide(int x, int y, int z) {
+		public override PackedCol LightCol_ZSide(int x, int y, int z) {
 			return IsLit(x, y, z) ? OutsideZSide : shadowZSide;
 		}		
 
-		public override int LightCol_Sprite_Fast(int x, int y, int z) {
+		public override PackedCol LightCol_Sprite_Fast(int x, int y, int z) {
 			return IsLit(x, y, z) ? Outside : shadow;
 		}
 		
-		public override int LightCol_YTop_Fast(int x, int y, int z) {
+		public override PackedCol LightCol_YTop_Fast(int x, int y, int z) {
 			return IsLit(x, y + 1, z) ? Outside : shadow;
 		}
 		
-		public override int LightCol_YBottom_Fast(int x, int y, int z) {
+		public override PackedCol LightCol_YBottom_Fast(int x, int y, int z) {
 			return IsLit(x, y, z) ? OutsideYBottom : shadowYBottom;
 		}
 		
-		public override int LightCol_XSide_Fast(int x, int y, int z) {
+		public override PackedCol LightCol_XSide_Fast(int x, int y, int z) {
 			return IsLit(x, y, z) ? OutsideXSide : shadowXSide;
 		}
 		
-		public override int LightCol_ZSide_Fast(int x, int y, int z) {
+		public override PackedCol LightCol_ZSide_Fast(int x, int y, int z) {
 			return IsLit(x, y, z) ? OutsideZSide : shadowZSide;
 		}
 		
