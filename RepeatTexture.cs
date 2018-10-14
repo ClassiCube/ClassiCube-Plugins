@@ -5,7 +5,7 @@ using ClassicalSharp;
 using ClassicalSharp.Textures;
 using OpenTK;
 
-namespace AO {
+namespace RepeatTexturePlugin {
 
 	public sealed class Core : Plugin {		
 		public int APIVersion { get { return 2; } }
