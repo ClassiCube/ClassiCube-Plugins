@@ -2,4 +2,6 @@
 
 Plugins for ClassiCube. 
 
-The bin folder has the dlls you can put in plugins folder.
+To use them, put the dlls in plugins folder.
+
+Use /client gpuinfo to check if you need 32 or 64 bit dlls.
