@@ -149,12 +149,39 @@ static int CC_Server_IsSingleplayer(lua_State* L) {
 	return 1;
 }
 
+static int CC_Server_SendData(lua_State* L) {
+	uint8_t* data;
+	size_t len;
+	int i, type = lua_type(L, -1);
+
+	if (type == LUA_TSTRING) {
+		data = lua_tolstring(L, -1, &len);
+		Server.SendData(data, len);
+	} else if (type == LUA_TTABLE) {
+		len  = lua_rawlen(L, -1);
+		data = Mem_Alloc(len, 1, "lua send data");
+
+		for (i = 1; i <= len; i++) {
+			lua_rawgeti(L, -1, i);
+			data[i - 1] = lua_tointeger(L, -1);
+			lua_pop(L, 1);
+		}
+
+		Server.SendData(data, len);
+		Mem_Free(data);
+	} else {
+		luaL_error(L, "data must be string or an array table");
+	}
+	return 0;
+}
+
 static const struct luaL_Reg serverFuncs[] = {
 	{ "getMotd",        CC_Server_GetMotd },
 	{ "getName",        CC_Server_GetName },
 	{ "getAppName",     CC_Server_GetAppName },
 	{ "setAppName",     CC_Server_SetAppName },
 	{ "isSingleplayer", CC_Server_IsSingleplayer },
+	{ "sendData",       CC_Server_SendData },
 	{ NULL, NULL }
 };
 
@@ -197,7 +224,7 @@ static void CC_World_OnNew(void* obj) {
 	LuaPlugin_RaiseVoid("world", "onNewMap");
 }
 static void CC_World_OnMapLoaded(void* obj) {
-	LuaPlugin_RaiseVoid("world", "onNewMapLoaded");
+	LuaPlugin_RaiseVoid("world", "onMapLoaded");
 }
 static void CC_World_Hook(void) {
 	Event_RegisterVoid(&WorldEvents.NewMap,    NULL, CC_World_OnNew);
