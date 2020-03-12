@@ -9,17 +9,17 @@
 // The proper way would be to add 'additional include directories' and 'additional libs' in Visual Studio Project properties
 // Or, you can just be lazy and change these paths for your own system. 
 // You must compile ClassiCube in both x86 and x64 configurations to generate the .lib file.
-#include "../../../ClassicalSharp/src/GameStructs.h"
-#include "../../../ClassicalSharp/src/Block.h"
-#include "../../../ClassicalSharp/src/ExtMath.h"
-#include "../../../ClassicalSharp/src/Game.h"
-#include "../../../ClassicalSharp/src/Chat.h"
-#include "../../../ClassicalSharp/src/Stream.h"
-#include "../../../ClassicalSharp/src/TexturePack.h"
-#include "../../../ClassicalSharp/src/World.h"
-#include "../../../ClassicalSharp/src/Funcs.h"
-#include "../../../ClassicalSharp/src/Event.h"
-#include "../../../ClassicalSharp/src/Server.h"
+#include "../../ClassicalSharp/src/GameStructs.h"
+#include "../../ClassicalSharp/src/Block.h"
+#include "../../ClassicalSharp/src/ExtMath.h"
+#include "../../ClassicalSharp/src/Game.h"
+#include "../../ClassicalSharp/src/Chat.h"
+#include "../../ClassicalSharp/src/Stream.h"
+#include "../../ClassicalSharp/src/TexturePack.h"
+#include "../../ClassicalSharp/src/World.h"
+#include "../../ClassicalSharp/src/Funcs.h"
+#include "../../ClassicalSharp/src/Event.h"
+#include "../../ClassicalSharp/src/Server.h"
 
 #ifdef _WIN64
 #pragma comment(lib, "C:/GitPortable/Data/Home/ClassicalSharp/src/x64/Debug/ClassiCube.lib")
@@ -91,7 +91,9 @@ static void LuaPlugin_RaiseChat(const char* groupName, const char* funcName, con
 }
 
 
-// ====== LUA CHAT API ======
+/*########################################################################################################################*
+*--------------------------------------------------------Chat api---------------------------------------------------------*
+*#########################################################################################################################*/
 static int CC_Chat_Add(lua_State* L) {
 	String str = LuaPlugin_GetString(L, -1);
 	Chat_Add(&str);
@@ -123,7 +125,10 @@ static void CC_Chat_Hook(void) {
 	Event_RegisterChat(&ChatEvents.ChatSending,  NULL, CC_Chat_OnSent);
 }
 
-// ====== LUA SERVER API ======
+
+/*########################################################################################################################*
+*-------------------------------------------------------Server api--------------------------------------------------------*
+*#########################################################################################################################*/
 static int CC_Server_GetMotd(lua_State* L) {
 	lua_pushlstring(L, Server.MOTD.buffer, Server.MOTD.length);
 	return 1;
@@ -150,7 +155,7 @@ static int CC_Server_IsSingleplayer(lua_State* L) {
 }
 
 static int CC_Server_SendData(lua_State* L) {
-	uint8_t* data;
+	cc_uint8* data;
 	size_t len;
 	int i, type = lua_type(L, -1);
 
@@ -196,7 +201,10 @@ static void CC_Server_Hook(void) {
 	Event_RegisterVoid(&NetEvents.Disconnected, NULL, CC_Server_OnDisconnected);
 }
 
-// ====== LUA WORLD API ======
+
+/*########################################################################################################################*
+*--------------------------------------------------------World api--------------------------------------------------------*
+*#########################################################################################################################*/
 static int CC_World_GetDimensions(lua_State* L) {
 	lua_pushinteger(L, World.Width);
 	lua_pushinteger(L, World.Height);
@@ -231,7 +239,10 @@ static void CC_World_Hook(void) {
 	Event_RegisterVoid(&WorldEvents.MapLoaded, NULL, CC_World_OnMapLoaded);
 }
 
-// ====== LUA PLUGIN ======
+
+/*########################################################################################################################*
+*-------------------------------------------------Plugin implementation---------------------------------------------------*
+*#########################################################################################################################*/
 static void LuaPlugin_Register(lua_State* L) {
 	luaL_newlib(L, chatFuncs);
 	lua_setglobal(L, "chat");
@@ -246,6 +257,13 @@ static void LuaPlugin_Register(lua_State* L) {
 	// res = str ? loadfile(filename) : loadbuffer(str->buffer, 0, str->len)
 }
 
+static lua_State* LuaPlugin_New(void) {
+	lua_State* L = luaL_newstate();
+	luaL_openlibs(L);
+	LuaPlugin_Register(L);
+	return L;
+}
+
 static void LuaPlugin_Load(const String* origName, void* obj) {
 	static String ext = String_FromConst(".lua");
 	if (!String_CaselessEnds(origName, &ext)) return;
@@ -256,10 +274,7 @@ static void LuaPlugin_Load(const String* origName, void* obj) {
 	String_Copy(&name, origName);
 	name.buffer[name.length] = '\0';
 
-	lua_State* L = luaL_newstate();
-	luaL_openlibs(L);
-	LuaPlugin_Register(L);
-
+	lua_State* L = LuaPlugin_New();
 	//luaL_dofile(L, "test.lua");
 	res = luaL_loadfile(L, name.buffer);
 	if (res) {
@@ -280,10 +295,44 @@ static void LuaPlugin_Load(const String* origName, void* obj) {
 	pluginsHead  = plugin;
 }
 
+static void LuaPlugin_ExecCmd(const String* args, int argsCount) {
+	if (argsCount == 0) {
+		Chat_Add(&(const String)String_FromConst("&cNot enough arguments. See help"));
+		return;
+	}
+
+	char buffer[1024];
+	String tmp = String_FromArray(buffer);
+	for (int i = 0; i < argsCount; i++) {
+		String_AppendString(&tmp, &args[i]);
+		String_Append(&tmp, ' ');
+	}
+
+	lua_State* L  = LuaPlugin_New();
+	cc_result res = luaL_loadbuffer(L, tmp.buffer, tmp.length, "@tmp");
+	if (res) {
+		LuaPlugin_LogError(L, "loading script", &tmp, NULL);
+	} else {
+		res = lua_pcall(L, 0, LUA_MULTRET, 0);
+		if (res) LuaPlugin_LogError(L, "executing script", &tmp, NULL);
+	}
+	lua_close(L);
+}
+
+static struct ChatCommand LuaPlugin_Cmd = {
+	"lua", LuaPlugin_ExecCmd, false,
+	{
+		"&a/client lua [script]",
+		"&eExecutes the input text as a lua script",
+	}
+};
+
 static void LuaPlugin_Init(void) {
 	const static String luaDir = String_FromConst("lua");
 	if (!Directory_Exists(&luaDir)) Directory_Create(&luaDir);
+
 	Directory_Enum(&luaDir, NULL, LuaPlugin_Load);
+	Commands_Register(&LuaPlugin_Cmd);
 
 	CC_Chat_Hook();
 	CC_Server_Hook();
