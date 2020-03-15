@@ -20,6 +20,7 @@
 #include "../../ClassicalSharp/src/Funcs.h"
 #include "../../ClassicalSharp/src/Event.h"
 #include "../../ClassicalSharp/src/Server.h"
+#include "../../ClassicalSharp/src/Window.h"
 
 #ifdef _WIN64
 #pragma comment(lib, "C:/GitPortable/Data/Home/ClassicalSharp/src/x64/Debug/ClassiCube.lib")
@@ -241,20 +242,29 @@ static void CC_World_Hook(void) {
 
 
 /*########################################################################################################################*
+*--------------------------------------------------------Window api-------------------------------------------------------*
+*#########################################################################################################################*/
+static int CC_Window_SetTitle(lua_State* L) {
+	String str = LuaPlugin_GetString(L, -1);
+	Window_SetTitle(&str);
+	lua_pop(L, 1);
+	return 0;
+}
+
+static const struct luaL_Reg windowFuncs[] = {
+	{ "setTitle", CC_Window_SetTitle },
+	{ NULL, NULL }
+};
+
+
+/*########################################################################################################################*
 *-------------------------------------------------Plugin implementation---------------------------------------------------*
 *#########################################################################################################################*/
 static void LuaPlugin_Register(lua_State* L) {
-	luaL_newlib(L, chatFuncs);
-	lua_setglobal(L, "chat");
-
-	luaL_newlib(L, serverFuncs);
-	lua_setglobal(L, "server");
-
-	luaL_newlib(L, worldFuncs);
-	lua_setglobal(L, "world");
-	// TODO: move into LuaPlugin_New(L) (share with file/string
-	// LuaPlugin_Load(L, filename, str) {
-	// res = str ? loadfile(filename) : loadbuffer(str->buffer, 0, str->len)
+	luaL_newlib(L, chatFuncs);   lua_setglobal(L, "chat");
+	luaL_newlib(L, serverFuncs); lua_setglobal(L, "server");
+	luaL_newlib(L, worldFuncs);  lua_setglobal(L, "world");
+	luaL_newlib(L, windowFuncs); lua_setglobal(L, "window");
 }
 
 static lua_State* LuaPlugin_New(void) {
