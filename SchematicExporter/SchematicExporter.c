@@ -5,12 +5,51 @@
 #include "GameStructs.h"
 #include "Funcs.h"
 
+
+/*########################################################################################################################*
+*------------------------------------------------------Dynamic imports----------------------------------------------------*
+*#########################################################################################################################*/
+// This is just to work around problems with normal dynamic linking
+// - Importing CC_VAR forces mingw to use runtime relocation, which bloats the dll (twice the size) on Windows
+// See the bottom of the file for the actual ugly importing
+static void LoadSymbolsFromGame(void);
+static struct _WorldData* World_;
+
+
+/*########################################################################################################################*
+*--------------------------------------------------------Common utils-----------------------------------------------------*
+*#########################################################################################################################*/
+static void SendChat(const char* format, const void* arg1, const void* arg2, const void* arg3) {
+	String msg; char msgBuffer[256];
+	String_InitArray(msg, msgBuffer);
+
+	String_Format3(&msg, format, arg1, arg2, arg3);
+	Chat_Add(&msg);
+}
+
+static void WarnChat(cc_result res, const char* place, const String* path) {
+	SendChat("Error %h when %c '%s'", &res, place, path);
+}
+
+static void SetU16_BE(cc_uint8* data, cc_uint16 value) {
+	data[0] = (cc_uint8)(value >> 8 ); data[1] = (cc_uint8)(value);
+}
+
+static void SetU32_BE(cc_uint8* data, cc_uint32 value) {
+	data[0] = (cc_uint8)(value >> 24); data[1] = (cc_uint8)(value >> 16);
+	data[2] = (cc_uint8)(value >> 8 ); data[3] = (cc_uint8)(value);
+}
+
+
+/*########################################################################################################################*
+*-------------------------------------------------------Format writing----------------------------------------------------*
+*#########################################################################################################################*/
 enum NbtTagType { 
 	NBT_END, NBT_I8,  NBT_I16, NBT_I32,  NBT_I64,  NBT_F32, 
 	NBT_R64, NBT_I8S, NBT_STR, NBT_LIST, NBT_DICT, NBT_I32S
 };
 
-static const cc_uint8 sc_begin[76] = {
+static cc_uint8 sc_begin[76] = {
 NBT_DICT, 0,9, 'S','c','h','e','m','a','t','i','c',
 	NBT_STR,  0,9,  'M','a','t','e','r','i','a','l','s', 0,5, 'A','l','p','h','a',
 	NBT_I16,  0,5,  'W','i','d','t','h',                 0,0,
@@ -18,10 +57,10 @@ NBT_DICT, 0,9, 'S','c','h','e','m','a','t','i','c',
 	NBT_I16,  0,6,  'L','e','n','g','t','h',             0,0,
 	NBT_I8S,  0,6,  'B','l','o','c','k','s',             0,0,0,0,
 };
-static const cc_uint8 sc_data[11] = {
+static cc_uint8 sc_data[11] = {
 	NBT_I8S,  0,4,  'D','a','t','a',                     0,0,0,0,
 };
-static const cc_uint8 sc_end[37] = {
+static cc_uint8 sc_end[37] = {
 	NBT_LIST, 0,8,  'E','n','t','i','t','i','e','s',                 NBT_DICT, 0,0,0,0,
 	NBT_LIST, 0,12, 'T','i','l','e','E','n','t','i','t','i','e','s', NBT_DICT, 0,0,0,0,
 NBT_END,
@@ -68,36 +107,31 @@ static const cc_uint8 beta_meta[256] = {
 };
 
 static cc_result SaveSchematic(struct Stream* stream) {
-	cc_uint8 tmp[256], chunk[8192] = { 0 };
+	cc_uint8 chunk[8192];
 	cc_result res;
-	int i, j, count;
+	int i, j, count, volume = World_->Volume;
+	cc_uint8* blocks = World_->Blocks;
 
-	Mem_Copy(tmp, sc_begin, sizeof(sc_begin));
-	{
-		Stream_SetU16_BE(&tmp[39], World.Width);
-		Stream_SetU16_BE(&tmp[50], World.Height);
-		Stream_SetU16_BE(&tmp[61], World.Length);
-		Stream_SetU32_BE(&tmp[72], World.Volume);
-	}
-	if ((res = Stream_Write(stream, tmp, sizeof(sc_begin)))) return res;
+	SetU16_BE(&sc_begin[39], World_->Width);
+	SetU16_BE(&sc_begin[50], World_->Height);
+	SetU16_BE(&sc_begin[61], World_->Length);
+	SetU32_BE(&sc_begin[72], volume);
+	if ((res = Stream_Write(stream, sc_begin, sizeof(sc_begin)))) return res;
 	
-	for (i = 0; i < World.Volume; i += sizeof(chunk)) {
-		count = World.Volume - i; count = min(count, sizeof(chunk));
+	for (i = 0; i < volume; i += sizeof(chunk)) {
+		count = volume - i; count = min(count, sizeof(chunk));
 
-		for (j = 0; j < count; j++) { chunk[j] = beta_data[World.Blocks[i + j]]; }
+		for (j = 0; j < count; j++) { chunk[j] = beta_data[blocks[i + j]]; }
 		if ((res = Stream_Write(stream, chunk, count))) return res;
 	}
 
-	Mem_Copy(tmp, sc_data, sizeof(sc_data));
-	{
-		Stream_SetU32_BE(&tmp[7], World.Volume);
-	}
-	if ((res = Stream_Write(stream, tmp, sizeof(sc_data)))) return res;
+	SetU32_BE(&sc_data[7], volume);
+	if ((res = Stream_Write(stream, sc_data, sizeof(sc_data)))) return res;
 
-	for (i = 0; i < World.Volume; i += sizeof(chunk)) {
-		count = World.Volume - i; count = min(count, sizeof(chunk));
+	for (i = 0; i < volume; i += sizeof(chunk)) {
+		count = volume - i; count = min(count, sizeof(chunk));
 
-		for (j = 0; j < count; j++) { chunk[j] = beta_meta[World.Blocks[i + j]]; }
+		for (j = 0; j < count; j++) { chunk[j] = beta_meta[blocks[i + j]]; }
 		if ((res = Stream_Write(stream, chunk, count))) return res;
 	}
 
@@ -110,25 +144,25 @@ static void SaveMap(const String* path) {
 	cc_result res;
 
 	res = Stream_CreateFile(&stream, path);
-	if (res) { Logger_Warn2(res, "creating", path); return; }
+	if (res) { WarnChat(res, "creating", path); return; }
 	GZip_MakeStream(&compStream, &state, &stream);
 
 	res = SaveSchematic(&compStream);
 
 	if (res) {
 		stream.Close(&stream);
-		Logger_Warn2(res, "encoding", path); return;
+		WarnChat(res, "encoding", path); return;
 	}
 		
 	if ((res = compStream.Close(&compStream))) {
 		stream.Close(&stream);
-		Logger_Warn2(res, "closing", path); return;
+		WarnChat(res, "closing", path); return;
 	}
 
 	res = stream.Close(&stream);
-	if (res) { Logger_Warn2(res, "closing", path); return; }
+	if (res) { WarnChat(res, "closing", path); return; }
 
-	Chat_Add1("&eSaved map to: %s", path);
+	SendChat("&Exported map to: %s", path, NULL, NULL);
 }
 
 
@@ -136,19 +170,13 @@ static void SaveMap(const String* path) {
 /*########################################################################################################################*
 *---------------------------------------------------Plugin implementation-------------------------------------------------*
 *#########################################################################################################################*/
-#define SendChat(msg) const static String str = String_FromConst(msg); Chat_Add(&str);
-
 static void SchematicExportCmd_Execute(const String* args, int argsCount) {
-	if (!argsCount) { SendChat("&cFilename required."); return; }
+	if (!argsCount) { SendChat("&cFilename required.", NULL, NULL, NULL); return; }
+	char pathBuffer[FILENAME_SIZE];
+	String path = String_FromArray(pathBuffer);
 
-	char strBuffer[FILENAME_SIZE];
-	String str = String_FromArray(strBuffer);
-	String_Format1(&str, "maps/%s.schematic", &args[0]);
-	SaveMap(&str);
-
-	str.length = 0;
-	String_Format1(&str, "&eExported map to maps/%s.schematic", &args[0]);
-	Chat_Add(&str);
+	String_Format1(&path, "maps/%s.schematic", args);
+	SaveMap(&path);
 }
 
 static struct ChatCommand SchematicExportCmd = {
@@ -162,6 +190,7 @@ static struct ChatCommand SchematicExportCmd = {
 
 static void SchematicExporter_Init(void) {
 	Commands_Register(&SchematicExportCmd);
+	LoadSymbolsFromGame();
 }
 
 
@@ -180,3 +209,29 @@ PLUGIN_EXPORT int Plugin_ApiVersion = 1;
 PLUGIN_EXPORT struct IGameComponent Plugin_Component = {
 	SchematicExporter_Init /* Init */
 };
+
+
+/*########################################################################################################################*
+*------------------------------------------------------Dynamic loading----------------------------------------------------*
+*#########################################################################################################################*/
+#define QUOTE(x) #x
+
+#ifdef CC_BUILD_WIN
+#define WIN32_LEAN_AND_MEAN
+#define NOSERVICE
+#define NOMCX
+#define NOIME
+#include <windows.h>
+#define LoadSymbol(name) name ## _ = GetProcAddress(app, QUOTE(name))
+#else
+#define _GNU_SOURCE
+#include <dlfcn.h>
+#define LoadSymbol(name) name ## _ = dlsym(RTLD_DEFAULT, QUOTE(name))
+#endif
+
+static void LoadSymbolsFromGame(void) {
+#ifdef CC_BUILD_WIN
+	HMODULE app = GetModuleHandle(NULL);
+#endif
+	LoadSymbol(World);
+}
