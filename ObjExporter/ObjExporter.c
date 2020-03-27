@@ -8,12 +8,6 @@
 #define CC_VAR
 #endif
 
-// NOTE !! Make sure you use the 'Release' configuration when building the dlls to give to end-users.
-// Check that the dlls are 25kb instead of debug dll 50-70 kb. (debug dlls depend on MSVCRT debug libs, which end users won't have)
-
-// The proper way would be to add 'additional include directories' and 'additional libs' in Visual Studio Project properties
-// Or, you can just be lazy and change these paths for your own system. 
-// You must compile ClassiCube in both x86 and x64 configurations to generate the .lib file.
 #include "GameStructs.h"
 #include "Block.h"
 #include "ExtMath.h"
@@ -24,11 +18,18 @@
 #include "TexturePack.h"
 #include "World.h"
 
-#ifdef _WIN64
-#pragma comment(lib, "H:/PortableApps/GitPortable/App/Git/ClassicalSharp/src/x64/Debug/ClassiCube.lib")
-#else
-#pragma comment(lib, "H:/PortableApps/GitPortable/App/Git/ClassicalSharp/src/x86/Debug/ClassiCube.lib")
-#endif
+
+/*########################################################################################################################*
+*------------------------------------------------------Dynamic imports----------------------------------------------------*
+*#########################################################################################################################*/
+// This is just to work around problems with normal dynamic linking
+// - Importing CC_VAR forces mingw to use runtime relocation, which bloats the dll on Windows
+// See the bottom of the file for the actual ugly importing
+static void LoadSymbolsFromGame(void);
+static struct _Atlas2DData* Atlas2D_;
+static struct _BlockLists* Blocks_;
+static struct _WorldData* World_;
+#define GetTex(block, face) Blocks_->Textures[(block) * FACE_COUNT + (face)]
 
 
 /*########################################################################################################################*
@@ -49,7 +50,7 @@ static void Obj_Init(void) {
 	// exports blocks that are not gas draw (air) and are not named "Invalid"
 	for (int b = 0; b < BLOCK_COUNT; b++) {
 		String name = Block_UNSAFE_GetName(b);
-		include[b] = Blocks.Draw[b] != DRAW_GAS && !String_Equals(&name, &invalid);
+		include[b] = Blocks_->Draw[b] != DRAW_GAS && !String_Equals(&name, &invalid);
 	}
 	bufferLen = 0;
 }
@@ -70,10 +71,10 @@ static void WriteConst(const char* src) {
 }
 
 #define InitVars()\
-	oneX = 1;          maxX = World.MaxX; width  = World.Width;\
-	oneZ = width;      maxZ = World.MaxZ; length = World.Length;\
-	oneY = World.OneY; maxY = World.MaxY; height = World.Height;\
-	blocks = World.Blocks; blocks2 = World.Blocks2;\
+	oneX = 1;          maxX = World_->MaxX; width  = World_->Width;\
+	oneZ = width;      maxZ = World_->MaxZ; length = World_->Length;\
+	oneY = World_->OneY; maxY = World_->MaxY; height = World_->Height;\
+	blocks = World_->Blocks; blocks2 = World_->Blocks2;\
 	mask = blocks == blocks2 ? 255 : 1023;
 
 static void DumpNormals(void) {
@@ -94,7 +95,7 @@ static void DumpNormals(void) {
 
 static void Unpack(int texLoc, int* x, int* y) {
 	*x = (texLoc % ATLAS2D_TILES_PER_ROW);
-	*y = (Atlas2D.RowsCount - 1) - (texLoc / ATLAS2D_TILES_PER_ROW);
+	*y = (Atlas2D_->RowsCount - 1) - (texLoc / ATLAS2D_TILES_PER_ROW);
 }
 
 static void WriteTex(float u, float v) {
@@ -114,50 +115,50 @@ static void DumpTextures() {
 	WriteConst("#textures\n");
 	int i = 1;
 	int x, y;
-	float u = 1.0f / 16, v = 1.0f / Atlas2D.RowsCount;
+	float u = 1.0f / 16, v = 1.0f / Atlas2D_->RowsCount;
 
 	for (int b = 0; b < BLOCK_COUNT; b++) {
 		if (!include[b]) continue;
 		WriteTexName(b);
 
-		Vec3 min = Blocks.MinBB[b], max = Blocks.MaxBB[b];	
-		if (Blocks.Draw[b] == DRAW_SPRITE) {
+		Vec3 min = Blocks_->MinBB[b], max = Blocks_->MaxBB[b];	
+		if (Blocks_->Draw[b] == DRAW_SPRITE) {
 			Vec3_Set(min, 0,0,0);
 			Vec3_Set(max, 1,1,1);
 		}
 		texI[b] = i;
 
-		Unpack(Block_Tex(b, FACE_XMIN), &x, &y);
+		Unpack(GetTex(b, FACE_XMIN), &x, &y);
 		WriteTex((x + min.Z) * u, (y + min.Y) * v);
 		WriteTex((x + min.Z) * u, (y + max.Y) * v);
 		WriteTex((x + max.Z) * u, (y + max.Y) * v);
 		WriteTex((x + max.Z) * u, (y + min.Y) * v);
 
-		Unpack(Block_Tex(b, FACE_XMAX), &x, &y);
+		Unpack(GetTex(b, FACE_XMAX), &x, &y);
 		WriteTex((x + max.Z) * u, (y + min.Y) * v);
 		WriteTex((x + max.Z) * u, (y + max.Y) * v);
 		WriteTex((x + min.Z) * u, (y + max.Y) * v);
 		WriteTex((x + min.Z) * u, (y + min.Y) * v);
 
-		Unpack(Block_Tex(b, FACE_ZMIN), &x, &y);
+		Unpack(GetTex(b, FACE_ZMIN), &x, &y);
 		WriteTex((x + max.X) * u, (y + min.Y) * v);
 		WriteTex((x + max.X) * u, (y + max.Y) * v);
 		WriteTex((x + min.X) * u, (y + max.Y) * v);
 		WriteTex((x + min.X) * u, (y + min.Y) * v);
 
-		Unpack(Block_Tex(b, FACE_ZMAX), &x, &y);
+		Unpack(GetTex(b, FACE_ZMAX), &x, &y);
 		WriteTex((x + min.X) * u, (y + min.Y) * v);
 		WriteTex((x + min.X) * u, (y + max.Y) * v);
 		WriteTex((x + max.X) * u, (y + max.Y) * v);
 		WriteTex((x + max.X) * u, (y + min.Y) * v);
 
-		Unpack(Block_Tex(b, FACE_YMIN), &x, &y);
+		Unpack(GetTex(b, FACE_YMIN), &x, &y);
 		WriteTex((x + min.X) * u, (y + max.Z) * v);
 		WriteTex((x + min.X) * u, (y + min.Z) * v);
 		WriteTex((x + max.X) * u, (y + min.Z) * v);
 		WriteTex((x + max.X) * u, (y + max.Z) * v);
 
-		Unpack(Block_Tex(b, FACE_YMAX), &x, &y);
+		Unpack(GetTex(b, FACE_YMAX), &x, &y);
 		WriteTex((x + min.X) * u, (y + max.Z) * v);
 		WriteTex((x + min.X) * u, (y + min.Z) * v);
 		WriteTex((x + max.X) * u, (y + min.Z) * v);
@@ -167,7 +168,7 @@ static void DumpTextures() {
 }
 
 static cc_bool IsFaceHidden(int block, int other, int side) {
-	return (Blocks.Hidden[(block * BLOCK_COUNT) + other] & (1 << side)) != 0;
+	return (Blocks_->Hidden[(block * BLOCK_COUNT) + other] & (1 << side)) != 0;
 }
 
 static void WriteVertex(float x, float y, float z) {
@@ -196,11 +197,11 @@ static void DumpVertices() {
 				min.X = x; min.Y = y; min.Z = z;
 				max.X = x; max.Y = y; max.Z = z;
 
-				if (Blocks.Draw[b] == DRAW_SPRITE) {
+				if (Blocks_->Draw[b] == DRAW_SPRITE) {
 					min.X += 2.50f / 16; min.Z += 2.50f / 16;
 					max.X += 13.5f / 16; max.Z += 13.5f / 16; max.Y += 1.0f;
 
-					int offsetType = Blocks.SpriteOffset[b];
+					int offsetType = Blocks_->SpriteOffset[b];
 					if (offsetType >= 6 && offsetType <= 7) {
 						Random_Seed(&spriteRng, (x + 1217 * z) & 0x7fffffff);
 						float valX = Random_Range(&spriteRng, -3, 3 + 1) / 16.0f;
@@ -243,8 +244,8 @@ static void DumpVertices() {
 					continue;
 				}
 
-				Vec3_AddBy(&min, &Blocks.RenderMinBB[b]);
-				Vec3_AddBy(&max, &Blocks.RenderMaxBB[b]);
+				Vec3_AddBy(&min, &Blocks_->RenderMinBB[b]);
+				Vec3_AddBy(&max, &Blocks_->RenderMaxBB[b]);
 
 				// minx
 				if (x == 0 || all || !IsFaceHidden(b, (blocks[i - oneX] | (blocks2[i - oneX] << 8)) & mask, FACE_XMIN)) {
@@ -324,7 +325,7 @@ static void DumpFaces() {
 				if (!include[b]) continue;
 				int k = texI[b], n = 1;
 
-				if (Blocks.Draw[b] == DRAW_SPRITE) {
+				if (Blocks_->Draw[b] == DRAW_SPRITE) {
 					n += 6;
 					WriteFace(j+3,k+3,n, j+2,k+2,n, j+1,k+1,n, j+0,k+0,n); j += 4; n++;
 					if (mirror) { WriteFace(j+3,k+3,n, j+2,k+2,n, j+1,k+1,n, j+0,k+0,n); j += 4; n++; }
@@ -427,6 +428,7 @@ static struct ChatCommand ObjExporterCommand = {
 };
 
 static void ObjExporter_Init(void) {
+	LoadSymbolsFromGame();
 	Commands_Register(&ObjExporterCommand);
 }
 
@@ -446,3 +448,31 @@ PLUGIN_EXPORT int Plugin_ApiVersion = 1;
 PLUGIN_EXPORT struct IGameComponent Plugin_Component = {
 	ObjExporter_Init /* Init */
 };
+
+
+
+/*########################################################################################################################*
+*------------------------------------------------------Dynamic loading----------------------------------------------------*
+*#########################################################################################################################*/
+#define QUOTE(x) #x
+
+#ifdef CC_BUILD_WIN
+#define WIN32_LEAN_AND_MEAN
+#define NOSERVICE
+#define NOMCX
+#define NOIME
+#include <windows.h>
+#define LoadSymbol(name) name ## _ = GetProcAddress(app, QUOTE(name))
+#else
+#include <dlfcn.h>
+#define LoadSymbol(name) name ## _ = dlsym(0, QUOTE(name))
+#endif
+
+static void LoadSymbolsFromGame(void) {
+#ifdef CC_BUILD_WIN
+	HMODULE app = GetModuleHandle(NULL);
+#endif
+	LoadSymbol(Atlas2D); 
+	LoadSymbol(Blocks);
+	LoadSymbol(World);
+}
