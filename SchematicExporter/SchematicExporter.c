@@ -2,7 +2,7 @@
 #include "Deflate.h"
 #include "Stream.h"
 #include "Chat.h"
-#include "GameStructs.h"
+#include "Game.h"
 #include "Funcs.h"
 
 

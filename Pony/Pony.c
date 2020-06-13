@@ -10,7 +10,6 @@
 
 #include "Model.h"
 #include "Graphics.h"
-#include "GameStructs.h"
 #include "Server.h"
 #include "Entity.h"
 #include "Block.h"

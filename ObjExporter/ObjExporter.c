@@ -8,11 +8,10 @@
 #define CC_VAR
 #endif
 
-#include "GameStructs.h"
+#include "Game.h"
 #include "Block.h"
 #include "ExtMath.h"
 #include "Vectors.h"
-#include "Game.h"
 #include "Chat.h"
 #include "Stream.h"
 #include "TexturePack.h"

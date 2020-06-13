@@ -9,10 +9,9 @@
 // The proper way would be to add 'additional include directories' and 'additional libs' in Visual Studio Project properties
 // Or, you can just be lazy and change these paths for your own system. 
 // You must compile ClassiCube in both x86 and x64 configurations to generate the .lib file.
-#include "../../ClassicalSharp/src/GameStructs.h"
+#include "../../ClassicalSharp/src/Game.h"
 #include "../../ClassicalSharp/src/Block.h"
 #include "../../ClassicalSharp/src/ExtMath.h"
-#include "../../ClassicalSharp/src/Game.h"
 #include "../../ClassicalSharp/src/Chat.h"
 #include "../../ClassicalSharp/src/Stream.h"
 #include "../../ClassicalSharp/src/TexturePack.h"
