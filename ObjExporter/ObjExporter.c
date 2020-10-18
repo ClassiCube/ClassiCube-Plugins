@@ -44,11 +44,11 @@ static int bufferLen;
 #define Buffer_Str(str, len) str.buffer = (char*)&buffer[bufferLen]; str.length = 0; str.capacity = len;
 
 static void Obj_Init(void) {
-	const static String invalid = String_FromConst("Invalid");
+	const static cc_string invalid = String_FromConst("Invalid");
 
 	// exports blocks that are not gas draw (air) and are not named "Invalid"
 	for (int b = 0; b < BLOCK_COUNT; b++) {
-		String name = Block_UNSAFE_GetName(b);
+		cc_string name = Block_UNSAFE_GetName(b);
 		include[b] = Blocks_->Draw[b] != DRAW_GAS && !String_Equals(&name, &invalid);
 	}
 	bufferLen = 0;
@@ -64,7 +64,7 @@ static void FlushData(int len) {
 }
 
 static void WriteConst(const char* src) {
-	String tmp; Buffer_Str(tmp, 128);
+	cc_string tmp; Buffer_Str(tmp, 128);
 	String_AppendConst(&tmp, src);
 	FlushData(tmp.length);
 }
@@ -98,14 +98,14 @@ static void Unpack(int texLoc, int* x, int* y) {
 }
 
 static void WriteTex(float u, float v) {
-	String tmp; Buffer_Str(tmp, 128);
+	cc_string tmp; Buffer_Str(tmp, 128);
 	String_Format2(&tmp, "vt %f8 %f8\n", &u, &v);
 	FlushData(tmp.length);
 }
 
 static void WriteTexName(int b) {
-	String name = Block_UNSAFE_GetName(b);
-	String tmp; Buffer_Str(tmp, 128);
+	cc_string name = Block_UNSAFE_GetName(b);
+	cc_string tmp; Buffer_Str(tmp, 128);
 	String_Format1(&tmp, "#%s\n", &name);
 	FlushData(tmp.length);
 }
@@ -171,7 +171,7 @@ static cc_bool IsFaceHidden(int block, int other, int side) {
 }
 
 static void WriteVertex(float x, float y, float z) {
-	String tmp; Buffer_Str(tmp, 256);
+	cc_string tmp; Buffer_Str(tmp, 256);
 	String_Format3(&tmp, "v %f8 %f8 %f8\n", &x, &y, &z);
 	FlushData(tmp.length);
 }
@@ -299,7 +299,7 @@ static void DumpVertices() {
 }
 
 static void WriteFace(int v1,int t1,int n1, int v2,int t2,int n2, int v3,int t3,int n3, int v4,int t4,int n4) {
-	String tmp; Buffer_Str(tmp, 256);
+	cc_string tmp; Buffer_Str(tmp, 256);
 	String_Format3(&tmp,"f %i/%i/%i ", &v1, &t1, &n1);
 	String_Format3(&tmp,  "%i/%i/%i ", &v2, &t2, &n2);
 	String_Format3(&tmp,  "%i/%i/%i ", &v3, &t3, &n3);
@@ -385,13 +385,13 @@ static void ExportObj(void) {
 /*########################################################################################################################*
 *---------------------------------------------------Plugin implementation-------------------------------------------------*
 *#########################################################################################################################*/
-#define SendChat(msg) const static String str = String_FromConst(msg); Chat_Add(&str);
+#define SendChat(msg) const static cc_string str = String_FromConst(msg); Chat_Add(&str);
 
-static void ObjExporterCommand_Execute(const String* args, int argsCount) {
+static void ObjExporterCommand_Execute(const cc_string* args, int argsCount) {
 	if (!argsCount) { SendChat("&cFilename required."); return; }
 
 	char strBuffer[FILENAME_SIZE];
-	String str = String_FromArray(strBuffer);
+	cc_string str = String_FromArray(strBuffer);
 	String_Format1(&str, "maps/%s.obj", &args[0]);
 
 	cc_result res = Stream_CreateFile(&stream, &str);

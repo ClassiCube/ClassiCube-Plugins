@@ -32,7 +32,7 @@ struct LuaPlugin;
 typedef struct LuaPlugin { lua_State* L; struct LuaPlugin* next; } LuaPlugin;
 static LuaPlugin* pluginsHead;
 
-static String LuaPlugin_GetString(lua_State* L, int idx) {
+static cc_string LuaPlugin_GetString(lua_State* L, int idx) {
 	size_t len;
 	const char* msg = lua_tolstring(L, idx, &len);
 	return String_Init(msg, len, len);
@@ -40,7 +40,7 @@ static String LuaPlugin_GetString(lua_State* L, int idx) {
 
 static void LuaPlugin_LogError(lua_State* L, const char* place, const void* arg1, const void* arg2) {
 	char buffer[256];
-	String str = String_FromArray(buffer);
+	cc_string str = String_FromArray(buffer);
 	
 	// kinda hacky and hardcoded but it works
 	if (arg1 && arg2) {
@@ -81,7 +81,7 @@ static void LuaPlugin_RaiseVoid(const char* groupName, const char* funcName) {
 	LuaPlugin_RaiseCommonEnd
 }
 
-static void LuaPlugin_RaiseChat(const char* groupName, const char* funcName, const String* msg, int msgType) {
+static void LuaPlugin_RaiseChat(const char* groupName, const char* funcName, const cc_string* msg, int msgType) {
 	LuaPlugin_RaiseCommonBegin
 		lua_pushlstring(L, msg->buffer, msg->length);
 		lua_pushinteger(L, msgType);
@@ -95,14 +95,14 @@ static void LuaPlugin_RaiseChat(const char* groupName, const char* funcName, con
 *--------------------------------------------------------Chat api---------------------------------------------------------*
 *#########################################################################################################################*/
 static int CC_Chat_Add(lua_State* L) {
-	String str = LuaPlugin_GetString(L, -1);
+	cc_string str = LuaPlugin_GetString(L, -1);
 	Chat_Add(&str);
 	lua_pop(L, 1);
 	return 0;
 }
 
 static int CC_Chat_Send(lua_State* L) {
-	String str = LuaPlugin_GetString(L, -1);
+	cc_string str = LuaPlugin_GetString(L, -1);
 	Chat_Send(&str, false);
 	lua_pop(L, 1);
 	return 0;
@@ -114,10 +114,10 @@ static const struct luaL_Reg chatFuncs[] = {
 	{ NULL, NULL }
 };
 
-static void CC_Chat_OnReceived(void* obj, const String* msg, int msgType) {
+static void CC_Chat_OnReceived(void* obj, const cc_string* msg, int msgType) {
 	LuaPlugin_RaiseChat("chat", "onReceived", msg, msgType);
 }
-static void CC_Chat_OnSent(void* obj, const String* msg, int msgType) {
+static void CC_Chat_OnSent(void* obj, const cc_string* msg, int msgType) {
 	LuaPlugin_RaiseChat("chat", "onSent", msg, msgType);
 }
 static void CC_Chat_Hook(void) {
@@ -143,7 +143,7 @@ static int CC_Server_GetAppName(lua_State* L) {
 }
 
 static int CC_Server_SetAppName(lua_State* L) {
-	String str = LuaPlugin_GetString(L, -1);
+	cc_string str = LuaPlugin_GetString(L, -1);
 	String_Copy(&Server.AppName, &str);
 	lua_pop(L, 1);
 	return 0;
@@ -244,7 +244,7 @@ static void CC_World_Hook(void) {
 *--------------------------------------------------------Window api-------------------------------------------------------*
 *#########################################################################################################################*/
 static int CC_Window_SetTitle(lua_State* L) {
-	String str = LuaPlugin_GetString(L, -1);
+	cc_string str = LuaPlugin_GetString(L, -1);
 	Window_SetTitle(&str);
 	lua_pop(L, 1);
 	return 0;
@@ -273,10 +273,10 @@ static lua_State* LuaPlugin_New(void) {
 	return L;
 }
 
-static void LuaPlugin_Load(const String* origName, void* obj) {
-	static String ext = String_FromConst(".lua");
+static void LuaPlugin_Load(const cc_string* origName, void* obj) {
+	static cc_string ext = String_FromConst(".lua");
 	if (!String_CaselessEnds(origName, &ext)) return;
-	String name; char nameBuffer[601];
+	cc_string name; char nameBuffer[601];
 	int res;
 
 	String_InitArray_NT(name, nameBuffer);
@@ -304,14 +304,14 @@ static void LuaPlugin_Load(const String* origName, void* obj) {
 	pluginsHead  = plugin;
 }
 
-static void LuaPlugin_ExecCmd(const String* args, int argsCount) {
+static void LuaPlugin_ExecCmd(const cc_string* args, int argsCount) {
 	if (argsCount == 0) {
-		Chat_Add(&(const String)String_FromConst("&cNot enough arguments. See help"));
+		Chat_Add(&(const cc_string)String_FromConst("&cNot enough arguments. See help"));
 		return;
 	}
 
 	char buffer[1024];
-	String tmp = String_FromArray(buffer);
+	cc_string tmp = String_FromArray(buffer);
 	for (int i = 0; i < argsCount; i++) {
 		String_AppendString(&tmp, &args[i]);
 		String_Append(&tmp, ' ');
@@ -337,7 +337,7 @@ static struct ChatCommand LuaPlugin_Cmd = {
 };
 
 static void LuaPlugin_Init(void) {
-	const static String luaDir = String_FromConst("lua");
+	const static cc_string luaDir = String_FromConst("lua");
 	if (!Directory_Exists(&luaDir)) Directory_Create(&luaDir);
 
 	Directory_Enum(&luaDir, NULL, LuaPlugin_Load);

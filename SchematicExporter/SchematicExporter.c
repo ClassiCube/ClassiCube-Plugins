@@ -20,14 +20,14 @@ static struct _WorldData* World_;
 *--------------------------------------------------------Common utils-----------------------------------------------------*
 *#########################################################################################################################*/
 static void SendChat(const char* format, const void* arg1, const void* arg2, const void* arg3) {
-	String msg; char msgBuffer[256];
+	cc_string msg; char msgBuffer[256];
 	String_InitArray(msg, msgBuffer);
 
 	String_Format3(&msg, format, arg1, arg2, arg3);
 	Chat_Add(&msg);
 }
 
-static void WarnChat(cc_result res, const char* place, const String* path) {
+static void WarnChat(cc_result res, const char* place, const cc_string* path) {
 	SendChat("Error %h when %c '%s'", &res, place, path);
 }
 
@@ -142,7 +142,7 @@ static cc_result SaveSchematic(struct Stream* stream) {
 	return Stream_Write(stream, sc_end, sizeof(sc_end));
 }
 
-static void SaveMap(const String* path) {
+static void SaveMap(const cc_string* path) {
 	struct Stream stream, compStream;
 	struct GZipState state;
 	cc_result res;
@@ -174,10 +174,10 @@ static void SaveMap(const String* path) {
 /*########################################################################################################################*
 *---------------------------------------------------Plugin implementation-------------------------------------------------*
 *#########################################################################################################################*/
-static void SchematicExportCmd_Execute(const String* args, int argsCount) {
+static void SchematicExportCmd_Execute(const cc_string* args, int argsCount) {
 	if (!argsCount) { SendChat("&cFilename required.", NULL, NULL, NULL); return; }
 	char pathBuffer[FILENAME_SIZE];
-	String path = String_FromArray(pathBuffer);
+	cc_string path = String_FromArray(pathBuffer);
 
 	String_Format1(&path, "maps/%s.schematic", args);
 	SaveMap(&path);
