@@ -526,7 +526,7 @@ static struct Model* PonySitModel_GetInstance(void) {
 *----------------------------------------------------------Plugin---------------------------------------------------------*
 *#########################################################################################################################*/
 
-static VertexP3fT2fC4b large_vertices[24 * 20];
+static struct VertexTextured large_vertices[24 * 20];
 static void Pony_Init(void) {
 	LoadSymbolsFromGame();
 	Model_RegisterTexture(&pony_tex);
@@ -538,7 +538,7 @@ static void Pony_Init(void) {
 	Gfx_DeleteVb(&Models_->Vb);
 	Models_->Vertices    = large_vertices;
 	Models_->MaxVertices = 24 * 20;
-	Models_->Vb = Gfx_CreateDynamicVb(VERTEX_FORMAT_P3FT2FC4B, Models_->MaxVertices);
+	Models_->Vb = Gfx_CreateDynamicVb(VERTEX_FORMAT_TEXTURED, Models_->MaxVertices);
 
 	String_AppendConst(&Server_->AppName, " + Ponies v2.1");
 }
