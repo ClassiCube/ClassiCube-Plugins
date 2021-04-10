@@ -15,7 +15,7 @@ Adds a pony model to the game
 
 ## .obj exporter
 
-Lets you to export the world to an .obj file, which can be imported into Blender
+Lets you export the world to an .obj file, which can be imported into Blender
 
 ### [Download](/ObjExporter)
 
@@ -23,7 +23,7 @@ Lets you to export the world to an .obj file, which can be imported into Blender
 
 ## .schematic exporter
 
-Lets you to export the world to a .schematic file, which can be imported into MCEdit
+Lets you export the world to a .schematic file, which can be imported into MCEdit
 
 ### [Download](/SchematicExporter)
 
@@ -31,4 +31,4 @@ Lets you to export the world to a .schematic file, which can be imported into MC
 
 ## LUA scripting
 
-(still a work in progress)
+(not finished yet)
