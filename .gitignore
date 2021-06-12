@@ -19,7 +19,8 @@ x64/
 x86/
 build/
 bld/
-[Bb]in/
+# want bin folder in this case
+#[Bb]in/
 [Oo]bj/
 [Oo]utput/
 [Pp]rofilingSessions/
