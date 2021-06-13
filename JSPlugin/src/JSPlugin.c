@@ -23,10 +23,10 @@
 #ifdef _WIN64
 #pragma comment(lib, "C:/GitPortable/Data/Home/ClassicalSharp/src/x64/Debug/ClassiCube.lib")
 #else
-#pragma comment(lib, "H:/PortableApps/GitPortable/App/Git/ClassicalSharp/src/x86/Debug/ClassiCube.lib")
+#pragma comment(lib, "C:/GitPortable/Data/Home/ClassicalSharp/src/x86/Debug/ClassiCube.lib")
 #endif
 
-// ====== LUA BASE PLUGIN API ======
+// ====== JAVASCRIPT BASE PLUGIN API ======
 struct JSPlugin;
 typedef struct JSPlugin { duk_context* ctx; struct JSPlugin* next; } JSPlugin;
 static JSPlugin* pluginsHead;
@@ -284,7 +284,7 @@ static cc_result JSPlugin_LoadFile(duk_context* ctx, const cc_string* path) {
 }
 
 static void JSPlugin_Load(const cc_string* path, void* obj) {
-	static cc_string ext = String_FromConst(".lua");
+	static cc_string ext = String_FromConst(".js");
 	if (!String_CaselessEnds(path, &ext)) return;
 	int res;
 
@@ -300,7 +300,7 @@ static void JSPlugin_Load(const cc_string* path, void* obj) {
 	}	
 
 	// no need to bother freeing
-	JSPlugin* plugin = Mem_Alloc(1, sizeof(JSPlugin), "lua plugin");
+	JSPlugin* plugin = Mem_Alloc(1, sizeof(JSPlugin), "js plugin");
 	plugin->ctx  = ctx;
 	plugin->next = pluginsHead;
 	pluginsHead  = plugin;
