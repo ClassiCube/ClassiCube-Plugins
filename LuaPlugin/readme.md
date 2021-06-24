@@ -42,15 +42,15 @@ Called whenever a chat message has been sent to the server
 
 #### server functions
 
-```(string motd) getMotd()```
+```string getMotd()```
 
 Returns the current server MOTD (usually this is the second line in the loading map screen)
 
-```(string name) getName()```
+```string getName()```
 
 Returns the current server name (usually this is the first line in the loading map screen)
 
-```(boolean singleplayer) isSingleplayer()```
+```boolean isSingleplayer()```
 
 Returns whether the server is the internal singleplayer server
 
@@ -73,11 +73,19 @@ Raises when the user is disconnected from the server
 
 #### world functions
 
-```(int width, int height, int length) getDimensions()```
+```int getWidth()```
 
-Returns the width, height, and length of the current world
+Returns the width of the current world
 
-```(int block) getBlock(int x, int y, int z)```
+```int getHeight()```
+
+Returns the height of the current world
+
+```int getLength()```
+
+Returns the length of the current world
+
+```int getBlock(int x, int y, int z)```
 
 Returns the block at the given coordinates in the current world
 

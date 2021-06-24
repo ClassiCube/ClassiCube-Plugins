@@ -9,17 +9,18 @@
 // The proper way would be to add 'additional include directories' and 'additional libs' in Visual Studio Project properties
 // Or, you can just be lazy and change these paths for your own system. 
 // You must compile ClassiCube in both x86 and x64 configurations to generate the .lib file.
-#include "../../ClassicalSharp/src/Game.h"
-#include "../../ClassicalSharp/src/Block.h"
-#include "../../ClassicalSharp/src/ExtMath.h"
-#include "../../ClassicalSharp/src/Chat.h"
-#include "../../ClassicalSharp/src/Stream.h"
-#include "../../ClassicalSharp/src/TexturePack.h"
-#include "../../ClassicalSharp/src/World.h"
-#include "../../ClassicalSharp/src/Funcs.h"
-#include "../../ClassicalSharp/src/Event.h"
-#include "../../ClassicalSharp/src/Server.h"
-#include "../../ClassicalSharp/src/Window.h"
+#include "../../../ClassicalSharp/src/Game.h"
+#include "../../../ClassicalSharp/src/String.h"
+#include "../../../ClassicalSharp/src/Block.h"
+#include "../../../ClassicalSharp/src/ExtMath.h"
+#include "../../../ClassicalSharp/src/Chat.h"
+#include "../../../ClassicalSharp/src/Stream.h"
+#include "../../../ClassicalSharp/src/TexturePack.h"
+#include "../../../ClassicalSharp/src/World.h"
+#include "../../../ClassicalSharp/src/Funcs.h"
+#include "../../../ClassicalSharp/src/Event.h"
+#include "../../../ClassicalSharp/src/Server.h"
+#include "../../../ClassicalSharp/src/Window.h"
 
 #ifdef _WIN64
 #pragma comment(lib, "C:/GitPortable/Data/Home/ClassicalSharp/src/x64/Debug/ClassiCube.lib")
@@ -121,8 +122,8 @@ static void CC_Chat_OnSent(void* obj, const cc_string* msg, int msgType) {
 	LuaPlugin_RaiseChat("chat", "onSent", msg, msgType);
 }
 static void CC_Chat_Hook(void) {
-	Event_RegisterChat(&ChatEvents.ChatReceived, NULL, CC_Chat_OnReceived);
-	Event_RegisterChat(&ChatEvents.ChatSending,  NULL, CC_Chat_OnSent);
+	Event_Register_(&ChatEvents.ChatReceived, NULL, CC_Chat_OnReceived);
+	Event_Register_(&ChatEvents.ChatSending,  NULL, CC_Chat_OnSent);
 }
 
 
@@ -197,19 +198,25 @@ static void CC_Server_OnDisconnected(void* obj) {
 	LuaPlugin_RaiseVoid("server", "onDisconnected");
 }
 static void CC_Server_Hook(void) {
-	Event_RegisterVoid(&NetEvents.Connected,    NULL, CC_Server_OnConnected);
-	Event_RegisterVoid(&NetEvents.Disconnected, NULL, CC_Server_OnDisconnected);
+	Event_Register_(&NetEvents.Connected,    NULL, CC_Server_OnConnected);
+	Event_Register_(&NetEvents.Disconnected, NULL, CC_Server_OnDisconnected);
 }
 
 
 /*########################################################################################################################*
 *--------------------------------------------------------World api--------------------------------------------------------*
 *#########################################################################################################################*/
-static int CC_World_GetDimensions(lua_State* L) {
+static int CC_World_GetWidth(lua_State* L) {
 	lua_pushinteger(L, World.Width);
+	return 1;
+}
+static int CC_World_GetHeight(lua_State* L) {
 	lua_pushinteger(L, World.Height);
+	return 1;
+}
+static int CC_World_GetLength(lua_State* L) {
 	lua_pushinteger(L, World.Length);
-	return 3;
+	return 1;
 }
 
 static int CC_World_GetBlock(lua_State* L) {
@@ -223,8 +230,10 @@ static int CC_World_GetBlock(lua_State* L) {
 }
 
 static const struct luaL_Reg worldFuncs[] = {
-	{ "getDimensions", CC_World_GetDimensions },
-	{ "getBlock",      CC_World_GetBlock },
+	{ "getWidth",  CC_World_GetWidth  },
+	{ "getHeight", CC_World_GetHeight },
+	{ "getLength", CC_World_GetLength },
+	{ "getBlock",  CC_World_GetBlock  },
 	{ NULL, NULL }
 };
 
@@ -235,8 +244,8 @@ static void CC_World_OnMapLoaded(void* obj) {
 	LuaPlugin_RaiseVoid("world", "onMapLoaded");
 }
 static void CC_World_Hook(void) {
-	Event_RegisterVoid(&WorldEvents.NewMap,    NULL, CC_World_OnNew);
-	Event_RegisterVoid(&WorldEvents.MapLoaded, NULL, CC_World_OnMapLoaded);
+	Event_Register_(&WorldEvents.NewMap,    NULL, CC_World_OnNew);
+	Event_Register_(&WorldEvents.MapLoaded, NULL, CC_World_OnMapLoaded);
 }
 
 
@@ -338,7 +347,7 @@ static struct ChatCommand LuaPlugin_Cmd = {
 
 static void LuaPlugin_Init(void) {
 	const static cc_string luaDir = String_FromConst("lua");
-	if (!Directory_Exists(&luaDir)) Directory_Create(&luaDir);
+	Directory_Create(&luaDir);
 
 	Directory_Enum(&luaDir, NULL, LuaPlugin_Load);
 	Commands_Register(&LuaPlugin_Cmd);
