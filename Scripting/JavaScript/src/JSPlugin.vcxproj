@@ -152,6 +152,7 @@
   <ItemGroup>
     <ClInclude Include="duktape.h" />
     <ClInclude Include="duk_config.h" />
+    <ClInclude Include="Scripting.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

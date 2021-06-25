@@ -3,39 +3,35 @@
 #define CC_VAR __declspec(dllimport)
 
 #include "duktape.h"
-
-// The proper way would be to add 'additional include directories' and 'additional libs' in Visual Studio Project properties
-// Or, you can just be lazy and change these paths for your own system. 
-// You must compile ClassiCube in both x86 and x64 configurations to generate the .lib file.
-#include "../../../ClassicalSharp/src/Game.h"
-#include "../../../ClassicalSharp/src/Block.h"
-#include "../../../ClassicalSharp/src/ExtMath.h"
-#include "../../../ClassicalSharp/src/Chat.h"
-#include "../../../ClassicalSharp/src/Stream.h"
-#include "../../../ClassicalSharp/src/TexturePack.h"
-#include "../../../ClassicalSharp/src/World.h"
-#include "../../../ClassicalSharp/src/Funcs.h"
-#include "../../../ClassicalSharp/src/Event.h"
-#include "../../../ClassicalSharp/src/Server.h"
-#include "../../../ClassicalSharp/src/String.h"
-#include "../../../ClassicalSharp/src/Window.h"
-
-#ifdef _WIN64
-#pragma comment(lib, "C:/GitPortable/Data/Home/ClassicalSharp/src/x64/Debug/ClassiCube.lib")
-#else
-#pragma comment(lib, "C:/GitPortable/Data/Home/ClassicalSharp/src/x86/Debug/ClassiCube.lib")
-#endif
-
-// ====== JAVASCRIPT BASE PLUGIN API ======
-struct JSPlugin;
-typedef struct JSPlugin { duk_context* ctx; struct JSPlugin* next; } JSPlugin;
-static JSPlugin* pluginsHead;
+#include "../../../../ClassicalSharp/src/String.h"
 
 static cc_string JSPlugin_GetString(duk_context* ctx, int idx) {
 	duk_size_t len;
 	const char* msg = duk_to_lstring(ctx, idx, &len);
 	return String_Init(msg, len, len);
 }
+
+#define SCRIPTING_DIRECTORY "js"
+#define SCRIPTING_CONTEXT duk_context*
+#define SCRIPTING_RESULT duk_ret_t
+
+#define Scripting_GetString(ctx, arg) JSPlugin_GetString(ctx, -(arg)-1)
+#define Scripting_GetInt(ctx, arg) duk_to_int(ctx, -(arg)-1)
+#define Scripting_Consume(ctx, args)
+
+#define Scripting_ReturnVoid(ctx) return 1;
+#define Scripting_ReturnInt(ctx, value) duk_push_int(ctx, value); return 1;
+#define Scripting_ReturnBoolean(ctx, value) duk_push_boolean(ctx, value); return 1;
+#define Scripting_ReturnString(ctx, buffer, len) duk_push_lstring(ctx, buffer, len); return 1;
+
+#include "Scripting.h"
+
+/*########################################################################################################################*
+*--------------------------------------------------------Backend----------------------------------------------------------*
+*#########################################################################################################################*/
+struct JSPlugin;
+typedef struct JSPlugin { duk_context* ctx; struct JSPlugin* next; } JSPlugin;
+static JSPlugin* pluginsHead;
 
 static void JSPlugin_LogError(duk_context* ctx, const char* place, const void* arg1, const void* arg2) {
 	char buffer[256];
@@ -74,14 +70,14 @@ static void JSPlugin_LogError(duk_context* ctx, const char* place, const void* a
 		plugin = plugin->next;\
 	}
 
-static void JSPlugin_RaiseVoid(const char* groupName, const char* funcName) {
+static void Backend_RaiseVoid(const char* groupName, const char* funcName) {
 	JSPlugin_RaiseCommonBegin
 		duk_int_t ret = duk_pcall(ctx, 0);
 		if (ret != 0) JSPlugin_LogError(ctx, "running callback", groupName, funcName);
 	JSPlugin_RaiseCommonEnd
 }
 
-static void JSPlugin_RaiseChat(const char* groupName, const char* funcName, const cc_string* msg, int msgType) {
+static void Backend_RaiseChat(const char* groupName, const char* funcName, const cc_string* msg, int msgType) {
 	JSPlugin_RaiseCommonBegin
 		duk_push_lstring(ctx, msg->buffer, msg->length);
 		duk_push_int(ctx, msgType);
@@ -94,64 +90,17 @@ static void JSPlugin_RaiseChat(const char* groupName, const char* funcName, cons
 /*########################################################################################################################*
 *--------------------------------------------------------Chat api---------------------------------------------------------*
 *#########################################################################################################################*/
-static duk_ret_t CC_Chat_Add(duk_context* ctx) {
-	cc_string str = JSPlugin_GetString(ctx, -1);
-	Chat_Add(&str);
-	return 1;
-}
-
-static duk_ret_t CC_Chat_Send(duk_context* ctx) {
-	cc_string str = JSPlugin_GetString(ctx, -1);
-	Chat_Send(&str, false);
-	return 1;
-}
-
 static const duk_function_list_entry chatFuncs[] = {
 	{ "add",  CC_Chat_Add, 1 },
 	{ "send", CC_Chat_Send, 1 },
 	{ NULL, NULL, 0}
 };
 
-static void CC_Chat_OnReceived(void* obj, const cc_string* msg, int msgType) {
-	JSPlugin_RaiseChat("chat", "onReceived", msg, msgType);
-}
-static void CC_Chat_OnSent(void* obj, const cc_string* msg, int msgType) {
-	JSPlugin_RaiseChat("chat", "onSent", msg, msgType);
-}
-static void CC_Chat_Hook(void) {
-	Event_Register_(&ChatEvents.ChatReceived, NULL, CC_Chat_OnReceived);
-	Event_Register_(&ChatEvents.ChatSending,  NULL, CC_Chat_OnSent);
-}
-
 
 /*########################################################################################################################*
 *-------------------------------------------------------Server api--------------------------------------------------------*
 *#########################################################################################################################*/
-static duk_ret_t CC_Server_GetMotd(duk_context* ctx) {
-	duk_push_lstring(ctx, Server.MOTD.buffer, Server.MOTD.length);
-	return 1;
-}
-static duk_ret_t CC_Server_GetName(duk_context* ctx) {
-	duk_push_lstring(ctx, Server.Name.buffer, Server.Name.length);
-	return 1;
-}
-static duk_ret_t CC_Server_GetAppName(duk_context* ctx) {
-	duk_push_lstring(ctx, Server.AppName.buffer, Server.AppName.length);
-	return 1;
-}
-
-static duk_ret_t CC_Server_SetAppName(duk_context* ctx) {
-	cc_string str = JSPlugin_GetString(ctx, -1);
-	String_Copy(&Server.AppName, &str);
-	return 1;
-}
-
-static duk_ret_t CC_Server_IsSingleplayer(duk_context* ctx) {
-	duk_push_boolean(ctx, Server.IsSinglePlayer);
-	return 1;
-}
-
-static duk_ret_t CC_Server_SendData(duk_context* ctx) {
+static SCRIPTING_RESULT CC_Server_SendData(duk_context* ctx) {
 	duk_size_t size;
 	void* data = duk_to_buffer(ctx, -1, &size);
 	Server.SendData(data, size);
@@ -168,45 +117,10 @@ static const duk_function_list_entry serverFuncs[] = {
 	{ NULL, NULL, 0 }
 };
 
-static void CC_Server_OnConnected(void* obj) {
-	JSPlugin_RaiseVoid("server", "onConnected");
-}
-static void CC_Server_OnDisconnected(void* obj) {
-	JSPlugin_RaiseVoid("server", "onDisconnected");
-}
-static void CC_Server_Hook(void) {
-	Event_Register_(&NetEvents.Connected,    NULL, CC_Server_OnConnected);
-	Event_Register_(&NetEvents.Disconnected, NULL, CC_Server_OnDisconnected);
-}
-
 
 /*########################################################################################################################*
 *--------------------------------------------------------World api--------------------------------------------------------*
 *#########################################################################################################################*/
-static duk_ret_t CC_World_GetWidth(duk_context* ctx) {
-	duk_push_int(ctx, World.Width);
-	return 1;
-}
-
-static duk_ret_t CC_World_GetHeight(duk_context* ctx) {
-	duk_push_int(ctx, World.Height);
-	return 1;
-}
-
-static duk_ret_t CC_World_GetLength(duk_context* ctx) {
-	duk_push_int(ctx, World.Height);
-	return 1;
-}
-
-static duk_ret_t CC_World_GetBlock(duk_context* ctx) {
-	duk_int_t x = duk_to_int(ctx, -3);
-	duk_int_t y = duk_to_int(ctx, -2);
-	duk_int_t z = duk_to_int(ctx, -1);
-
-	duk_push_int(ctx, World_GetBlock(x, y, z));
-	return 1;
-}
-
 static const duk_function_list_entry worldFuncs[] = {
 	{ "getWidth",  CC_World_GetWidth, 0, },
 	{ "getHeight", CC_World_GetHeight, 0 },
@@ -215,27 +129,10 @@ static const duk_function_list_entry worldFuncs[] = {
 	{ NULL, NULL, 0 }
 };
 
-static void CC_World_OnNew(void* obj) {
-	JSPlugin_RaiseVoid("world", "onNewMap");
-}
-static void CC_World_OnMapLoaded(void* obj) {
-	JSPlugin_RaiseVoid("world", "onMapLoaded");
-}
-static void CC_World_Hook(void) {
-	Event_Register_(&WorldEvents.NewMap,    NULL, CC_World_OnNew);
-	Event_Register_(&WorldEvents.MapLoaded, NULL, CC_World_OnMapLoaded);
-}
-
 
 /*########################################################################################################################*
 *--------------------------------------------------------Window api-------------------------------------------------------*
 *#########################################################################################################################*/
-static duk_ret_t CC_Window_SetTitle(duk_context* ctx) {
-	cc_string str = JSPlugin_GetString(ctx, -1);
-	Window_SetTitle(&str);
-	return 1;
-}
-
 static const duk_function_list_entry windowFuncs[] = {
 	{ "setTitle", CC_Window_SetTitle, 1 },
 	{ NULL, NULL, 0 }
@@ -283,7 +180,7 @@ static cc_result JSPlugin_LoadFile(duk_context* ctx, const cc_string* path) {
 	return 0;
 }
 
-static void JSPlugin_Load(const cc_string* path, void* obj) {
+static void Backend_Load(const cc_string* path, void* obj) {
 	static cc_string ext = String_FromConst(".js");
 	if (!String_CaselessEnds(path, &ext)) return;
 	int res;
@@ -306,49 +203,25 @@ static void JSPlugin_Load(const cc_string* path, void* obj) {
 	pluginsHead  = plugin;
 }
 
-static void JSPlugin_ExecCmd(const cc_string* args, int argsCount) {
-	if (argsCount == 0) {
-		Chat_Add(&(const cc_string)String_FromConst("&cNot enough arguments. See help"));
-		return;
-	}
-
-	char buffer[1024];
-	cc_string tmp = String_FromArray(buffer);
-	for (int i = 0; i < argsCount; i++) {
-		String_AppendString(&tmp, &args[i]);
-		String_Append(&tmp, ' ');
-	}
-
+static void Backend_ExecScript(const cc_string* script) {
 	duk_context* ctx  = JSPlugin_New();
-	duk_push_lstring(ctx, tmp.buffer, tmp.length);
+	duk_push_lstring(ctx, script->buffer, script->length);
 
 	if (duk_peval(ctx) != 0) {
-		JSPlugin_LogError(ctx, "loading script", &tmp, NULL);
+		JSPlugin_LogError(ctx, "loading script", script, NULL);
 	}
 	/* TODO: Compile and call */
 	duk_destroy_heap(ctx);
 }
 
 static struct ChatCommand JSPlugin_Cmd = {
-	"js", JSPlugin_ExecCmd, false,
+	"js", Scripting_Handle, false,
 	{
 		"&a/client js [script]",
 		"&eExecutes the input text as a JavaScript script",
 	}
 };
 
-static void JSPlugin_Init(void) {
-	const static cc_string jsDir = String_FromConst("js");
-	Directory_Create(&jsDir);
-	Directory_Enum(&jsDir, NULL, JSPlugin_Load);
+static void Backend_Init(void) {
 	Commands_Register(&JSPlugin_Cmd);
-
-	CC_Chat_Hook();
-	CC_Server_Hook();
-	CC_World_Hook();
 }
-
-__declspec(dllexport) int Plugin_ApiVersion = 1;
-__declspec(dllexport) struct IGameComponent Plugin_Component = {
-	JSPlugin_Init /* Init */
-};

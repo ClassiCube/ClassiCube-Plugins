@@ -9,29 +9,30 @@
 // The proper way would be to add 'additional include directories' and 'additional libs' in Visual Studio Project properties
 // Or, you can just be lazy and change these paths for your own system. 
 // You must compile ClassiCube in both x86 and x64 configurations to generate the .lib file.
-#include "../../../ClassicalSharp/src/Game.h"
-#include "../../../ClassicalSharp/src/String.h"
-#include "../../../ClassicalSharp/src/Block.h"
-#include "../../../ClassicalSharp/src/ExtMath.h"
-#include "../../../ClassicalSharp/src/Chat.h"
-#include "../../../ClassicalSharp/src/Stream.h"
-#include "../../../ClassicalSharp/src/TexturePack.h"
-#include "../../../ClassicalSharp/src/World.h"
-#include "../../../ClassicalSharp/src/Funcs.h"
-#include "../../../ClassicalSharp/src/Event.h"
-#include "../../../ClassicalSharp/src/Server.h"
-#include "../../../ClassicalSharp/src/Window.h"
+#include "../../../../ClassicalSharp/src/Game.h"
+#include "../../../../ClassicalSharp/src/String.h"
+#include "../../../../ClassicalSharp/src/Block.h"
+#include "../../../../ClassicalSharp/src/ExtMath.h"
+#include "../../../../ClassicalSharp/src/Chat.h"
+#include "../../../../ClassicalSharp/src/Stream.h"
+#include "../../../../ClassicalSharp/src/TexturePack.h"
+#include "../../../../ClassicalSharp/src/World.h"
+#include "../../../../ClassicalSharp/src/Funcs.h"
+#include "../../../../ClassicalSharp/src/Event.h"
+#include "../../../../ClassicalSharp/src/Server.h"
+#include "../../../../ClassicalSharp/src/Window.h"
 
 #ifdef _WIN64
-#pragma comment(lib, "../../../ClassicalSharp/src/x64/Debug/ClassiCube.lib")
+#pragma comment(lib, "../../../../ClassicalSharp/src/x64/Debug/ClassiCube.lib")
 #else
-#pragma comment(lib, "../../../ClassicalSharp/src/x86/Debug/ClassiCube.lib")
+#pragma comment(lib, "../../../../ClassicalSharp/src/x86/Debug/ClassiCube.lib")
 #endif
 
-static void Scripting_RaiseVoid(const char* groupName, const char* funcName);
-static void Scripting_RaiseChat(const char* groupName, const char* funcName, const cc_string* msg, int msgType);
+static void Backend_RaiseVoid(const char* groupName, const char* funcName);
+static void Backend_RaiseChat(const char* groupName, const char* funcName, const cc_string* msg, int msgType);
 
 static void Backend_Load(const cc_string* origName, void* obj);
+static void Backend_ExecScript(const cc_string* script);
 static void Backend_Init(void);
 
 /*
@@ -70,10 +71,10 @@ static SCRIPTING_RESULT CC_Chat_Send(SCRIPTING_CONTEXT ctx) {
 }
 
 static void CC_Chat_OnReceived(void* obj, const cc_string* msg, int msgType) {
-	Scripting_RaiseChat("chat", "onReceived", msg, msgType);
+	Backend_RaiseChat("chat", "onReceived", msg, msgType);
 }
 static void CC_Chat_OnSent(void* obj, const cc_string* msg, int msgType) {
-	Scripting_RaiseChat("chat", "onSent", msg, msgType);
+	Backend_RaiseChat("chat", "onSent", msg, msgType);
 }
 static void CC_Chat_Hook(void) {
 	Event_Register_(&ChatEvents.ChatReceived, NULL, CC_Chat_OnReceived);
@@ -134,10 +135,10 @@ static SCRIPTING_RESULT CC_Server_IsSingleplayer(SCRIPTING_CONTEXT ctx) {
 }*/
 
 static void CC_Server_OnConnected(void* obj) {
-	Scripting_RaiseVoid("server", "onConnected");
+	Backend_RaiseVoid("server", "onConnected");
 }
 static void CC_Server_OnDisconnected(void* obj) {
-	Scripting_RaiseVoid("server", "onDisconnected");
+	Backend_RaiseVoid("server", "onDisconnected");
 }
 static void CC_Server_Hook(void) {
 	Event_Register_(&NetEvents.Connected,    NULL, CC_Server_OnConnected);
@@ -170,10 +171,10 @@ static SCRIPTING_RESULT CC_World_GetBlock(SCRIPTING_CONTEXT ctx) {
 }
 
 static void CC_World_OnNew(void* obj) {
-	Scripting_RaiseVoid("world", "onNewMap");
+	Backend_RaiseVoid("world", "onNewMap");
 }
 static void CC_World_OnMapLoaded(void* obj) {
-	Scripting_RaiseVoid("world", "onMapLoaded");
+	Backend_RaiseVoid("world", "onMapLoaded");
 }
 static void CC_World_Hook(void) {
 	Event_Register_(&WorldEvents.NewMap,    NULL, CC_World_OnNew);
@@ -200,12 +201,27 @@ static void Scripting_Init(void) {
 	const static cc_string dir = String_FromConst(SCRIPTING_DIRECTORY);
 	Directory_Create(&dir);
 
-	Directory_Enum(&dir, NULL, Backend_Load);
 	Backend_Init();
+	Directory_Enum(&dir, NULL, Backend_Load);
 
 	CC_Chat_Hook();
 	CC_Server_Hook();
 	CC_World_Hook();
+}
+
+static void Scripting_Handle(const cc_string* args, int argsCount) {
+	if (argsCount == 0) {
+		Chat_Add(&(const cc_string)String_FromConst("&cNot enough arguments. See help"));
+		return;
+	}
+
+	char buffer[1024];
+	cc_string tmp = String_FromArray(buffer);
+	for (int i = 0; i < argsCount; i++) {
+		String_AppendString(&tmp, &args[i]);
+		String_Append(&tmp, ' ');
+	}
+	Backend_ExecScript(&tmp);
 }
 
 #ifdef CC_BUILD_WIN

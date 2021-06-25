@@ -5,7 +5,7 @@
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
-#include "../../../ClassicalSharp/src/String.h"
+#include "../../../../ClassicalSharp/src/String.h"
 
 static cc_string LuaPlugin_GetString(lua_State* L, int idx) {
 	size_t len;
@@ -68,14 +68,14 @@ static void LuaPlugin_LogError(lua_State* L, const char* place, const void* arg1
 		plugin = plugin->next;\
 	}
 
-static void Scripting_RaiseVoid(const char* groupName, const char* funcName) {
+static void Backend_RaiseVoid(const char* groupName, const char* funcName) {
 	LuaPlugin_RaiseCommonBegin
 		int ret = lua_pcall(L, 0, 0, 0); /* call implicitly pops function */
 		if (ret) LuaPlugin_LogError(L, "running callback", groupName, funcName);
 	LuaPlugin_RaiseCommonEnd
 }
 
-static void Scripting_RaiseChat(const char* groupName, const char* funcName, const cc_string* msg, int msgType) {
+static void Backend_RaiseChat(const char* groupName, const char* funcName, const cc_string* msg, int msgType) {
 	LuaPlugin_RaiseCommonBegin
 		lua_pushlstring(L, msg->buffer, msg->length);
 		lua_pushinteger(L, msgType);
@@ -204,32 +204,20 @@ static void Backend_Load(const cc_string* origName, void* obj) {
 	pluginsHead  = plugin;
 }
 
-static void LuaPlugin_ExecCmd(const cc_string* args, int argsCount) {
-	if (argsCount == 0) {
-		Chat_Add(&(const cc_string)String_FromConst("&cNot enough arguments. See help"));
-		return;
-	}
-
-	char buffer[1024];
-	cc_string tmp = String_FromArray(buffer);
-	for (int i = 0; i < argsCount; i++) {
-		String_AppendString(&tmp, &args[i]);
-		String_Append(&tmp, ' ');
-	}
-
+static void Backend_ExecScript(const cc_string* script) {
 	lua_State* L  = LuaPlugin_New();
-	cc_result res = luaL_loadbuffer(L, tmp.buffer, tmp.length, "@tmp");
+	cc_result res = luaL_loadbuffer(L, script->buffer, script->length, "@tmp");
 	if (res) {
-		LuaPlugin_LogError(L, "loading script", &tmp, NULL);
+		LuaPlugin_LogError(L, "loading script", script, NULL);
 	} else {
 		res = lua_pcall(L, 0, LUA_MULTRET, 0);
-		if (res) LuaPlugin_LogError(L, "executing script", &tmp, NULL);
+		if (res) LuaPlugin_LogError(L, "executing script", script, NULL);
 	}
 	lua_close(L);
 }
 
 static struct ChatCommand LuaPlugin_Cmd = {
-	"lua", LuaPlugin_ExecCmd, false,
+	"lua", Scripting_Handle, false,
 	{
 		"&a/client lua [script]",
 		"&eExecutes the input text as a lua script",
