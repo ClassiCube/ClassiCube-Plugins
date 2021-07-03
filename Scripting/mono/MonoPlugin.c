@@ -6,6 +6,10 @@
 #include <mono/metadata/assembly.h>
 #include <mono/metadata/mono-config.h>
 
+// references
+//  https://stackoverflow.com/questions/46434387/could-not-load-assembly-system-when-using-c-and-embedded-mono-to-call-to-c-sha
+//  https://www.mono-project.com/docs/advanced/embedding/
+
 #include "src/String.h"
 static MonoDomain* domain;
 

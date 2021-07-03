@@ -14,6 +14,7 @@ static cc_string JSPlugin_GetString(duk_context* ctx, int idx) {
 #define SCRIPTING_DIRECTORY "js"
 #define SCRIPTING_CONTEXT duk_context*
 #define SCRIPTING_RESULT duk_ret_t
+#define Scripting_DeclareFunc(name, func, num_args) { name, func, num_args }
 
 #define Scripting_GetString(ctx, arg) JSPlugin_GetString(ctx, -(arg)-1)
 #define Scripting_GetInt(ctx, arg) duk_to_int(ctx, -(arg)-1)
@@ -88,17 +89,7 @@ static void Backend_RaiseChat(const char* groupName, const char* funcName, const
 
 
 /*########################################################################################################################*
-*--------------------------------------------------------Chat api---------------------------------------------------------*
-*#########################################################################################################################*/
-static const duk_function_list_entry chatFuncs[] = {
-	{ "add",  CC_Chat_Add, 1 },
-	{ "send", CC_Chat_Send, 1 },
-	{ NULL, NULL, 0}
-};
-
-
-/*########################################################################################################################*
-*-------------------------------------------------------Server api--------------------------------------------------------*
+*---------------------------------------------------API implementation----------------------------------------------------*
 *#########################################################################################################################*/
 static SCRIPTING_RESULT CC_Server_SendData(duk_context* ctx) {
 	duk_size_t size;
@@ -107,36 +98,16 @@ static SCRIPTING_RESULT CC_Server_SendData(duk_context* ctx) {
 	return 1;
 }
 
+static const duk_function_list_entry blockFuncs[]  = { CC_BLOCK_FUNCS, SCRIPTING_NULL_FUNC };
+static const duk_function_list_entry chatFuncs[]   = { CC_CHAT_FUNCS,  SCRIPTING_NULL_FUNC };
 static const duk_function_list_entry serverFuncs[] = {
-	{ "getMotd",        CC_Server_GetMotd, 0 },
-	{ "getName",        CC_Server_GetName, 0 },
-	{ "getAppName",     CC_Server_GetAppName, 0 },
-	{ "setAppName",     CC_Server_SetAppName, 1 },
-	{ "isSingleplayer", CC_Server_IsSingleplayer, 0 },
-	{ "sendData",       CC_Server_SendData, 1},
-	{ NULL, NULL, 0 }
+	CC_SERVER_FUNCS,
+	Scripting_DeclareFunc("sendData", CC_Server_SendData, 1),
+	SCRIPTING_NULL_FUNC
 };
-
-
-/*########################################################################################################################*
-*--------------------------------------------------------World api--------------------------------------------------------*
-*#########################################################################################################################*/
-static const duk_function_list_entry worldFuncs[] = {
-	{ "getWidth",  CC_World_GetWidth, 0, },
-	{ "getHeight", CC_World_GetHeight, 0 },
-	{ "getLength", CC_World_GetLength, 0 },
-	{ "getBlock",  CC_World_GetBlock, 3 },
-	{ NULL, NULL, 0 }
-};
-
-
-/*########################################################################################################################*
-*--------------------------------------------------------Window api-------------------------------------------------------*
-*#########################################################################################################################*/
-static const duk_function_list_entry windowFuncs[] = {
-	{ "setTitle", CC_Window_SetTitle, 1 },
-	{ NULL, NULL, 0 }
-};
+static const duk_function_list_entry tablistFuncs[] = { CC_TABLIST_FUNCS, SCRIPTING_NULL_FUNC };
+static const duk_function_list_entry worldFuncs[]   = { CC_WORLD_FUNCS,   SCRIPTING_NULL_FUNC };
+static const duk_function_list_entry windowFuncs[]  = { CC_WINDOW_FUNCS,  SCRIPTING_NULL_FUNC };
 
 
 /*########################################################################################################################*
@@ -151,10 +122,12 @@ static void JSPlugin_RegisterModule(duk_context* ctx, const char* name, const du
 }
 
 static void JSPlugin_Register(duk_context* ctx) {
-	JSPlugin_RegisterModule(ctx, "chat",   chatFuncs);
-	JSPlugin_RegisterModule(ctx, "server", serverFuncs);
-	JSPlugin_RegisterModule(ctx, "world",  worldFuncs);
-	JSPlugin_RegisterModule(ctx, "window", windowFuncs);
+	JSPlugin_RegisterModule(ctx, "block",   blockFuncs);
+	JSPlugin_RegisterModule(ctx, "chat",    chatFuncs);
+	JSPlugin_RegisterModule(ctx, "server",  serverFuncs);
+	JSPlugin_RegisterModule(ctx, "tablist", tablistFuncs);
+	JSPlugin_RegisterModule(ctx, "world",   worldFuncs);
+	JSPlugin_RegisterModule(ctx, "window",  windowFuncs);
 }
 
 static duk_context* JSPlugin_New(void) {

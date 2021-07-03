@@ -16,6 +16,7 @@ static cc_string LuaPlugin_GetString(lua_State* L, int idx) {
 #define SCRIPTING_DIRECTORY "lua"
 #define SCRIPTING_CONTEXT lua_State*
 #define SCRIPTING_RESULT int
+#define Scripting_DeclareFunc(name, func, num_args) { name, func }
 
 #define Scripting_GetString(ctx, arg) LuaPlugin_GetString(ctx, -(arg)-1)
 #define Scripting_GetInt(ctx, arg) lua_tointeger(ctx, -(arg)-1)
@@ -86,17 +87,7 @@ static void Backend_RaiseChat(const char* groupName, const char* funcName, const
 
 
 /*########################################################################################################################*
-*--------------------------------------------------------Chat api---------------------------------------------------------*
-*#########################################################################################################################*/
-static const struct luaL_Reg chatFuncs[] = {
-	{ "add",  CC_Chat_Add },
-	{ "send", CC_Chat_Send },
-	{ NULL, NULL }
-};
-
-
-/*########################################################################################################################*
-*-------------------------------------------------------Server api--------------------------------------------------------*
+*------------------------------------------------------API functions-------------------------------------------------------*
 *#########################################################################################################################*/
 static int CC_Server_SendData(lua_State* L) {
 	cc_uint8* data;
@@ -124,46 +115,28 @@ static int CC_Server_SendData(lua_State* L) {
 	return 0;
 }
 
-static const struct luaL_Reg serverFuncs[] = {
-	{ "getMotd",        CC_Server_GetMotd },
-	{ "getName",        CC_Server_GetName },
-	{ "getAppName",     CC_Server_GetAppName },
-	{ "setAppName",     CC_Server_SetAppName },
-	{ "isSingleplayer", CC_Server_IsSingleplayer },
-	{ "sendData",       CC_Server_SendData },
-	{ NULL, NULL }
+static const struct luaL_Reg blockFuncs[]   = { CC_BLOCK_FUNCS, SCRIPTING_NULL_FUNC };
+static const struct luaL_Reg chatFuncs[]    = { CC_CHAT_FUNCS,  SCRIPTING_NULL_FUNC };
+static const struct luaL_Reg serverFuncs[]  = {
+	CC_SERVER_FUNCS,
+	Scripting_DeclareFunc("sendData", CC_Server_SendData, 1),
+	SCRIPTING_NULL_FUNC
 };
-
-
-/*########################################################################################################################*
-*--------------------------------------------------------World api--------------------------------------------------------*
-*#########################################################################################################################*/
-static const struct luaL_Reg worldFuncs[] = {
-	{ "getWidth",  CC_World_GetWidth  },
-	{ "getHeight", CC_World_GetHeight },
-	{ "getLength", CC_World_GetLength },
-	{ "getBlock",  CC_World_GetBlock  },
-	{ NULL, NULL }
-};
-
-
-/*########################################################################################################################*
-*--------------------------------------------------------Window api-------------------------------------------------------*
-*#########################################################################################################################*/
-static const struct luaL_Reg windowFuncs[] = {
-	{ "setTitle", CC_Window_SetTitle },
-	{ NULL, NULL }
-};
+static const struct luaL_Reg tablistFuncs[] = { CC_TABLIST_FUNCS, SCRIPTING_NULL_FUNC };
+static const struct luaL_Reg worldFuncs[]   = { CC_WORLD_FUNCS,   SCRIPTING_NULL_FUNC };
+static const struct luaL_Reg windowFuncs[]  = { CC_WINDOW_FUNCS,  SCRIPTING_NULL_FUNC };
 
 
 /*########################################################################################################################*
 *-------------------------------------------------Plugin implementation---------------------------------------------------*
 *#########################################################################################################################*/
 static void LuaPlugin_Register(lua_State* L) {
-	luaL_newlib(L, chatFuncs);   lua_setglobal(L, "chat");
-	luaL_newlib(L, serverFuncs); lua_setglobal(L, "server");
-	luaL_newlib(L, worldFuncs);  lua_setglobal(L, "world");
-	luaL_newlib(L, windowFuncs); lua_setglobal(L, "window");
+	luaL_newlib(L, blockFuncs);   lua_setglobal(L, "block");
+	luaL_newlib(L, chatFuncs);    lua_setglobal(L, "chat");
+	luaL_newlib(L, serverFuncs);  lua_setglobal(L, "server");
+	luaL_newlib(L, tablistFuncs); lua_setglobal(L, "tablist");
+	luaL_newlib(L, worldFuncs);   lua_setglobal(L, "world");
+	luaL_newlib(L, windowFuncs);  lua_setglobal(L, "window");
 }
 
 static lua_State* LuaPlugin_New(void) {

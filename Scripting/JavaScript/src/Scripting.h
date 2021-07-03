@@ -12,6 +12,7 @@
 #include "../../../../ClassicalSharp/src/Game.h"
 #include "../../../../ClassicalSharp/src/String.h"
 #include "../../../../ClassicalSharp/src/Block.h"
+#include "../../../../ClassicalSharp/src/Entity.h"
 #include "../../../../ClassicalSharp/src/ExtMath.h"
 #include "../../../../ClassicalSharp/src/Chat.h"
 #include "../../../../ClassicalSharp/src/Stream.h"
@@ -36,19 +37,44 @@ static void Backend_ExecScript(const cc_string* script);
 static void Backend_Init(void);
 
 /*
+Backends must additionally provide the following defines:
 #define SCRIPTING_DIRECTORY
 #define SCRIPTING_CONTEXT
+#define SCRIPTING_RESULT
+c
 
 #define Scripting_GetString(SCRIPTING_CONTEXT, arg)
 #define Scripting_GetInt(SCRIPTING_CONTEXT, arg)
 #define Scripting_Consume(SCRIPTING_CONTEXT, args)
 
-#define SCRIPTING_RESULT
 #define Scripting_ReturnVoid(SCRIPTING_CONTEXT)
 #define Scripting_ReturnInt(SCRIPTING_CONTEXT, value)
 #define Scripting_ReturnBoolean(SCRIPTING_CONTEXT, value)
 #define Scripting_ReturnString(SCRIPTING_CONTEXT, buffer, len)
+
+Keep in mind that function arguments are accessed in reverse order, e.g. 
+function GetBlock(x, y, z) {
+  int x = Scripting_GetInt(ctx, 2);
+  int y = Scripting_GetInt(ctx, 1);
+  int z = Scripting_GetInt(ctx, 0);
+}
 */
+#define SCRIPTING_NULL_FUNC Scripting_DeclareFunc(NULL, NULL, 0)
+
+
+/*########################################################################################################################*
+*--------------------------------------------------------Block api--------------------------------------------------------*
+*#########################################################################################################################*/
+static SCRIPTING_RESULT CC_Block_Parse(SCRIPTING_CONTEXT ctx) {
+	cc_string str = Scripting_GetString(ctx, 0);
+	int block = Block_Parse(&str);
+
+	Scripting_Consume(ctx, 1);
+	Scripting_ReturnInt(ctx, block);
+}
+
+#define CC_BLOCK_FUNCS \
+	Scripting_DeclareFunc("parse", CC_Block_Parse, 1)
 
 
 /*########################################################################################################################*
@@ -61,6 +87,16 @@ static SCRIPTING_RESULT CC_Chat_Add(SCRIPTING_CONTEXT ctx) {
 	Scripting_Consume(ctx, 1);
 	Scripting_ReturnVoid(ctx);
 }
+
+static SCRIPTING_RESULT CC_Chat_AddOf(SCRIPTING_CONTEXT ctx) {
+	cc_string str = Scripting_GetString(ctx, 1);
+	int msgType   = Scripting_GetInt(ctx, 0);
+	Chat_AddOf(&str, msgType);
+
+	Scripting_Consume(ctx, 2);
+	Scripting_ReturnVoid(ctx);
+}
+
 
 static SCRIPTING_RESULT CC_Chat_Send(SCRIPTING_CONTEXT ctx) {
 	cc_string str = Scripting_GetString(ctx, 0);
@@ -80,6 +116,11 @@ static void CC_Chat_Hook(void) {
 	Event_Register_(&ChatEvents.ChatReceived, NULL, CC_Chat_OnReceived);
 	Event_Register_(&ChatEvents.ChatSending,  NULL, CC_Chat_OnSent);
 }
+
+#define CC_CHAT_FUNCS \
+	Scripting_DeclareFunc("add",   CC_Chat_Add,   1), \
+	Scripting_DeclareFunc("addOf", CC_Chat_AddOf, 2), \
+	Scripting_DeclareFunc("send",  CC_Chat_Send,  1)
 
 
 /*########################################################################################################################*
@@ -145,6 +186,41 @@ static void CC_Server_Hook(void) {
 	Event_Register_(&NetEvents.Disconnected, NULL, CC_Server_OnDisconnected);
 }
 
+#define CC_SERVER_FUNCS \
+	Scripting_DeclareFunc("getMotd",     CC_Server_GetMotd,    0), \
+	Scripting_DeclareFunc("getName",     CC_Server_GetName,    0), \
+	Scripting_DeclareFunc("getAppName",  CC_Server_GetAppName, 0), \
+	Scripting_DeclareFunc("setAppName",  CC_Server_SetAppName, 1), \
+	Scripting_DeclareFunc("isSingleplayer", CC_Server_IsSingleplayer, 0)
+
+
+/*########################################################################################################################*
+*-------------------------------------------------------Tablist api-------------------------------------------------------*
+*#########################################################################################################################*/
+static SCRIPTING_RESULT CC_Tablist_Remove(SCRIPTING_CONTEXT ctx) {
+	int id = Scripting_GetInt(ctx, 0);
+	TabList_Remove(id);
+
+	Scripting_Consume(ctx, 1);
+	Scripting_ReturnVoid(ctx);
+}
+
+static SCRIPTING_RESULT CC_Tablist_Set(SCRIPTING_CONTEXT ctx) {
+	int id           = Scripting_GetInt(ctx, 4);
+	cc_string player = Scripting_GetString(ctx, 3);
+	cc_string list   = Scripting_GetString(ctx, 2);
+	cc_string group  = Scripting_GetString(ctx, 1);
+	int groupRank    = Scripting_GetInt(ctx, 0);
+	TabList_Set(id, &player, &list, &group, groupRank);
+
+	Scripting_Consume(ctx, 5);
+	Scripting_ReturnVoid(ctx);
+}
+
+#define CC_TABLIST_FUNCS \
+	Scripting_DeclareFunc("remove", CC_Tablist_Remove, 1), \
+	Scripting_DeclareFunc("set",    CC_Tablist_Set,    5)
+
 
 /*########################################################################################################################*
 *--------------------------------------------------------World api--------------------------------------------------------*
@@ -181,6 +257,12 @@ static void CC_World_Hook(void) {
 	Event_Register_(&WorldEvents.MapLoaded, NULL, CC_World_OnMapLoaded);
 }
 
+#define CC_WORLD_FUNCS \
+	Scripting_DeclareFunc("getWidth",  CC_World_GetWidth,  0), \
+	Scripting_DeclareFunc("getHeight", CC_World_GetHeight, 0), \
+	Scripting_DeclareFunc("getLength", CC_World_GetLength, 0), \
+	Scripting_DeclareFunc("getBlock",  CC_World_GetBlock,  3)
+
 
 /*########################################################################################################################*
 *--------------------------------------------------------Window api-------------------------------------------------------*
@@ -192,6 +274,9 @@ static SCRIPTING_RESULT CC_Window_SetTitle(SCRIPTING_CONTEXT ctx) {
 	Scripting_Consume(ctx, 1);
 	Scripting_ReturnVoid(ctx);
 }
+
+#define CC_WINDOW_FUNCS \
+	Scripting_DeclareFunc("setTitle",  CC_Window_SetTitle, 1)
 
 
 /*########################################################################################################################*
