@@ -18,7 +18,7 @@ static cc_string LuaPlugin_GetString(lua_State* L, int idx) {
 #define SCRIPTING_RESULT int
 #define Scripting_DeclareFunc(name, func, num_args) { name, func }
 
-#define Scripting_GetString(ctx, arg) LuaPlugin_GetString(ctx, -(arg)-1)
+#define Scripting_GetStr(ctx, arg) LuaPlugin_GetString(ctx, -(arg)-1)
 #define Scripting_GetInt(ctx, arg) lua_tointeger(ctx, -(arg)-1)
 #define Scripting_Consume(ctx, args) lua_pop(ctx, args)
 

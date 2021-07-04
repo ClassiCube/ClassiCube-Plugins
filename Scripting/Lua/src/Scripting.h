@@ -43,7 +43,7 @@ Backends must additionally provide the following defines:
 #define SCRIPTING_RESULT
 c
 
-#define Scripting_GetString(SCRIPTING_CONTEXT, arg)
+#define Scripting_GetStr(SCRIPTING_CONTEXT, arg)
 #define Scripting_GetInt(SCRIPTING_CONTEXT, arg)
 #define Scripting_Consume(SCRIPTING_CONTEXT, args)
 
@@ -60,13 +60,14 @@ function GetBlock(x, y, z) {
 }
 */
 #define SCRIPTING_NULL_FUNC Scripting_DeclareFunc(NULL, NULL, 0)
+static const cc_string emptyStr = { "", 0, 0 };
 
 
 /*########################################################################################################################*
 *--------------------------------------------------------Block api--------------------------------------------------------*
 *#########################################################################################################################*/
 static SCRIPTING_RESULT CC_Block_Parse(SCRIPTING_CONTEXT ctx) {
-	cc_string str = Scripting_GetString(ctx, 0);
+	cc_string str = Scripting_GetStr(ctx, 0);
 	int block = Block_Parse(&str);
 
 	Scripting_Consume(ctx, 1);
@@ -81,7 +82,7 @@ static SCRIPTING_RESULT CC_Block_Parse(SCRIPTING_CONTEXT ctx) {
 *--------------------------------------------------------Chat api---------------------------------------------------------*
 *#########################################################################################################################*/
 static SCRIPTING_RESULT CC_Chat_Add(SCRIPTING_CONTEXT ctx) {
-	cc_string str = Scripting_GetString(ctx, 0);
+	cc_string str = Scripting_GetStr(ctx, 0);
 	Chat_Add(&str);
 
 	Scripting_Consume(ctx, 1);
@@ -89,7 +90,7 @@ static SCRIPTING_RESULT CC_Chat_Add(SCRIPTING_CONTEXT ctx) {
 }
 
 static SCRIPTING_RESULT CC_Chat_AddOf(SCRIPTING_CONTEXT ctx) {
-	cc_string str = Scripting_GetString(ctx, 1);
+	cc_string str = Scripting_GetStr(ctx, 1);
 	int msgType   = Scripting_GetInt(ctx, 0);
 	Chat_AddOf(&str, msgType);
 
@@ -97,9 +98,8 @@ static SCRIPTING_RESULT CC_Chat_AddOf(SCRIPTING_CONTEXT ctx) {
 	Scripting_ReturnVoid(ctx);
 }
 
-
 static SCRIPTING_RESULT CC_Chat_Send(SCRIPTING_CONTEXT ctx) {
-	cc_string str = Scripting_GetString(ctx, 0);
+	cc_string str = Scripting_GetStr(ctx, 0);
 	Chat_Send(&str, false);
 
 	Scripting_Consume(ctx, 1);
@@ -137,7 +137,7 @@ static SCRIPTING_RESULT CC_Server_GetAppName(SCRIPTING_CONTEXT ctx) {
 }
 
 static SCRIPTING_RESULT CC_Server_SetAppName(SCRIPTING_CONTEXT ctx) {
-	cc_string str = Scripting_GetString(ctx, 0);
+	cc_string str = Scripting_GetStr(ctx, 0);
 	String_Copy(&Server.AppName, &str);
 
 	Scripting_Consume(ctx, 1);
@@ -149,31 +149,7 @@ static SCRIPTING_RESULT CC_Server_IsSingleplayer(SCRIPTING_CONTEXT ctx) {
 }
 
 /* this one is too tricky to abstract */
-/*static SCRIPTING_RESULT CC_Server_SendData(lua_State* L) {
-	cc_uint8* data;
-	size_t len;
-	int i, type = lua_type(L, -1);
-
-	if (type == LUA_TSTRING) {
-		data = lua_tolstring(L, -1, &len);
-		Server.SendData(data, len);
-	} else if (type == LUA_TTABLE) {
-		len  = lua_rawlen(L, -1);
-		data = Mem_Alloc(len, 1, "lua send data");
-
-		for (i = 1; i <= len; i++) {
-			lua_rawgeti(L, -1, i);
-			data[i - 1] = lua_tointeger(L, -1);
-			lua_pop(L, 1);
-		}
-
-		Server.SendData(data, len);
-		Mem_Free(data);
-	} else {
-		luaL_error(L, "data must be string or an array table");
-	}
-	return 0;
-}*/
+/*static SCRIPTING_RESULT CC_Server_SendData(SCRIPTING_CONTEXT ctx)*/
 
 static void CC_Server_OnConnected(void* obj) {
 	Backend_RaiseVoid("server", "onConnected");
@@ -197,6 +173,39 @@ static void CC_Server_Hook(void) {
 /*########################################################################################################################*
 *-------------------------------------------------------Tablist api-------------------------------------------------------*
 *#########################################################################################################################*/
+static SCRIPTING_RESULT CC_Tablist_GetPlayer(SCRIPTING_CONTEXT ctx) {
+	int id         = Scripting_GetInt(ctx, 0);
+	cc_string name = emptyStr;
+	if (TabList.NameOffsets[id]) name = TabList_UNSAFE_GetPlayer(id);
+
+	Scripting_Consume(ctx, 1);
+	Scripting_ReturnString(ctx, name.buffer, name.length);
+}
+
+static SCRIPTING_RESULT CC_Tablist_GetName(SCRIPTING_CONTEXT ctx) {
+	int id         = Scripting_GetInt(ctx, 0);
+	cc_string name = emptyStr;
+	if (TabList.NameOffsets[id]) name = TabList_UNSAFE_GetList(id);
+
+	Scripting_Consume(ctx, 1);
+	Scripting_ReturnString(ctx, name.buffer, name.length);
+}
+
+static SCRIPTING_RESULT CC_Tablist_GetGroup(SCRIPTING_CONTEXT ctx) {
+	int id         = Scripting_GetInt(ctx, 0);
+	cc_string name = emptyStr;
+	if (TabList.NameOffsets[id]) name = TabList_UNSAFE_GetGroup(id);
+
+	Scripting_Consume(ctx, 1);
+	Scripting_ReturnString(ctx, name.buffer, name.length);
+}
+
+static SCRIPTING_RESULT CC_Tablist_GetRank(SCRIPTING_CONTEXT ctx) {
+	int id = Scripting_GetInt(ctx, 0);
+	Scripting_Consume(ctx, 1);
+	Scripting_ReturnInt(ctx, TabList.GroupRanks[id]);
+}
+
 static SCRIPTING_RESULT CC_Tablist_Remove(SCRIPTING_CONTEXT ctx) {
 	int id = Scripting_GetInt(ctx, 0);
 	TabList_Remove(id);
@@ -207,9 +216,9 @@ static SCRIPTING_RESULT CC_Tablist_Remove(SCRIPTING_CONTEXT ctx) {
 
 static SCRIPTING_RESULT CC_Tablist_Set(SCRIPTING_CONTEXT ctx) {
 	int id           = Scripting_GetInt(ctx, 4);
-	cc_string player = Scripting_GetString(ctx, 3);
-	cc_string list   = Scripting_GetString(ctx, 2);
-	cc_string group  = Scripting_GetString(ctx, 1);
+	cc_string player = Scripting_GetStr(ctx, 3);
+	cc_string list   = Scripting_GetStr(ctx, 2);
+	cc_string group  = Scripting_GetStr(ctx, 1);
 	int groupRank    = Scripting_GetInt(ctx, 0);
 	TabList_Set(id, &player, &list, &group, groupRank);
 
@@ -218,8 +227,12 @@ static SCRIPTING_RESULT CC_Tablist_Set(SCRIPTING_CONTEXT ctx) {
 }
 
 #define CC_TABLIST_FUNCS \
-	Scripting_DeclareFunc("remove", CC_Tablist_Remove, 1), \
-	Scripting_DeclareFunc("set",    CC_Tablist_Set,    5)
+	Scripting_DeclareFunc("getPlayer", CC_Tablist_GetPlayer, 1), \
+	Scripting_DeclareFunc("getName",   CC_Tablist_GetName,   1), \
+	Scripting_DeclareFunc("getGroup",  CC_Tablist_GetGroup,  1), \
+	Scripting_DeclareFunc("getRank",   CC_Tablist_GetRank,   1), \
+	Scripting_DeclareFunc("remove",    CC_Tablist_Remove,    1), \
+	Scripting_DeclareFunc("set",       CC_Tablist_Set,       5)
 
 
 /*########################################################################################################################*
@@ -268,7 +281,7 @@ static void CC_World_Hook(void) {
 *--------------------------------------------------------Window api-------------------------------------------------------*
 *#########################################################################################################################*/
 static SCRIPTING_RESULT CC_Window_SetTitle(SCRIPTING_CONTEXT ctx) {
-	cc_string str = Scripting_GetString(ctx, 0);
+	cc_string str = Scripting_GetStr(ctx, 0);
 	Window_SetTitle(&str);
 
 	Scripting_Consume(ctx, 1);

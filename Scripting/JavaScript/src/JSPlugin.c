@@ -16,7 +16,7 @@ static cc_string JSPlugin_GetString(duk_context* ctx, int idx) {
 #define SCRIPTING_RESULT duk_ret_t
 #define Scripting_DeclareFunc(name, func, num_args) { name, func, num_args }
 
-#define Scripting_GetString(ctx, arg) JSPlugin_GetString(ctx, -(arg)-1)
+#define Scripting_GetStr(ctx, arg) JSPlugin_GetString(ctx, -(arg)-1)
 #define Scripting_GetInt(ctx, arg) duk_to_int(ctx, -(arg)-1)
 #define Scripting_Consume(ctx, args)
 
@@ -89,7 +89,7 @@ static void Backend_RaiseChat(const char* groupName, const char* funcName, const
 
 
 /*########################################################################################################################*
-*---------------------------------------------------API implementation----------------------------------------------------*
+*------------------------------------------------------API functions------------------------------------------------------*
 *#########################################################################################################################*/
 static SCRIPTING_RESULT CC_Server_SendData(duk_context* ctx) {
 	duk_size_t size;
