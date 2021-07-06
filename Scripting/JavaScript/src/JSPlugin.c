@@ -12,7 +12,7 @@
 #define Scripting_ReturnStr(buffer, len) duk_push_lstring(ctx, buffer, len); return 1;
 #define Scripting_ReturnPtr(value) duk_push_pointer(ctx, value); return 1;
 
-#include "Scripting.h"
+#include "../../Scripting.h"
 
 /*########################################################################################################################*
 *--------------------------------------------------------Backend----------------------------------------------------------*

@@ -27,7 +27,7 @@ static int PythonPlugin_GetInt(Py_ssize_t ctx, int idx) {
 #define Scripting_ReturnBoolean(ctx, value) return PyBool_FromLong(value)
 #define Scripting_ReturnString(ctx, buffer, len) return PyBytes_FromStringAndSize(buffer, len)
 
-#include "Scripting.h"
+#include "../../Scripting.h"
 
 /*########################################################################################################################*
 *--------------------------------------------------------Backend----------------------------------------------------------*

@@ -139,18 +139,16 @@ static SCRIPTING_RESULT CC_Server_SetAppName(SCRIPTING_ARGS) {
 	Scripting_ReturnVoid();
 }
 
-static SCRIPTING_RESULT CC_Server_IsSingleplayer(SCRIPTING_ARGS) {
-	Scripting_ReturnBool(Server.IsSinglePlayer);
-}
-
-/* this one is too tricky to abstract */
-/*static SCRIPTING_RESULT CC_Server_SendData(SCRIPTING_ARGS)*/
 static SCRIPTING_RESULT CC_Server_SendData(SCRIPTING_ARGS) {
 	sc_buffer buffer = Scripting_GetBuf(SCRIPTING_CALL, 0);
 	Server.SendData(buffer.data, buffer.len);
 
 	Scripting_FreeBuf(&buffer);
 	Scripting_ReturnVoid();
+}
+
+static SCRIPTING_RESULT CC_Server_IsSingleplayer(SCRIPTING_ARGS) {
+	Scripting_ReturnBool(Server.IsSinglePlayer);
 }
 
 static void CC_Server_OnConnected(void* obj) {
@@ -169,6 +167,7 @@ static void CC_Server_Hook(void) {
 	Scripting_DeclareFunc("getName",     CC_Server_GetName,    0), \
 	Scripting_DeclareFunc("getAppName",  CC_Server_GetAppName, 0), \
 	Scripting_DeclareFunc("setAppName",  CC_Server_SetAppName, 1), \
+	Scripting_DeclareFunc("sendData",    CC_Server_SendData,   1), \
 	Scripting_DeclareFunc("isSingleplayer", CC_Server_IsSingleplayer, 0)
 
 

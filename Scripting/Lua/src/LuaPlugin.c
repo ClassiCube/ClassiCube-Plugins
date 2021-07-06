@@ -22,8 +22,8 @@
 #define Scripting_ReturnStr(buffer, len) lua_pushlstring(L, buffer, len); return 1;
 #define Scripting_ReturnPtr(value) lua_pushlightuserdata(L, value); return 1;
 
-#include "Scripting.h"
-/* don't forge to add 1 to arg, because LUA stack starts at 1 */
+#include "../../Scripting.h"
+/* Scripting_GetXYZ functions: don't forget to add 1 to arg, because LUA stack starts at 1 */
 
 /*########################################################################################################################*
 *--------------------------------------------------------Backend----------------------------------------------------------*
