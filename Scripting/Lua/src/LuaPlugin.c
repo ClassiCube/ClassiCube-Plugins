@@ -5,29 +5,31 @@
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
-#include "../../../../ClassicalSharp/src/String.h"
+
+typedef struct cc_string_ cc_string;
+static cc_string LuaPlugin_GetString(lua_State* L, int idx);
+
+#define SCRIPTING_DIRECTORY "lua"
+#define SCRIPTING_ARGS lua_State* ctx
+#define SCRIPTING_RESULT int
+#define Scripting_DeclareFunc(name, func, num_args) { name, func }
+
+#define Scripting_GetStr(arg) LuaPlugin_GetString(ctx, -(arg)-1)
+#define Scripting_GetInt(arg) lua_tointeger(ctx, -(arg)-1)
+#define Scripting_Consume(args) lua_pop(ctx, args)
+
+#define Scripting_ReturnVoid() return 0;
+#define Scripting_ReturnInt(value) lua_pushinteger(ctx, value); return 1;
+#define Scripting_ReturnBool(value) lua_pushboolean(ctx, value); return 1;
+#define Scripting_ReturnStr(buffer, len) lua_pushlstring(ctx, buffer, len); return 1;
+
+#include "Scripting.h"
 
 static cc_string LuaPlugin_GetString(lua_State* L, int idx) {
 	size_t len;
 	const char* msg = lua_tolstring(L, idx, &len);
 	return String_Init(msg, len, len);
 }
-
-#define SCRIPTING_DIRECTORY "lua"
-#define SCRIPTING_CONTEXT lua_State*
-#define SCRIPTING_RESULT int
-#define Scripting_DeclareFunc(name, func, num_args) { name, func }
-
-#define Scripting_GetStr(ctx, arg) LuaPlugin_GetString(ctx, -(arg)-1)
-#define Scripting_GetInt(ctx, arg) lua_tointeger(ctx, -(arg)-1)
-#define Scripting_Consume(ctx, args) lua_pop(ctx, args)
-
-#define Scripting_ReturnVoid(ctx) return 0;
-#define Scripting_ReturnInt(ctx, value) lua_pushinteger(ctx, value); return 1;
-#define Scripting_ReturnBoolean(ctx, value) lua_pushboolean(ctx, value); return 1;
-#define Scripting_ReturnString(ctx, buffer, len) lua_pushlstring(ctx, buffer, len); return 1;
-
-#include "Scripting.h"
 
 // ====== LUA BASE PLUGIN API ======
 struct LuaPlugin;

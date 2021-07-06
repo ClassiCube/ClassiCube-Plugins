@@ -3,8 +3,18 @@
 // ====================================================================
 
 // Since we are building an external plugin dll, we need to import from ClassiCube lib instead of exporting these
-#define CC_API __declspec(dllimport)
-#define CC_VAR __declspec(dllimport)
+#ifdef _WIN32
+  #define CC_API __declspec(dllimport)
+  #define CC_VAR __declspec(dllimport)
+  #ifdef _WIN64
+    #pragma comment(lib, "../../../../ClassicalSharp/src/x64/Debug/ClassiCube.lib")
+  #else
+    #pragma comment(lib, "../../../../ClassicalSharp/src/x86/Debug/ClassiCube.lib")
+  #endif
+#else
+  #define CC_API
+  #define CC_VAR
+#endif
 
 // The proper way would be to add 'additional include directories' and 'additional libs' in Visual Studio Project properties
 // Or, you can just be lazy and change these paths for your own system. 
@@ -23,12 +33,6 @@
 #include "../../../../ClassicalSharp/src/Server.h"
 #include "../../../../ClassicalSharp/src/Window.h"
 
-#ifdef _WIN64
-#pragma comment(lib, "../../../../ClassicalSharp/src/x64/Debug/ClassiCube.lib")
-#else
-#pragma comment(lib, "../../../../ClassicalSharp/src/x86/Debug/ClassiCube.lib")
-#endif
-
 static void Backend_RaiseVoid(const char* groupName, const char* funcName);
 static void Backend_RaiseChat(const char* groupName, const char* funcName, const cc_string* msg, int msgType);
 
@@ -39,24 +43,24 @@ static void Backend_Init(void);
 /*
 Backends must additionally provide the following defines:
 #define SCRIPTING_DIRECTORY
-#define SCRIPTING_CONTEXT
+#define SCRIPTING_ARGS
 #define SCRIPTING_RESULT
 c
 
-#define Scripting_GetStr(SCRIPTING_CONTEXT, arg)
-#define Scripting_GetInt(SCRIPTING_CONTEXT, arg)
-#define Scripting_Consume(SCRIPTING_CONTEXT, args)
+#define Scripting_GetStr(arg)   (SCRIPTING_ARGS is implicitly available)
+#define Scripting_GetInt(arg)   (SCRIPTING_ARGS is implicitly available)
+#define Scripting_Consume(args) (SCRIPTING_ARGS is implicitly available)
 
-#define Scripting_ReturnVoid(SCRIPTING_CONTEXT)
-#define Scripting_ReturnInt(SCRIPTING_CONTEXT, value)
-#define Scripting_ReturnBoolean(SCRIPTING_CONTEXT, value)
-#define Scripting_ReturnString(SCRIPTING_CONTEXT, buffer, len)
+#define Scripting_ReturnVoid()      (SCRIPTING_ARGS is implicitly available)
+#define Scripting_ReturnInt(value)  (SCRIPTING_ARGS is implicitly available)
+#define Scripting_ReturnBool(value) (SCRIPTING_ARGS is implicitly available)
+#define Scripting_ReturnStr(buffer, len) (SCRIPTING_ARGS is implicitly available)
 
 Keep in mind that function arguments are accessed in reverse order, e.g. 
 function GetBlock(x, y, z) {
-  int x = Scripting_GetInt(ctx, 2);
-  int y = Scripting_GetInt(ctx, 1);
-  int z = Scripting_GetInt(ctx, 0);
+  int x = Scripting_GetInt(2);
+  int y = Scripting_GetInt(1);
+  int z = Scripting_GetInt(0);
 }
 */
 #define SCRIPTING_NULL_FUNC Scripting_DeclareFunc(NULL, NULL, 0)
@@ -66,12 +70,12 @@ static const cc_string emptyStr = { "", 0, 0 };
 /*########################################################################################################################*
 *--------------------------------------------------------Block api--------------------------------------------------------*
 *#########################################################################################################################*/
-static SCRIPTING_RESULT CC_Block_Parse(SCRIPTING_CONTEXT ctx) {
-	cc_string str = Scripting_GetStr(ctx, 0);
+static SCRIPTING_RESULT CC_Block_Parse(SCRIPTING_ARGS) {
+	cc_string str = Scripting_GetStr(0);
 	int block = Block_Parse(&str);
 
-	Scripting_Consume(ctx, 1);
-	Scripting_ReturnInt(ctx, block);
+	Scripting_Consume(1);
+	Scripting_ReturnInt(block);
 }
 
 #define CC_BLOCK_FUNCS \
@@ -81,29 +85,29 @@ static SCRIPTING_RESULT CC_Block_Parse(SCRIPTING_CONTEXT ctx) {
 /*########################################################################################################################*
 *--------------------------------------------------------Chat api---------------------------------------------------------*
 *#########################################################################################################################*/
-static SCRIPTING_RESULT CC_Chat_Add(SCRIPTING_CONTEXT ctx) {
-	cc_string str = Scripting_GetStr(ctx, 0);
+static SCRIPTING_RESULT CC_Chat_Add(SCRIPTING_ARGS) {
+	cc_string str = Scripting_GetStr(0);
 	Chat_Add(&str);
 
-	Scripting_Consume(ctx, 1);
-	Scripting_ReturnVoid(ctx);
+	Scripting_Consume(1);
+	Scripting_ReturnVoid();
 }
 
-static SCRIPTING_RESULT CC_Chat_AddOf(SCRIPTING_CONTEXT ctx) {
-	cc_string str = Scripting_GetStr(ctx, 1);
-	int msgType   = Scripting_GetInt(ctx, 0);
+static SCRIPTING_RESULT CC_Chat_AddOf(SCRIPTING_ARGS) {
+	cc_string str = Scripting_GetStr(1);
+	int msgType   = Scripting_GetInt(0);
 	Chat_AddOf(&str, msgType);
 
-	Scripting_Consume(ctx, 2);
-	Scripting_ReturnVoid(ctx);
+	Scripting_Consume(2);
+	Scripting_ReturnVoid();
 }
 
-static SCRIPTING_RESULT CC_Chat_Send(SCRIPTING_CONTEXT ctx) {
-	cc_string str = Scripting_GetStr(ctx, 0);
+static SCRIPTING_RESULT CC_Chat_Send(SCRIPTING_ARGS) {
+	cc_string str = Scripting_GetStr(0);
 	Chat_Send(&str, false);
 
-	Scripting_Consume(ctx, 1);
-	Scripting_ReturnVoid(ctx);
+	Scripting_Consume(1);
+	Scripting_ReturnVoid();
 }
 
 static void CC_Chat_OnReceived(void* obj, const cc_string* msg, int msgType) {
@@ -126,30 +130,30 @@ static void CC_Chat_Hook(void) {
 /*########################################################################################################################*
 *-------------------------------------------------------Server api--------------------------------------------------------*
 *#########################################################################################################################*/
-static SCRIPTING_RESULT CC_Server_GetMotd(SCRIPTING_CONTEXT ctx) {
-	Scripting_ReturnString(ctx, Server.MOTD.buffer, Server.MOTD.length);
+static SCRIPTING_RESULT CC_Server_GetMotd(SCRIPTING_ARGS) {
+	Scripting_ReturnStr(Server.MOTD.buffer, Server.MOTD.length);
 }
-static SCRIPTING_RESULT CC_Server_GetName(SCRIPTING_CONTEXT ctx) {
-	Scripting_ReturnString(ctx, Server.Name.buffer, Server.Name.length);
+static SCRIPTING_RESULT CC_Server_GetName(SCRIPTING_ARGS) {
+	Scripting_ReturnStr(Server.Name.buffer, Server.Name.length);
 }
-static SCRIPTING_RESULT CC_Server_GetAppName(SCRIPTING_CONTEXT ctx) {
-	Scripting_ReturnString(ctx, Server.AppName.buffer, Server.AppName.length);
+static SCRIPTING_RESULT CC_Server_GetAppName(SCRIPTING_ARGS) {
+	Scripting_ReturnStr(Server.AppName.buffer, Server.AppName.length);
 }
 
-static SCRIPTING_RESULT CC_Server_SetAppName(SCRIPTING_CONTEXT ctx) {
-	cc_string str = Scripting_GetStr(ctx, 0);
+static SCRIPTING_RESULT CC_Server_SetAppName(SCRIPTING_ARGS) {
+	cc_string str = Scripting_GetStr(0);
 	String_Copy(&Server.AppName, &str);
 
-	Scripting_Consume(ctx, 1);
-	Scripting_ReturnVoid(ctx);
+	Scripting_Consume(1);
+	Scripting_ReturnVoid();
 }
 
-static SCRIPTING_RESULT CC_Server_IsSingleplayer(SCRIPTING_CONTEXT ctx) {
-	Scripting_ReturnBoolean(ctx, Server.IsSinglePlayer);
+static SCRIPTING_RESULT CC_Server_IsSingleplayer(SCRIPTING_ARGS) {
+	Scripting_ReturnBool(Server.IsSinglePlayer);
 }
 
 /* this one is too tricky to abstract */
-/*static SCRIPTING_RESULT CC_Server_SendData(SCRIPTING_CONTEXT ctx)*/
+/*static SCRIPTING_RESULT CC_Server_SendData(SCRIPTING_ARGS)*/
 
 static void CC_Server_OnConnected(void* obj) {
 	Backend_RaiseVoid("server", "onConnected");
@@ -173,57 +177,57 @@ static void CC_Server_Hook(void) {
 /*########################################################################################################################*
 *-------------------------------------------------------Tablist api-------------------------------------------------------*
 *#########################################################################################################################*/
-static SCRIPTING_RESULT CC_Tablist_GetPlayer(SCRIPTING_CONTEXT ctx) {
-	int id         = Scripting_GetInt(ctx, 0);
+static SCRIPTING_RESULT CC_Tablist_GetPlayer(SCRIPTING_ARGS) {
+	int id         = Scripting_GetInt(0);
 	cc_string name = emptyStr;
 	if (TabList.NameOffsets[id]) name = TabList_UNSAFE_GetPlayer(id);
 
-	Scripting_Consume(ctx, 1);
-	Scripting_ReturnString(ctx, name.buffer, name.length);
+	Scripting_Consume(1);
+	Scripting_ReturnStr(name.buffer, name.length);
 }
 
-static SCRIPTING_RESULT CC_Tablist_GetName(SCRIPTING_CONTEXT ctx) {
-	int id         = Scripting_GetInt(ctx, 0);
+static SCRIPTING_RESULT CC_Tablist_GetName(SCRIPTING_ARGS) {
+	int id         = Scripting_GetInt(0);
 	cc_string name = emptyStr;
 	if (TabList.NameOffsets[id]) name = TabList_UNSAFE_GetList(id);
 
-	Scripting_Consume(ctx, 1);
-	Scripting_ReturnString(ctx, name.buffer, name.length);
+	Scripting_Consume(1);
+	Scripting_ReturnStr(name.buffer, name.length);
 }
 
-static SCRIPTING_RESULT CC_Tablist_GetGroup(SCRIPTING_CONTEXT ctx) {
-	int id         = Scripting_GetInt(ctx, 0);
+static SCRIPTING_RESULT CC_Tablist_GetGroup(SCRIPTING_ARGS) {
+	int id         = Scripting_GetInt(0);
 	cc_string name = emptyStr;
 	if (TabList.NameOffsets[id]) name = TabList_UNSAFE_GetGroup(id);
 
-	Scripting_Consume(ctx, 1);
-	Scripting_ReturnString(ctx, name.buffer, name.length);
+	Scripting_Consume(1);
+	Scripting_ReturnStr(name.buffer, name.length);
 }
 
-static SCRIPTING_RESULT CC_Tablist_GetRank(SCRIPTING_CONTEXT ctx) {
-	int id = Scripting_GetInt(ctx, 0);
-	Scripting_Consume(ctx, 1);
-	Scripting_ReturnInt(ctx, TabList.GroupRanks[id]);
+static SCRIPTING_RESULT CC_Tablist_GetRank(SCRIPTING_ARGS) {
+	int id = Scripting_GetInt(0);
+	Scripting_Consume(1);
+	Scripting_ReturnInt(TabList.GroupRanks[id]);
 }
 
-static SCRIPTING_RESULT CC_Tablist_Remove(SCRIPTING_CONTEXT ctx) {
-	int id = Scripting_GetInt(ctx, 0);
+static SCRIPTING_RESULT CC_Tablist_Remove(SCRIPTING_ARGS) {
+	int id = Scripting_GetInt(0);
 	TabList_Remove(id);
 
-	Scripting_Consume(ctx, 1);
-	Scripting_ReturnVoid(ctx);
+	Scripting_Consume(1);
+	Scripting_ReturnVoid();
 }
 
-static SCRIPTING_RESULT CC_Tablist_Set(SCRIPTING_CONTEXT ctx) {
-	int id           = Scripting_GetInt(ctx, 4);
-	cc_string player = Scripting_GetStr(ctx, 3);
-	cc_string list   = Scripting_GetStr(ctx, 2);
-	cc_string group  = Scripting_GetStr(ctx, 1);
-	int groupRank    = Scripting_GetInt(ctx, 0);
+static SCRIPTING_RESULT CC_Tablist_Set(SCRIPTING_ARGS) {
+	int id           = Scripting_GetInt(4);
+	cc_string player = Scripting_GetStr(3);
+	cc_string list   = Scripting_GetStr(2);
+	cc_string group  = Scripting_GetStr(1);
+	int groupRank    = Scripting_GetInt(0);
 	TabList_Set(id, &player, &list, &group, groupRank);
 
-	Scripting_Consume(ctx, 5);
-	Scripting_ReturnVoid(ctx);
+	Scripting_Consume(5);
+	Scripting_ReturnVoid();
 }
 
 #define CC_TABLIST_FUNCS \
@@ -238,25 +242,25 @@ static SCRIPTING_RESULT CC_Tablist_Set(SCRIPTING_CONTEXT ctx) {
 /*########################################################################################################################*
 *--------------------------------------------------------World api--------------------------------------------------------*
 *#########################################################################################################################*/
-static SCRIPTING_RESULT CC_World_GetWidth(SCRIPTING_CONTEXT ctx) {
-	Scripting_ReturnInt(ctx, World.Width);
+static SCRIPTING_RESULT CC_World_GetWidth(SCRIPTING_ARGS) {
+	Scripting_ReturnInt(World.Width);
 }
 
-static SCRIPTING_RESULT CC_World_GetHeight(SCRIPTING_CONTEXT ctx) {
-	Scripting_ReturnInt(ctx, World.Height);
+static SCRIPTING_RESULT CC_World_GetHeight(SCRIPTING_ARGS) {
+	Scripting_ReturnInt(World.Height);
 }
 
-static SCRIPTING_RESULT CC_World_GetLength(SCRIPTING_CONTEXT ctx) {
-	Scripting_ReturnInt(ctx, World.Length);
+static SCRIPTING_RESULT CC_World_GetLength(SCRIPTING_ARGS) {
+	Scripting_ReturnInt(World.Length);
 }
 
-static SCRIPTING_RESULT CC_World_GetBlock(SCRIPTING_CONTEXT ctx) {
-	int x = Scripting_GetInt(ctx, 2);
-	int y = Scripting_GetInt(ctx, 1);
-	int z = Scripting_GetInt(ctx, 0);
+static SCRIPTING_RESULT CC_World_GetBlock(SCRIPTING_ARGS) {
+	int x = Scripting_GetInt(2);
+	int y = Scripting_GetInt(1);
+	int z = Scripting_GetInt(0);
 
-	Scripting_Consume(ctx, 3);
-	Scripting_ReturnInt(ctx, World_GetBlock(x, y, z));
+	Scripting_Consume(3);
+	Scripting_ReturnInt(World_GetBlock(x, y, z));
 }
 
 static void CC_World_OnNew(void* obj) {
@@ -280,12 +284,12 @@ static void CC_World_Hook(void) {
 /*########################################################################################################################*
 *--------------------------------------------------------Window api-------------------------------------------------------*
 *#########################################################################################################################*/
-static SCRIPTING_RESULT CC_Window_SetTitle(SCRIPTING_CONTEXT ctx) {
-	cc_string str = Scripting_GetStr(ctx, 0);
+static SCRIPTING_RESULT CC_Window_SetTitle(SCRIPTING_ARGS) {
+	cc_string str = Scripting_GetStr(0);
 	Window_SetTitle(&str);
 
-	Scripting_Consume(ctx, 1);
-	Scripting_ReturnVoid(ctx);
+	Scripting_Consume(1);
+	Scripting_ReturnVoid();
 }
 
 #define CC_WINDOW_FUNCS \
