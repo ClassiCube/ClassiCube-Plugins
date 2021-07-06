@@ -45,16 +45,21 @@ Backends must additionally provide the following defines:
 #define SCRIPTING_DIRECTORY
 #define SCRIPTING_ARGS
 #define SCRIPTING_RESULT
-c
+---------------------------
+NOTE that SCRIPTING_ARGS is implicitly available to all of the following functions:
 
-#define Scripting_GetStr(arg)   (SCRIPTING_ARGS is implicitly available)
-#define Scripting_GetInt(arg)   (SCRIPTING_ARGS is implicitly available)
-#define Scripting_Consume(args) (SCRIPTING_ARGS is implicitly available)
+#define Scripting_GetStr(arg)
+#define Scripting_GetInt(arg)
+#define Scripting_GetBuf(arg)
 
-#define Scripting_ReturnVoid()      (SCRIPTING_ARGS is implicitly available)
-#define Scripting_ReturnInt(value)  (SCRIPTING_ARGS is implicitly available)
-#define Scripting_ReturnBool(value) (SCRIPTING_ARGS is implicitly available)
-#define Scripting_ReturnStr(buffer, len) (SCRIPTING_ARGS is implicitly available)
+#define Scripting_FreeBuf(buffer)
+#define Scripting_Consume(args)
+
+#define Scripting_ReturnVoid()
+#define Scripting_ReturnInt(value)
+#define Scripting_ReturnBool(value)
+#define Scripting_ReturnStr(buffer, len)
+#define Scripting_ReturnPtr(value)
 
 Keep in mind that function arguments are accessed in reverse order, e.g. 
 function GetBlock(x, y, z) {
@@ -63,8 +68,10 @@ function GetBlock(x, y, z) {
   int z = Scripting_GetInt(0);
 }
 */
+
 #define SCRIPTING_NULL_FUNC Scripting_DeclareFunc(NULL, NULL, 0)
 static const cc_string emptyStr = { "", 0, 0 };
+struct ScriptingBuffer { cc_uint8* data; int len, meta; };
 
 
 /*########################################################################################################################*
@@ -154,6 +161,14 @@ static SCRIPTING_RESULT CC_Server_IsSingleplayer(SCRIPTING_ARGS) {
 
 /* this one is too tricky to abstract */
 /*static SCRIPTING_RESULT CC_Server_SendData(SCRIPTING_ARGS)*/
+static SCRIPTING_RESULT CC_Server_SendData(SCRIPTING_ARGS) {
+	struct ScriptingBuffer buffer = Scripting_GetBuf(0);
+	Server.SendData(buffer.data, buffer.len);
+	Scripting_FreeBuf(&buffer);
+
+	Scripting_Consume(1);
+	Scripting_ReturnVoid();
+}
 
 static void CC_Server_OnConnected(void* obj) {
 	Backend_RaiseVoid("server", "onConnected");
@@ -292,8 +307,13 @@ static SCRIPTING_RESULT CC_Window_SetTitle(SCRIPTING_ARGS) {
 	Scripting_ReturnVoid();
 }
 
+static SCRIPTING_RESULT CC_Window_GetHandle(SCRIPTING_ARGS) {
+	Scripting_ReturnPtr(WindowInfo.Handle);
+}
+
 #define CC_WINDOW_FUNCS \
-	Scripting_DeclareFunc("setTitle",  CC_Window_SetTitle, 1)
+	Scripting_DeclareFunc("setTitle",  CC_Window_SetTitle,  1), \
+	Scripting_DeclareFunc("getHandle", CC_Window_GetHandle, 0)
 
 
 /*########################################################################################################################*

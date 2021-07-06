@@ -1,34 +1,52 @@
-// Since we are building an external plugin dll, we need to import from ClassiCube lib instead of exporting these
-#define CC_API __declspec(dllimport)
-#define CC_VAR __declspec(dllimport)
-
 #include "duktape.h"
-#include "../../../../ClassicalSharp/src/String.h"
 
+struct ScriptingBuffer;
+typedef struct cc_string_ cc_string;
+static cc_string              JSPlugin_GetString(duk_context* ctx, int idx);
+static struct ScriptingBuffer JSPlugin_GetBuffer(duk_context* ctx, int idx);
+static void LuaPlugin_FreeBuffer(struct ScriptingBuffer* buffer);
+
+#define SCRIPTING_DIRECTORY "js"
+#define SCRIPTING_ARGS duk_context* ctx
+#define SCRIPTING_RESULT duk_ret_t
+#define Scripting_DeclareFunc(name, func, num_args) { name, func, num_args }
+
+#define Scripting_GetStr(arg) JSPlugin_GetString(ctx, -(arg)-1)
+#define Scripting_GetInt(arg) duk_to_int(ctx, -(arg)-1)
+#define Scripting_GetBuf(arg) JSPlugin_GetBuffer(ctx, -(arg)-1)
+
+#define Scripting_Consume(args)
+#define Scripting_FreeBuf(buffer) /* no need to manually free */
+
+#define Scripting_ReturnVoid() return 1;
+#define Scripting_ReturnInt(value) duk_push_int(ctx, value); return 1;
+#define Scripting_ReturnBool(value) duk_push_boolean(ctx, value); return 1;
+#define Scripting_ReturnStr(buffer, len) duk_push_lstring(ctx, buffer, len); return 1;
+#define Scripting_ReturnPtr(value) duk_push_pointer(ctx, value); return 1;
+
+#include "Scripting.h"
+
+/*########################################################################################################################*
+*--------------------------------------------------------Backend----------------------------------------------------------*
+*#########################################################################################################################*/
 static cc_string JSPlugin_GetString(duk_context* ctx, int idx) {
 	duk_size_t len;
 	const char* msg = duk_to_lstring(ctx, idx, &len);
 	return String_Init(msg, len, len);
 }
 
-#define SCRIPTING_DIRECTORY "js"
-#define SCRIPTING_CONTEXT duk_context*
-#define SCRIPTING_RESULT duk_ret_t
-#define Scripting_DeclareFunc(name, func, num_args) { name, func, num_args }
+static struct ScriptingBuffer JSPlugin_GetBuffer(duk_context* ctx, int idx) {
+	struct ScriptingBuffer buffer;
+	duk_size_t size;
 
-#define Scripting_GetStr(ctx, arg) JSPlugin_GetString(ctx, -(arg)-1)
-#define Scripting_GetInt(ctx, arg) duk_to_int(ctx, -(arg)-1)
-#define Scripting_Consume(ctx, args)
+	buffer.data = duk_to_buffer(ctx, -1, &size);
+	buffer.len  = size;
+	return buffer;
+}
 
-#define Scripting_ReturnVoid(ctx) return 1;
-#define Scripting_ReturnInt(ctx, value) duk_push_int(ctx, value); return 1;
-#define Scripting_ReturnBoolean(ctx, value) duk_push_boolean(ctx, value); return 1;
-#define Scripting_ReturnString(ctx, buffer, len) duk_push_lstring(ctx, buffer, len); return 1;
-
-#include "Scripting.h"
 
 /*########################################################################################################################*
-*--------------------------------------------------------Backend----------------------------------------------------------*
+*--------------------------------------------------------Base API---------------------------------------------------------*
 *#########################################################################################################################*/
 struct JSPlugin;
 typedef struct JSPlugin { duk_context* ctx; struct JSPlugin* next; } JSPlugin;
@@ -89,30 +107,15 @@ static void Backend_RaiseChat(const char* groupName, const char* funcName, const
 
 
 /*########################################################################################################################*
-*------------------------------------------------------API functions------------------------------------------------------*
+*-------------------------------------------------Plugin implementation---------------------------------------------------*
 *#########################################################################################################################*/
-static SCRIPTING_RESULT CC_Server_SendData(duk_context* ctx) {
-	duk_size_t size;
-	void* data = duk_to_buffer(ctx, -1, &size);
-	Server.SendData(data, size);
-	return 1;
-}
-
-static const duk_function_list_entry blockFuncs[]  = { CC_BLOCK_FUNCS, SCRIPTING_NULL_FUNC };
-static const duk_function_list_entry chatFuncs[]   = { CC_CHAT_FUNCS,  SCRIPTING_NULL_FUNC };
-static const duk_function_list_entry serverFuncs[] = {
-	CC_SERVER_FUNCS,
-	Scripting_DeclareFunc("sendData", CC_Server_SendData, 1),
-	SCRIPTING_NULL_FUNC
-};
+static const duk_function_list_entry blockFuncs[]   = { CC_BLOCK_FUNCS,   SCRIPTING_NULL_FUNC };
+static const duk_function_list_entry chatFuncs[]    = { CC_CHAT_FUNCS,    SCRIPTING_NULL_FUNC };
+static const duk_function_list_entry serverFuncs[]  = { CC_SERVER_FUNCS,  SCRIPTING_NULL_FUNC };
 static const duk_function_list_entry tablistFuncs[] = { CC_TABLIST_FUNCS, SCRIPTING_NULL_FUNC };
 static const duk_function_list_entry worldFuncs[]   = { CC_WORLD_FUNCS,   SCRIPTING_NULL_FUNC };
 static const duk_function_list_entry windowFuncs[]  = { CC_WINDOW_FUNCS,  SCRIPTING_NULL_FUNC };
 
-
-/*########################################################################################################################*
-*-------------------------------------------------Plugin implementation---------------------------------------------------*
-*#########################################################################################################################*/
 static void JSPlugin_RegisterModule(duk_context* ctx, const char* name, const duk_function_list_entry* funcs) {
 	duk_push_global_object(ctx);
 	duk_push_object(ctx);

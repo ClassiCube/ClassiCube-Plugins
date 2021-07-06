@@ -6,8 +6,11 @@
 #include "lualib.h"
 #include "lauxlib.h"
 
+struct ScriptingBuffer;
 typedef struct cc_string_ cc_string;
-static cc_string LuaPlugin_GetString(lua_State* L, int idx);
+static cc_string              LuaPlugin_GetString(lua_State* L, int idx);
+static struct ScriptingBuffer LuaPlugin_GetBuffer(lua_State* L, int idx);
+static void LuaPlugin_FreeBuffer(struct ScriptingBuffer* buffer);
 
 #define SCRIPTING_DIRECTORY "lua"
 #define SCRIPTING_ARGS lua_State* ctx
@@ -15,23 +18,61 @@ static cc_string LuaPlugin_GetString(lua_State* L, int idx);
 #define Scripting_DeclareFunc(name, func, num_args) { name, func }
 
 #define Scripting_GetStr(arg) LuaPlugin_GetString(ctx, -(arg)-1)
-#define Scripting_GetInt(arg) lua_tointeger(ctx, -(arg)-1)
+#define Scripting_GetInt(arg) (int)lua_tointeger(ctx,  -(arg)-1)
+#define Scripting_GetBuf(arg) LuaPlugin_GetBuffer(ctx, -(arg)-1)
+
 #define Scripting_Consume(args) lua_pop(ctx, args)
+#define Scripting_FreeBuf(buffer) LuaPlugin_FreeBuffer(buffer)
 
 #define Scripting_ReturnVoid() return 0;
 #define Scripting_ReturnInt(value) lua_pushinteger(ctx, value); return 1;
 #define Scripting_ReturnBool(value) lua_pushboolean(ctx, value); return 1;
 #define Scripting_ReturnStr(buffer, len) lua_pushlstring(ctx, buffer, len); return 1;
+#define Scripting_ReturnPtr(value) lua_pushlightuserdata(ctx, value); return 1;
 
 #include "Scripting.h"
 
+/*########################################################################################################################*
+*--------------------------------------------------------Backend----------------------------------------------------------*
+*#########################################################################################################################*/
 static cc_string LuaPlugin_GetString(lua_State* L, int idx) {
 	size_t len;
 	const char* msg = lua_tolstring(L, idx, &len);
 	return String_Init(msg, len, len);
 }
 
-// ====== LUA BASE PLUGIN API ======
+static struct ScriptingBuffer LuaPlugin_GetBuffer(lua_State* L, int idx) {
+	struct ScriptingBuffer buffer = { 0 };
+	size_t len;
+	int i, type = lua_type(L, idx);
+
+	if (type == LUA_TSTRING) {
+		buffer.data = lua_tolstring(L, idx, &len);
+		buffer.len  = len;
+	} else if (type == LUA_TTABLE) {
+		buffer.len  = lua_rawlen(L, -1);
+		buffer.data = Mem_Alloc(len, 1, "lua send data");
+		buffer.meta = 1;
+
+		for (i = 1; i <= buffer.len; i++) {
+			lua_rawgeti(L, -1, i);
+			buffer.data[i - 1] = lua_tointeger(L, -1);
+			lua_pop(L, 1);
+		}
+	} else {
+		luaL_error(L, "data must be string or an array table");
+	}
+	return buffer;
+}
+
+static void LuaPlugin_FreeBuffer(struct ScriptingBuffer* buffer) {
+	if (buffer->meta) Mem_Free(buffer->data);
+}
+
+
+/*########################################################################################################################*
+*--------------------------------------------------------Base API---------------------------------------------------------*
+*#########################################################################################################################*/
 struct LuaPlugin;
 typedef struct LuaPlugin { lua_State* L; struct LuaPlugin* next; } LuaPlugin;
 static LuaPlugin* pluginsHead;
@@ -89,49 +130,15 @@ static void Backend_RaiseChat(const char* groupName, const char* funcName, const
 
 
 /*########################################################################################################################*
-*------------------------------------------------------API functions-------------------------------------------------------*
+*-------------------------------------------------Plugin implementation---------------------------------------------------*
 *#########################################################################################################################*/
-static int CC_Server_SendData(lua_State* L) {
-	cc_uint8* data;
-	size_t len;
-	int i, type = lua_type(L, -1);
-
-	if (type == LUA_TSTRING) {
-		data = lua_tolstring(L, -1, &len);
-		Server.SendData(data, len);
-	} else if (type == LUA_TTABLE) {
-		len  = lua_rawlen(L, -1);
-		data = Mem_Alloc(len, 1, "lua send data");
-
-		for (i = 1; i <= len; i++) {
-			lua_rawgeti(L, -1, i);
-			data[i - 1] = lua_tointeger(L, -1);
-			lua_pop(L, 1);
-		}
-
-		Server.SendData(data, len);
-		Mem_Free(data);
-	} else {
-		luaL_error(L, "data must be string or an array table");
-	}
-	return 0;
-}
-
-static const struct luaL_Reg blockFuncs[]   = { CC_BLOCK_FUNCS, SCRIPTING_NULL_FUNC };
-static const struct luaL_Reg chatFuncs[]    = { CC_CHAT_FUNCS,  SCRIPTING_NULL_FUNC };
-static const struct luaL_Reg serverFuncs[]  = {
-	CC_SERVER_FUNCS,
-	Scripting_DeclareFunc("sendData", CC_Server_SendData, 1),
-	SCRIPTING_NULL_FUNC
-};
+static const struct luaL_Reg blockFuncs[]   = { CC_BLOCK_FUNCS,   SCRIPTING_NULL_FUNC };
+static const struct luaL_Reg chatFuncs[]    = { CC_CHAT_FUNCS,    SCRIPTING_NULL_FUNC };
+static const struct luaL_Reg serverFuncs[]  = { CC_SERVER_FUNCS,  SCRIPTING_NULL_FUNC };
 static const struct luaL_Reg tablistFuncs[] = { CC_TABLIST_FUNCS, SCRIPTING_NULL_FUNC };
 static const struct luaL_Reg worldFuncs[]   = { CC_WORLD_FUNCS,   SCRIPTING_NULL_FUNC };
 static const struct luaL_Reg windowFuncs[]  = { CC_WINDOW_FUNCS,  SCRIPTING_NULL_FUNC };
 
-
-/*########################################################################################################################*
-*-------------------------------------------------Plugin implementation---------------------------------------------------*
-*#########################################################################################################################*/
 static void LuaPlugin_Register(lua_State* L) {
 	luaL_newlib(L, blockFuncs);   lua_setglobal(L, "block");
 	luaL_newlib(L, chatFuncs);    lua_setglobal(L, "chat");
