@@ -1,36 +1,42 @@
-// Since we are building an external plugin dll, we need to import from ClassiCube lib instead of exporting these
-#define CC_API
-#define CC_VAR
-
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "src/String.h"
-static cc_string PythonPlugin_GetStr(Py_ssize_t ctx, int idx) {
-	return String_Empty;
-}
-
-static int PythonPlugin_GetInt(Py_ssize_t ctx, int idx) {
-	return 0;
-}
-
 #define SCRIPTING_DIRECTORY "python"
-#define SCRIPTING_CONTEXT PyObject* self, PyObject *const *args, Py_ssize_t
+#define SCRIPTING_ARGS PyObject* self, PyObject *const *args, Py_ssize_t numArgs
+#define SCRIPTING_CALL self, args, numArgs
 #define SCRIPTING_RESULT void*
 #define Scripting_DeclareFunc(name, func, num_args) { name, func, METH_FASTCALL, "" }
-#define Scripting_GetStr(ctx, arg) PythonPlugin_GetStr(ctx, arg)
-#define Scripting_GetInt(ctx, arg) PythonPlugin_GetInt(ctx, arg)
-#define Scripting_Consume(ctx, args)
 
-#define Scripting_ReturnVoid(ctx) return NULL;
-#define Scripting_ReturnInt(ctx, value) return PyLong_FromLong(value)
-#define Scripting_ReturnBoolean(ctx, value) return PyBool_FromLong(value)
-#define Scripting_ReturnString(ctx, buffer, len) return PyBytes_FromStringAndSize(buffer, len)
+#define Scripting_ReturnVoid() return NULL;
+#define Scripting_ReturnInt(value) return PyLong_FromLong(value)
+#define Scripting_ReturnBool(value) return PyBool_FromLong(value)
+#define Scripting_ReturnStr(buffer, len) return PyBytes_FromStringAndSize(buffer, len)
 
 #include "../../Scripting.h"
 
+
 /*########################################################################################################################*
 *--------------------------------------------------------Backend----------------------------------------------------------*
+*#########################################################################################################################*/
+static cc_string Scripting_GetStr(SCRIPTING_ARGS, int arg) {
+	return String_Empty;
+}
+
+static int Scripting_GetInt(SCRIPTING_ARGS, int arg) {
+	return 0;
+}
+
+static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg) {
+	sc_buffer buffer = { 0 };
+	return buffer;
+}
+
+static void Scripting_FreeBuf(sc_buffer* buffer) {
+	/* no need to manually free the memory here */
+}
+
+/*########################################################################################################################*
+*--------------------------------------------------------Base API----------------------------------------------------------*
 *#########################################################################################################################*/
 struct PythonPlugin;
 typedef struct PythonPlugin { void* ctx; struct PythonPlugin* next; } PythonPlugin;
@@ -42,16 +48,40 @@ static void Backend_RaiseVoid(const char* groupName, const char* funcName) {
 static void Backend_RaiseChat(const char* groupName, const char* funcName, const cc_string* msg, int msgType) {
 }
 
-static PyMethodDef chatFuncs[] = { CC_CHAT_FUNCS, SCRIPTING_NULL_FUNC };
-static PyModuleDef chatModule = {
-	PyModuleDef_HEAD_INIT, "chat", NULL, -1, chatFuncs,
-	NULL, NULL, NULL, NULL
-};
+/*########################################################################################################################*
+*-------------------------------------------------Plugin implementation---------------------------------------------------*
+*#########################################################################################################################*/
+static PyMethodDef blockFuncs[] = { CC_BLOCK_FUNCS, SCRIPTING_NULL_FUNC };
+static PyModuleDef blockModule  = { PyModuleDef_HEAD_INIT, "block", NULL, -1, blockFuncs, NULL, NULL, NULL, NULL };
+static PyObject* PyInit_block(void) { return PyModule_Create(&blockModule); }
 
+static PyMethodDef chatFuncs[] = { CC_CHAT_FUNCS, SCRIPTING_NULL_FUNC };
+static PyModuleDef chatModule  = { PyModuleDef_HEAD_INIT, "chat", NULL, -1, chatFuncs, NULL, NULL, NULL, NULL };
 static PyObject* PyInit_chat(void) { return PyModule_Create(&chatModule); }
 
+static PyMethodDef serverFuncs[] = { CC_SERVER_FUNCS, SCRIPTING_NULL_FUNC };
+static PyModuleDef serverModule  = { PyModuleDef_HEAD_INIT, "server", NULL, -1, serverFuncs, NULL, NULL, NULL, NULL };
+static PyObject* PyInit_server(void) { return PyModule_Create(&serverModule); }
+
+static PyMethodDef tablistFuncs[] = { CC_TABLIST_FUNCS, SCRIPTING_NULL_FUNC };
+static PyModuleDef tablistModule  = { PyModuleDef_HEAD_INIT, "tablist", NULL, -1, tablistFuncs, NULL, NULL, NULL, NULL };
+static PyObject* PyInit_tablist(void) { return PyModule_Create(&tablistModule); }
+
+static PyMethodDef worldFuncs[] = { CC_WORLD_FUNCS, SCRIPTING_NULL_FUNC };
+static PyModuleDef worldModule  = { PyModuleDef_HEAD_INIT, "world", NULL, -1, worldFuncs, NULL, NULL, NULL, NULL };
+static PyObject* PyInit_world(void) { return PyModule_Create(&worldModule); }
+
+static PyMethodDef windowFuncs[] = { CC_WINDOW_FUNCS, SCRIPTING_NULL_FUNC };
+static PyModuleDef windowModule  = { PyModuleDef_HEAD_INIT, "window", NULL, -1, windowFuncs, NULL, NULL, NULL, NULL };
+static PyObject* PyInit_window(void) { return PyModule_Create(&windowModule); }
+
 static void PythonPlugin_Register(void) {
-	PyImport_AppendInittab("chat", &PyInit_chat);
+	PyImport_AppendInittab("block",   &PyInit_block);
+	PyImport_AppendInittab("chat",    &PyInit_chat);
+	PyImport_AppendInittab("server",  &PyInit_server);
+	PyImport_AppendInittab("tablist", &PyInit_tablist);
+	PyImport_AppendInittab("world",   &PyInit_world);
+	PyImport_AppendInittab("window",  &PyInit_window);
 }
 
 static void Backend_Load(const cc_string* path, void* obj) {
@@ -81,7 +111,7 @@ static void Backend_Load(const cc_string* path, void* obj) {
 
 static void Backend_ExecScript(const cc_string* script) {
 	char buffer[NATIVE_STR_LEN];
-	Platform_EncodeUtf8(script, buffer);
+	Platform_EncodeUtf8(buffer, script);
 	PyRun_SimpleString(buffer);
 }
 
