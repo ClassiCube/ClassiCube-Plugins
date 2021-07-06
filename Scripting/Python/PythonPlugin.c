@@ -1,16 +1,17 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-
+// bus.python.org/issue27810
 #define SCRIPTING_DIRECTORY "python"
-#define SCRIPTING_ARGS PyObject* self, PyObject *const *args, Py_ssize_t numArgs
-#define SCRIPTING_CALL self, args, numArgs
-#define SCRIPTING_RESULT void*
-#define Scripting_DeclareFunc(name, func, num_args) { name, func, METH_FASTCALL, "" }
+#define SCRIPTING_ARGS PyObject* self, PyObject* args
+#define SCRIPTING_CALL self, args
+#define SCRIPTING_RESULT PyObject*
+#define Scripting_DeclareFunc(name, func, num_args) { name, func, METH_VARARGS, "" }
 
 #define Scripting_ReturnVoid() return NULL;
 #define Scripting_ReturnInt(value) return PyLong_FromLong(value)
 #define Scripting_ReturnBool(value) return PyBool_FromLong(value)
 #define Scripting_ReturnStr(buffer, len) return PyBytes_FromStringAndSize(buffer, len)
+#define Scripting_ReturnPtr(value) return PyLong_FromVoidPtr(value)
 
 #include "../../Scripting.h"
 
@@ -19,15 +20,34 @@
 *--------------------------------------------------------Backend----------------------------------------------------------*
 *#########################################################################################################################*/
 static cc_string Scripting_GetStr(SCRIPTING_ARGS, int arg) {
-	return String_Empty;
+	cc_string str = emptyStr;
+	Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+	if (arg >= nargs) return str;
+
+	
+	PyObject* obj = PyTuple_GET_ITEM(args, arg);
+	str.buffer    = PyBytes_AsString(obj);
+	str.length   = PyBytes_Size(obj);
+	str.capacity = 0;
+	return str;
 }
 
 static int Scripting_GetInt(SCRIPTING_ARGS, int arg) {
-	return 0;
+	Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+	if (arg >= nargs) return 0;
+
+	PyObject* obj = PyTuple_GET_ITEM(args, arg);
+	return PyLong_AsLong(obj);
 }
 
 static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg) {
 	sc_buffer buffer = { 0 };
+	Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+	if (arg >= nargs) return buffer;
+
+	PyObject* obj = PyTuple_GET_ITEM(args, arg);
+	buffer.data = PyByteArray_AsString(obj);
+	buffer.len  = PyByteArray_Size(obj);
 	return buffer;
 }
 
@@ -110,22 +130,30 @@ static void Backend_Load(const cc_string* path, void* obj) {
 }
 
 static void Backend_ExecScript(const cc_string* script) {
-	char buffer[NATIVE_STR_LEN];
-	Platform_EncodeUtf8(buffer, script);
+	char buffer[NATIVE_STR_LEN+1];
+	int i, len = min(NATIVE_STR_LEN, script->length);
+
+	memcpy(buffer, script->buffer, len); buffer[len] = '\0';
+	// newlines are pretty important in python
+	for (i = 0; i < len; i++) {
+		if (buffer[i] == '#') buffer[i] = '\n';
+	}
+
 	PyRun_SimpleString(buffer);
 }
 
 static struct ChatCommand PythonPlugin_Cmd = {
-	"mono", Scripting_Handle, false,
+	"python", Scripting_Handle, false,
 	{
-		"&a/client mono [pat",
-		"&eExecutes and then loads the given .dll",
+		"&a/client python [script]",
+		"&eExecutes the input text as a python script",
+		"&e  Note: # is replaced with newlines",
 	}
 };
 
 static void Backend_Init(void) {
 	Commands_Register(&PythonPlugin_Cmd);
+	PythonPlugin_Register();
 	Py_SetProgramName(L"ClassiCube");
 	Py_Initialize();
-	PythonPlugin_Register();
 }

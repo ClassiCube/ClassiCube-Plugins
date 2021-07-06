@@ -18,9 +18,13 @@
 *--------------------------------------------------------Backend----------------------------------------------------------*
 *#########################################################################################################################*/
 static cc_string Scripting_GetStr(SCRIPTING_ARGS, int arg) {
+	cc_string str;
 	duk_size_t len;
-	const char* msg = duk_to_lstring(ctx, arg, &len);
-	return String_Init(msg, len, len);
+
+	str.buffer   = duk_to_lstring(ctx, arg, &len);
+	str.length   = len;
+	str.capacity = 0;
+	return str;
 }
 
 static int Scripting_GetInt(SCRIPTING_ARGS, int arg) {
