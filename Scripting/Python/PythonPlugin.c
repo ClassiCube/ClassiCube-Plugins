@@ -1,13 +1,13 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-// bus.python.org/issue27810
+// https://bugs.python.org/issue27810
 #define SCRIPTING_DIRECTORY "python"
 #define SCRIPTING_ARGS PyObject* self, PyObject* args
 #define SCRIPTING_CALL self, args
 #define SCRIPTING_RESULT PyObject*
 #define Scripting_DeclareFunc(name, func, num_args) { name, func, METH_VARARGS, "" }
 
-#define Scripting_ReturnVoid() return NULL;
+#define Scripting_ReturnVoid() Py_RETURN_NONE // https://docs.python.org/3/c-api/none.html
 #define Scripting_ReturnInt(value) return PyLong_FromLong(value)
 #define Scripting_ReturnBool(value) return PyBool_FromLong(value)
 #define Scripting_ReturnStr(buffer, len) return PyBytes_FromStringAndSize(buffer, len)
