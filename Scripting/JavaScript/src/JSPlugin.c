@@ -1,22 +1,10 @@
 #include "duktape.h"
 
-struct ScriptingBuffer;
-typedef struct cc_string_ cc_string;
-static cc_string              JSPlugin_GetString(duk_context* ctx, int idx);
-static struct ScriptingBuffer JSPlugin_GetBuffer(duk_context* ctx, int idx);
-static void LuaPlugin_FreeBuffer(struct ScriptingBuffer* buffer);
-
 #define SCRIPTING_DIRECTORY "js"
 #define SCRIPTING_ARGS duk_context* ctx
+#define SCRIPTING_CALL ctx
 #define SCRIPTING_RESULT duk_ret_t
 #define Scripting_DeclareFunc(name, func, num_args) { name, func, num_args }
-
-#define Scripting_GetStr(arg) JSPlugin_GetString(ctx, -(arg)-1)
-#define Scripting_GetInt(arg) duk_to_int(ctx, -(arg)-1)
-#define Scripting_GetBuf(arg) JSPlugin_GetBuffer(ctx, -(arg)-1)
-
-#define Scripting_Consume(args)
-#define Scripting_FreeBuf(buffer) /* no need to manually free */
 
 #define Scripting_ReturnVoid() return 1;
 #define Scripting_ReturnInt(value) duk_push_int(ctx, value); return 1;
@@ -29,19 +17,27 @@ static void LuaPlugin_FreeBuffer(struct ScriptingBuffer* buffer);
 /*########################################################################################################################*
 *--------------------------------------------------------Backend----------------------------------------------------------*
 *#########################################################################################################################*/
-static cc_string JSPlugin_GetString(duk_context* ctx, int idx) {
+static cc_string Scripting_GetStr(SCRIPTING_ARGS, int arg) {
 	duk_size_t len;
-	const char* msg = duk_to_lstring(ctx, idx, &len);
+	const char* msg = duk_to_lstring(ctx, arg, &len);
 	return String_Init(msg, len, len);
 }
 
-static struct ScriptingBuffer JSPlugin_GetBuffer(duk_context* ctx, int idx) {
-	struct ScriptingBuffer buffer;
+static int Scripting_GetInt(SCRIPTING_ARGS, int arg) {
+	return duk_to_int(ctx, arg);
+}
+
+static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg) {
+	sc_buffer buffer;
 	duk_size_t size;
 
-	buffer.data = duk_to_buffer(ctx, -1, &size);
+	buffer.data = duk_to_buffer(ctx, arg, &size);
 	buffer.len  = size;
 	return buffer;
+}
+
+static void Scripting_FreeBuf(sc_buffer* buffer) {
+	/* no need to manually free */
 }
 
 

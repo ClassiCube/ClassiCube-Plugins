@@ -6,56 +6,53 @@
 #include "lualib.h"
 #include "lauxlib.h"
 
-struct ScriptingBuffer;
-typedef struct cc_string_ cc_string;
-static cc_string              LuaPlugin_GetString(lua_State* L, int idx);
-static struct ScriptingBuffer LuaPlugin_GetBuffer(lua_State* L, int idx);
-static void LuaPlugin_FreeBuffer(struct ScriptingBuffer* buffer);
+/* LUA handles most of the complicated work already: */
+/*  resets stack before C function called - https://www.lua.org/pil/26.html */
+/*  clears stack after  C function returns - https://stackoverflow.com/questions/1217423/how-to-use-lua-pop-function-correctly */
 
 #define SCRIPTING_DIRECTORY "lua"
-#define SCRIPTING_ARGS lua_State* ctx
+#define SCRIPTING_ARGS lua_State* L
+#define SCRIPTING_CALL L
 #define SCRIPTING_RESULT int
 #define Scripting_DeclareFunc(name, func, num_args) { name, func }
 
-#define Scripting_GetStr(arg) LuaPlugin_GetString(ctx, -(arg)-1)
-#define Scripting_GetInt(arg) (int)lua_tointeger(ctx,  -(arg)-1)
-#define Scripting_GetBuf(arg) LuaPlugin_GetBuffer(ctx, -(arg)-1)
-
-#define Scripting_Consume(args) lua_pop(ctx, args)
-#define Scripting_FreeBuf(buffer) LuaPlugin_FreeBuffer(buffer)
-
 #define Scripting_ReturnVoid() return 0;
-#define Scripting_ReturnInt(value) lua_pushinteger(ctx, value); return 1;
-#define Scripting_ReturnBool(value) lua_pushboolean(ctx, value); return 1;
-#define Scripting_ReturnStr(buffer, len) lua_pushlstring(ctx, buffer, len); return 1;
-#define Scripting_ReturnPtr(value) lua_pushlightuserdata(ctx, value); return 1;
+#define Scripting_ReturnInt(value) lua_pushinteger(L, value); return 1;
+#define Scripting_ReturnBool(value) lua_pushboolean(L, value); return 1;
+#define Scripting_ReturnStr(buffer, len) lua_pushlstring(L, buffer, len); return 1;
+#define Scripting_ReturnPtr(value) lua_pushlightuserdata(L, value); return 1;
 
 #include "Scripting.h"
+/* don't forge to add 1 to arg, because LUA stack starts at 1 */
 
 /*########################################################################################################################*
 *--------------------------------------------------------Backend----------------------------------------------------------*
 *#########################################################################################################################*/
-static cc_string LuaPlugin_GetString(lua_State* L, int idx) {
+static cc_string Scripting_GetStr(SCRIPTING_ARGS, int arg) {
 	size_t len;
-	const char* msg = lua_tolstring(L, idx, &len);
+	const char* msg = lua_tolstring(L, arg + 1, &len);
 	return String_Init(msg, len, len);
 }
 
-static struct ScriptingBuffer LuaPlugin_GetBuffer(lua_State* L, int idx) {
-	struct ScriptingBuffer buffer = { 0 };
+static int Scripting_GetInt(SCRIPTING_ARGS, int arg) {
+	return (int)lua_tointeger(L, arg + 1);
+}
+
+static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg) {
+	sc_buffer buffer = { 0 };
 	size_t len;
-	int i, type = lua_type(L, idx);
+	int i, idx = arg + 1, type = lua_type(L, idx);
 
 	if (type == LUA_TSTRING) {
 		buffer.data = lua_tolstring(L, idx, &len);
 		buffer.len  = len;
 	} else if (type == LUA_TTABLE) {
-		buffer.len  = lua_rawlen(L, -1);
-		buffer.data = Mem_Alloc(len, 1, "lua send data");
+		buffer.len  = lua_rawlen(L, idx);
+		buffer.data = Mem_Alloc(len, 1, "lua temp buffer");
 		buffer.meta = 1;
 
 		for (i = 1; i <= buffer.len; i++) {
-			lua_rawgeti(L, -1, i);
+			lua_rawgeti(L, idx, i);
 			buffer.data[i - 1] = lua_tointeger(L, -1);
 			lua_pop(L, 1);
 		}
@@ -65,7 +62,8 @@ static struct ScriptingBuffer LuaPlugin_GetBuffer(lua_State* L, int idx) {
 	return buffer;
 }
 
-static void LuaPlugin_FreeBuffer(struct ScriptingBuffer* buffer) {
+static void Scripting_FreeBuf(sc_buffer* buffer) {
+	/* only need to free memory when data was a table */
 	if (buffer->meta) Mem_Free(buffer->data);
 }
 
@@ -91,7 +89,7 @@ static void LuaPlugin_LogError(lua_State* L, const char* place, const void* arg1
 	}
 
 	Chat_Add(&str);
-	str = LuaPlugin_GetString(L, -1);
+	str = Scripting_GetStr(L, -2); /* really -1, but _GetStr adds 1 */
 	Chat_Add(&str);
 }
 

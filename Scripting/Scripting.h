@@ -44,44 +44,36 @@ static void Backend_Init(void);
 Backends must additionally provide the following defines:
 #define SCRIPTING_DIRECTORY
 #define SCRIPTING_ARGS
+#define SCRIPTING_CALL
 #define SCRIPTING_RESULT
 ---------------------------
-NOTE that SCRIPTING_ARGS is implicitly available to all of the following functions:
-
-#define Scripting_GetStr(arg)
-#define Scripting_GetInt(arg)
-#define Scripting_GetBuf(arg)
-
-#define Scripting_FreeBuf(buffer)
-#define Scripting_Consume(args)
+NOTE that SCRIPTING_ARGS is implicitly available to all of the following macros:
 
 #define Scripting_ReturnVoid()
 #define Scripting_ReturnInt(value)
 #define Scripting_ReturnBool(value)
 #define Scripting_ReturnStr(buffer, len)
 #define Scripting_ReturnPtr(value)
-
-Keep in mind that function arguments are accessed in reverse order, e.g. 
-function GetBlock(x, y, z) {
-  int x = Scripting_GetInt(2);
-  int y = Scripting_GetInt(1);
-  int z = Scripting_GetInt(0);
-}
 */
 
 #define SCRIPTING_NULL_FUNC Scripting_DeclareFunc(NULL, NULL, 0)
 static const cc_string emptyStr = { "", 0, 0 };
-struct ScriptingBuffer { cc_uint8* data; int len, meta; };
+struct sc_buffer_ { cc_uint8* data; int len, meta; };
+
+typedef struct sc_buffer_ sc_buffer;
+typedef struct cc_string_ cc_string;
+static cc_string Scripting_GetStr(SCRIPTING_ARGS, int arg);
+static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg);
+static int       Scripting_GetInt(SCRIPTING_ARGS, int arg);
+static void      Scripting_FreeBuf(sc_buffer* buffer);
 
 
 /*########################################################################################################################*
 *--------------------------------------------------------Block api--------------------------------------------------------*
 *#########################################################################################################################*/
 static SCRIPTING_RESULT CC_Block_Parse(SCRIPTING_ARGS) {
-	cc_string str = Scripting_GetStr(0);
-	int block = Block_Parse(&str);
-
-	Scripting_Consume(1);
+	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
+	int block     = Block_Parse(&str);
 	Scripting_ReturnInt(block);
 }
 
@@ -93,27 +85,21 @@ static SCRIPTING_RESULT CC_Block_Parse(SCRIPTING_ARGS) {
 *--------------------------------------------------------Chat api---------------------------------------------------------*
 *#########################################################################################################################*/
 static SCRIPTING_RESULT CC_Chat_Add(SCRIPTING_ARGS) {
-	cc_string str = Scripting_GetStr(0);
+	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
 	Chat_Add(&str);
-
-	Scripting_Consume(1);
 	Scripting_ReturnVoid();
 }
 
 static SCRIPTING_RESULT CC_Chat_AddOf(SCRIPTING_ARGS) {
-	cc_string str = Scripting_GetStr(1);
-	int msgType   = Scripting_GetInt(0);
+	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
+	int msgType   = Scripting_GetInt(SCRIPTING_CALL, 1);
 	Chat_AddOf(&str, msgType);
-
-	Scripting_Consume(2);
 	Scripting_ReturnVoid();
 }
 
 static SCRIPTING_RESULT CC_Chat_Send(SCRIPTING_ARGS) {
-	cc_string str = Scripting_GetStr(0);
+	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
 	Chat_Send(&str, false);
-
-	Scripting_Consume(1);
 	Scripting_ReturnVoid();
 }
 
@@ -148,10 +134,8 @@ static SCRIPTING_RESULT CC_Server_GetAppName(SCRIPTING_ARGS) {
 }
 
 static SCRIPTING_RESULT CC_Server_SetAppName(SCRIPTING_ARGS) {
-	cc_string str = Scripting_GetStr(0);
+	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
 	String_Copy(&Server.AppName, &str);
-
-	Scripting_Consume(1);
 	Scripting_ReturnVoid();
 }
 
@@ -162,11 +146,10 @@ static SCRIPTING_RESULT CC_Server_IsSingleplayer(SCRIPTING_ARGS) {
 /* this one is too tricky to abstract */
 /*static SCRIPTING_RESULT CC_Server_SendData(SCRIPTING_ARGS)*/
 static SCRIPTING_RESULT CC_Server_SendData(SCRIPTING_ARGS) {
-	struct ScriptingBuffer buffer = Scripting_GetBuf(0);
+	sc_buffer buffer = Scripting_GetBuf(SCRIPTING_CALL, 0);
 	Server.SendData(buffer.data, buffer.len);
-	Scripting_FreeBuf(&buffer);
 
-	Scripting_Consume(1);
+	Scripting_FreeBuf(&buffer);
 	Scripting_ReturnVoid();
 }
 
@@ -193,55 +176,48 @@ static void CC_Server_Hook(void) {
 *-------------------------------------------------------Tablist api-------------------------------------------------------*
 *#########################################################################################################################*/
 static SCRIPTING_RESULT CC_Tablist_GetPlayer(SCRIPTING_ARGS) {
-	int id         = Scripting_GetInt(0);
+	int id         = Scripting_GetInt(SCRIPTING_CALL, 0);
 	cc_string name = emptyStr;
 	if (TabList.NameOffsets[id]) name = TabList_UNSAFE_GetPlayer(id);
 
-	Scripting_Consume(1);
 	Scripting_ReturnStr(name.buffer, name.length);
 }
 
 static SCRIPTING_RESULT CC_Tablist_GetName(SCRIPTING_ARGS) {
-	int id         = Scripting_GetInt(0);
+	int id         = Scripting_GetInt(SCRIPTING_CALL, 0);
 	cc_string name = emptyStr;
 	if (TabList.NameOffsets[id]) name = TabList_UNSAFE_GetList(id);
 
-	Scripting_Consume(1);
 	Scripting_ReturnStr(name.buffer, name.length);
 }
 
 static SCRIPTING_RESULT CC_Tablist_GetGroup(SCRIPTING_ARGS) {
-	int id         = Scripting_GetInt(0);
+	int id         = Scripting_GetInt(SCRIPTING_CALL, 0);
 	cc_string name = emptyStr;
 	if (TabList.NameOffsets[id]) name = TabList_UNSAFE_GetGroup(id);
 
-	Scripting_Consume(1);
 	Scripting_ReturnStr(name.buffer, name.length);
 }
 
 static SCRIPTING_RESULT CC_Tablist_GetRank(SCRIPTING_ARGS) {
-	int id = Scripting_GetInt(0);
-	Scripting_Consume(1);
+	int id = Scripting_GetInt(SCRIPTING_CALL, 0);
 	Scripting_ReturnInt(TabList.GroupRanks[id]);
 }
 
 static SCRIPTING_RESULT CC_Tablist_Remove(SCRIPTING_ARGS) {
-	int id = Scripting_GetInt(0);
+	int id = Scripting_GetInt(SCRIPTING_CALL, 0);
 	TabList_Remove(id);
-
-	Scripting_Consume(1);
 	Scripting_ReturnVoid();
 }
 
 static SCRIPTING_RESULT CC_Tablist_Set(SCRIPTING_ARGS) {
-	int id           = Scripting_GetInt(4);
-	cc_string player = Scripting_GetStr(3);
-	cc_string list   = Scripting_GetStr(2);
-	cc_string group  = Scripting_GetStr(1);
-	int groupRank    = Scripting_GetInt(0);
+	int id           = Scripting_GetInt(SCRIPTING_CALL, 0);
+	cc_string player = Scripting_GetStr(SCRIPTING_CALL, 1);
+	cc_string list   = Scripting_GetStr(SCRIPTING_CALL, 2);
+	cc_string group  = Scripting_GetStr(SCRIPTING_CALL, 3);
+	int groupRank    = Scripting_GetInt(SCRIPTING_CALL, 4);
 	TabList_Set(id, &player, &list, &group, groupRank);
 
-	Scripting_Consume(5);
 	Scripting_ReturnVoid();
 }
 
@@ -270,11 +246,9 @@ static SCRIPTING_RESULT CC_World_GetLength(SCRIPTING_ARGS) {
 }
 
 static SCRIPTING_RESULT CC_World_GetBlock(SCRIPTING_ARGS) {
-	int x = Scripting_GetInt(2);
-	int y = Scripting_GetInt(1);
-	int z = Scripting_GetInt(0);
-
-	Scripting_Consume(3);
+	int x = Scripting_GetInt(SCRIPTING_CALL, 0);
+	int y = Scripting_GetInt(SCRIPTING_CALL, 1);
+	int z = Scripting_GetInt(SCRIPTING_CALL, 2);
 	Scripting_ReturnInt(World_GetBlock(x, y, z));
 }
 
@@ -300,10 +274,8 @@ static void CC_World_Hook(void) {
 *--------------------------------------------------------Window api-------------------------------------------------------*
 *#########################################################################################################################*/
 static SCRIPTING_RESULT CC_Window_SetTitle(SCRIPTING_ARGS) {
-	cc_string str = Scripting_GetStr(0);
+	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
 	Window_SetTitle(&str);
-
-	Scripting_Consume(1);
 	Scripting_ReturnVoid();
 }
 
