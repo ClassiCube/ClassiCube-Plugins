@@ -19,19 +19,21 @@
 // The proper way would be to add 'additional include directories' and 'additional libs' in Visual Studio Project properties
 // Or, you can just be lazy and change these paths for your own system. 
 // You must compile ClassiCube in both x86 and x64 configurations to generate the .lib file.
-#include "../../../../ClassicalSharp/src/Game.h"
-#include "../../../../ClassicalSharp/src/String.h"
-#include "../../../../ClassicalSharp/src/Block.h"
-#include "../../../../ClassicalSharp/src/Entity.h"
-#include "../../../../ClassicalSharp/src/ExtMath.h"
-#include "../../../../ClassicalSharp/src/Chat.h"
-#include "../../../../ClassicalSharp/src/Stream.h"
-#include "../../../../ClassicalSharp/src/TexturePack.h"
-#include "../../../../ClassicalSharp/src/World.h"
-#include "../../../../ClassicalSharp/src/Funcs.h"
-#include "../../../../ClassicalSharp/src/Event.h"
-#include "../../../../ClassicalSharp/src/Server.h"
-#include "../../../../ClassicalSharp/src/Window.h"
+#include "../../ClassicalSharp/src/Game.h"
+#include "../../ClassicalSharp/src/String.h"
+#include "../../ClassicalSharp/src/Block.h"
+#include "../../ClassicalSharp/src/Entity.h"
+#include "../../ClassicalSharp/src/ExtMath.h"
+#include "../../ClassicalSharp/src/Chat.h"
+#include "../../ClassicalSharp/src/Stream.h"
+#include "../../ClassicalSharp/src/TexturePack.h"
+#include "../../ClassicalSharp/src/World.h"
+#include "../../ClassicalSharp/src/Funcs.h"
+#include "../../ClassicalSharp/src/Event.h"
+#include "../../ClassicalSharp/src/Server.h"
+#include "../../ClassicalSharp/src/Window.h"
+#include "../../ClassicalSharp/src/Camera.h"
+#include "../../ClassicalSharp/src/Inventory.h"
 
 static void Backend_RaiseVoid(const char* groupName, const char* funcName);
 static void Backend_RaiseChat(const char* groupName, const char* funcName, const cc_string* msg, int msgType);
@@ -41,7 +43,7 @@ static void Backend_ExecScript(const cc_string* script);
 static void Backend_Init(void);
 
 /*
-Backends must additionally provide the following defines:
+Backends must provide the following defines:
 #define SCRIPTING_DIRECTORY
 #define SCRIPTING_ARGS
 #define SCRIPTING_CALL
@@ -54,6 +56,7 @@ NOTE that SCRIPTING_ARGS is implicitly available to all of the following macros:
 #define Scripting_ReturnBool(value)
 #define Scripting_ReturnStr(buffer, len)
 #define Scripting_ReturnPtr(value)
+#define Scripting_ReturnNum(value)
 */
 
 #define SCRIPTING_NULL_FUNC Scripting_DeclareFunc(NULL, NULL, 0)
@@ -118,6 +121,96 @@ static void CC_Chat_Hook(void) {
 	Scripting_DeclareFunc("add",   CC_Chat_Add,   1), \
 	Scripting_DeclareFunc("addOf", CC_Chat_AddOf, 2), \
 	Scripting_DeclareFunc("send",  CC_Chat_Send,  1)
+
+
+/*########################################################################################################################*
+*-------------------------------------------------------Camera api--------------------------------------------------------*
+*#########################################################################################################################*/
+static SCRIPTING_RESULT CC_Camera_GetFOV(SCRIPTING_ARGS) {
+	Scripting_ReturnInt(Camera.Fov);
+}
+
+static SCRIPTING_RESULT CC_Camera_IsThird(SCRIPTING_ARGS) {
+	Scripting_ReturnBool(Camera.Active->isThirdPerson);
+}
+
+static SCRIPTING_RESULT CC_Camera_GetX(SCRIPTING_ARGS) {
+	Scripting_ReturnNum(Camera.CurrentPos.X);
+}
+static SCRIPTING_RESULT CC_Camera_GetY(SCRIPTING_ARGS) {
+	Scripting_ReturnNum(Camera.CurrentPos.Y);
+}
+static SCRIPTING_RESULT CC_Camera_GetZ(SCRIPTING_ARGS) {
+	Scripting_ReturnNum(Camera.CurrentPos.Z);
+}
+
+static SCRIPTING_RESULT CC_Camera_GetYaw(SCRIPTING_ARGS) {
+	Vec2 orientation = Camera.Active->GetOrientation();
+	Scripting_ReturnNum(orientation.X);
+}
+static SCRIPTING_RESULT CC_Camera_GetPitch(SCRIPTING_ARGS) {
+	Vec2 orientation = Camera.Active->GetOrientation();
+	Scripting_ReturnNum(orientation.Y);
+}
+
+#define CC_CAMERA_FUNCS \
+	Scripting_DeclareFunc("getFOV",   CC_Camera_GetFOV,   0), \
+	Scripting_DeclareFunc("isThird",  CC_Camera_IsThird,  0), \
+	Scripting_DeclareFunc("getX",     CC_Camera_GetX,     0), \
+	Scripting_DeclareFunc("getY",     CC_Camera_GetY,     0), \
+	Scripting_DeclareFunc("getZ",     CC_Camera_GetZ,     0), \
+	Scripting_DeclareFunc("getYaw",   CC_Camera_GetYaw,   0), \
+	Scripting_DeclareFunc("getPitch", CC_Camera_GetPitch, 0)
+
+
+/*########################################################################################################################*
+*-----------------------------------------------------Inventory api-------------------------------------------------------*
+*#########################################################################################################################*/
+static SCRIPTING_RESULT CC_Inventory_GetSelected(SCRIPTING_ARGS) {
+	Scripting_ReturnInt(Inventory_SelectedBlock);
+}
+
+#define CC_INVENTORY_FUNCS \
+	Scripting_DeclareFunc("getSelected", CC_Inventory_GetSelected, 0)
+
+
+/*########################################################################################################################*
+*-------------------------------------------------------Player api--------------------------------------------------------*
+*#########################################################################################################################*/
+static SCRIPTING_RESULT CC_Player_GetReach(SCRIPTING_ARGS) {
+	struct LocalPlayer* p = (struct LocalPlayer*)Entities.List[ENTITIES_SELF_ID];
+	Scripting_ReturnNum(p->ReachDistance);
+}
+
+static SCRIPTING_RESULT CC_Player_GetX(SCRIPTING_ARGS) {
+	struct Entity* e = Entities.List[ENTITIES_SELF_ID];
+	Scripting_ReturnNum(e->Position.X);
+}
+static SCRIPTING_RESULT CC_Player_GetY(SCRIPTING_ARGS) {
+	struct Entity* e = Entities.List[ENTITIES_SELF_ID];
+	Scripting_ReturnNum(e->Position.Y);
+}
+static SCRIPTING_RESULT CC_Player_GetZ(SCRIPTING_ARGS) {
+	struct Entity* e = Entities.List[ENTITIES_SELF_ID];
+	Scripting_ReturnNum(e->Position.Z);
+}
+
+static SCRIPTING_RESULT CC_Player_GetYaw(SCRIPTING_ARGS) {
+	struct Entity* e = Entities.List[ENTITIES_SELF_ID];
+	Scripting_ReturnNum(e->Yaw);
+}
+static SCRIPTING_RESULT CC_Player_GetPitch(SCRIPTING_ARGS) {
+	struct Entity* e = Entities.List[ENTITIES_SELF_ID];
+	Scripting_ReturnNum(e->Pitch);
+}
+
+#define CC_PLAYER_FUNCS \
+	Scripting_DeclareFunc("getReach", CC_Player_GetReach, 0), \
+	Scripting_DeclareFunc("getX",     CC_Player_GetX,     0), \
+	Scripting_DeclareFunc("getY",     CC_Player_GetY,     0), \
+	Scripting_DeclareFunc("getZ",     CC_Player_GetZ,     0), \
+	Scripting_DeclareFunc("getYaw",   CC_Player_GetYaw,   0), \
+	Scripting_DeclareFunc("getPitch", CC_Player_GetPitch, 0)
 
 
 /*########################################################################################################################*

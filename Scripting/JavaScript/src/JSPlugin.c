@@ -11,6 +11,7 @@
 #define Scripting_ReturnBool(value) duk_push_boolean(ctx, value); return 1;
 #define Scripting_ReturnStr(buffer, len) duk_push_lstring(ctx, buffer, len); return 1;
 #define Scripting_ReturnPtr(value) duk_push_pointer(ctx, value); return 1;
+#define Scripting_ReturnNum(value) duk_push_number(ctx, value); return 1;
 
 #include "../../Scripting.h"
 
@@ -109,12 +110,15 @@ static void Backend_RaiseChat(const char* groupName, const char* funcName, const
 /*########################################################################################################################*
 *-------------------------------------------------Plugin implementation---------------------------------------------------*
 *#########################################################################################################################*/
-static const duk_function_list_entry blockFuncs[]   = { CC_BLOCK_FUNCS,   SCRIPTING_NULL_FUNC };
-static const duk_function_list_entry chatFuncs[]    = { CC_CHAT_FUNCS,    SCRIPTING_NULL_FUNC };
-static const duk_function_list_entry serverFuncs[]  = { CC_SERVER_FUNCS,  SCRIPTING_NULL_FUNC };
-static const duk_function_list_entry tablistFuncs[] = { CC_TABLIST_FUNCS, SCRIPTING_NULL_FUNC };
-static const duk_function_list_entry worldFuncs[]   = { CC_WORLD_FUNCS,   SCRIPTING_NULL_FUNC };
-static const duk_function_list_entry windowFuncs[]  = { CC_WINDOW_FUNCS,  SCRIPTING_NULL_FUNC };
+static const duk_function_list_entry blockFuncs[]     = { CC_BLOCK_FUNCS,     SCRIPTING_NULL_FUNC };
+static const duk_function_list_entry cameraFuncs[]    = { CC_CAMERA_FUNCS,    SCRIPTING_NULL_FUNC };
+static const duk_function_list_entry chatFuncs[]      = { CC_CHAT_FUNCS,      SCRIPTING_NULL_FUNC };
+static const duk_function_list_entry inventoryFuncs[] = { CC_INVENTORY_FUNCS, SCRIPTING_NULL_FUNC };
+static const duk_function_list_entry playerFuncs[]    = { CC_PLAYER_FUNCS,    SCRIPTING_NULL_FUNC };
+static const duk_function_list_entry serverFuncs[]    = { CC_SERVER_FUNCS,    SCRIPTING_NULL_FUNC };
+static const duk_function_list_entry tablistFuncs[]   = { CC_TABLIST_FUNCS,   SCRIPTING_NULL_FUNC };
+static const duk_function_list_entry worldFuncs[]     = { CC_WORLD_FUNCS,     SCRIPTING_NULL_FUNC };
+static const duk_function_list_entry windowFuncs[]    = { CC_WINDOW_FUNCS,    SCRIPTING_NULL_FUNC };
 
 static void JSPlugin_RegisterModule(duk_context* ctx, const char* name, const duk_function_list_entry* funcs) {
 	duk_push_global_object(ctx);
@@ -125,12 +129,15 @@ static void JSPlugin_RegisterModule(duk_context* ctx, const char* name, const du
 }
 
 static void JSPlugin_Register(duk_context* ctx) {
-	JSPlugin_RegisterModule(ctx, "block",   blockFuncs);
-	JSPlugin_RegisterModule(ctx, "chat",    chatFuncs);
-	JSPlugin_RegisterModule(ctx, "server",  serverFuncs);
-	JSPlugin_RegisterModule(ctx, "tablist", tablistFuncs);
-	JSPlugin_RegisterModule(ctx, "world",   worldFuncs);
-	JSPlugin_RegisterModule(ctx, "window",  windowFuncs);
+	JSPlugin_RegisterModule(ctx, "block",     blockFuncs);
+	JSPlugin_RegisterModule(ctx, "camera",    cameraFuncs);
+	JSPlugin_RegisterModule(ctx, "chat",      chatFuncs);
+	JSPlugin_RegisterModule(ctx, "inventory", inventoryFuncs);
+	JSPlugin_RegisterModule(ctx, "player",    playerFuncs);
+	JSPlugin_RegisterModule(ctx, "server",    serverFuncs);
+	JSPlugin_RegisterModule(ctx, "tablist",   tablistFuncs);
+	JSPlugin_RegisterModule(ctx, "world",     worldFuncs);
+	JSPlugin_RegisterModule(ctx, "window",    windowFuncs);
 }
 
 static duk_context* JSPlugin_New(void) {
