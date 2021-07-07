@@ -124,6 +124,24 @@ Returns the current server MOTD (usually this is the second line in the loading 
 
 Returns the current server name (usually this is the first line in the loading map screen)
 
+```string getAddress()```
+
+Returns the address of the server (e.g. `127.0.0.1`)
+
+```int getPort()```
+
+Returns the port of the server (e.g. `25565`)
+
+```string getAppName```
+
+Returns the current application name (the name that appears in /clients)
+
+```void setAppName(string name)```
+
+Sets the application name (the name that appears in /clients)
+
+Note: This only takes effect when set before connected to the server
+
 ```boolean isSingleplayer()```
 
 Returns whether the server is the internal singleplayer server

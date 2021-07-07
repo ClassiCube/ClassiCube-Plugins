@@ -87,47 +87,6 @@ static SCRIPTING_FUNC blockFuncs[] = {
 
 
 /*########################################################################################################################*
-*--------------------------------------------------------Chat api---------------------------------------------------------*
-*#########################################################################################################################*/
-static SCRIPTING_RESULT CC_Chat_Add(SCRIPTING_ARGS) {
-	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
-	Chat_Add(&str);
-	Scripting_ReturnVoid();
-}
-
-static SCRIPTING_RESULT CC_Chat_AddOf(SCRIPTING_ARGS) {
-	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
-	int msgType   = Scripting_GetInt(SCRIPTING_CALL, 1);
-	Chat_AddOf(&str, msgType);
-	Scripting_ReturnVoid();
-}
-
-static SCRIPTING_RESULT CC_Chat_Send(SCRIPTING_ARGS) {
-	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
-	Chat_Send(&str, false);
-	Scripting_ReturnVoid();
-}
-
-static void CC_Chat_OnReceived(void* obj, const cc_string* msg, int msgType) {
-	Backend_RaiseChat("chat", "onReceived", msg, msgType);
-}
-static void CC_Chat_OnSent(void* obj, const cc_string* msg, int msgType) {
-	Backend_RaiseChat("chat", "onSent", msg, msgType);
-}
-static void CC_Chat_Hook(void) {
-	Event_Register_(&ChatEvents.ChatReceived, NULL, CC_Chat_OnReceived);
-	Event_Register_(&ChatEvents.ChatSending,  NULL, CC_Chat_OnSent);
-}
-
-static SCRIPTING_FUNC chatFuncs[] = {
-	Scripting_DeclareFunc("add",   CC_Chat_Add,   1),
-	Scripting_DeclareFunc("addOf", CC_Chat_AddOf, 2),
-	Scripting_DeclareFunc("send",  CC_Chat_Send,  1),
-	SCRIPTING_NULL_FUNC
-};
-
-
-/*########################################################################################################################*
 *-------------------------------------------------------Camera api--------------------------------------------------------*
 *#########################################################################################################################*/
 static SCRIPTING_RESULT CC_Camera_GetFOV(SCRIPTING_ARGS) {
@@ -165,6 +124,47 @@ static SCRIPTING_FUNC cameraFuncs[] = {
 	Scripting_DeclareFunc("getZ",     CC_Camera_GetZ,     0),
 	Scripting_DeclareFunc("getYaw",   CC_Camera_GetYaw,   0),
 	Scripting_DeclareFunc("getPitch", CC_Camera_GetPitch, 0),
+	SCRIPTING_NULL_FUNC
+};
+
+
+/*########################################################################################################################*
+*--------------------------------------------------------Chat api---------------------------------------------------------*
+*#########################################################################################################################*/
+static SCRIPTING_RESULT CC_Chat_Add(SCRIPTING_ARGS) {
+	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
+	Chat_Add(&str);
+	Scripting_ReturnVoid();
+}
+
+static SCRIPTING_RESULT CC_Chat_AddOf(SCRIPTING_ARGS) {
+	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
+	int msgType   = Scripting_GetInt(SCRIPTING_CALL, 1);
+	Chat_AddOf(&str, msgType);
+	Scripting_ReturnVoid();
+}
+
+static SCRIPTING_RESULT CC_Chat_Send(SCRIPTING_ARGS) {
+	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
+	Chat_Send(&str, false);
+	Scripting_ReturnVoid();
+}
+
+static void CC_Chat_OnReceived(void* obj, const cc_string* msg, int msgType) {
+	Backend_RaiseChat("chat", "onReceived", msg, msgType);
+}
+static void CC_Chat_OnSent(void* obj, const cc_string* msg, int msgType) {
+	Backend_RaiseChat("chat", "onSent", msg, msgType);
+}
+static void CC_Chat_Hook(void) {
+	Event_Register_(&ChatEvents.ChatReceived, NULL, CC_Chat_OnReceived);
+	Event_Register_(&ChatEvents.ChatSending,  NULL, CC_Chat_OnSent);
+}
+
+static SCRIPTING_FUNC chatFuncs[] = {
+	Scripting_DeclareFunc("add",   CC_Chat_Add,   1),
+	Scripting_DeclareFunc("addOf", CC_Chat_AddOf, 2),
+	Scripting_DeclareFunc("send",  CC_Chat_Send,  1),
 	SCRIPTING_NULL_FUNC
 };
 
@@ -250,6 +250,14 @@ static SCRIPTING_RESULT CC_Server_SendData(SCRIPTING_ARGS) {
 	Scripting_ReturnVoid();
 }
 
+static SCRIPTING_RESULT CC_Server_GetAddress(SCRIPTING_ARGS) {
+	Scripting_ReturnStr(Server.Address.buffer, Server.Address.length);
+}
+
+static SCRIPTING_RESULT CC_Server_GetPort(SCRIPTING_ARGS) {
+	Scripting_ReturnInt(Server.Port);
+}
+
 static SCRIPTING_RESULT CC_Server_IsSingleplayer(SCRIPTING_ARGS) {
 	Scripting_ReturnBool(Server.IsSinglePlayer);
 }
@@ -271,6 +279,8 @@ static SCRIPTING_FUNC serverFuncs[] = {
 	Scripting_DeclareFunc("getAppName",  CC_Server_GetAppName, 0),
 	Scripting_DeclareFunc("setAppName",  CC_Server_SetAppName, 1),
 	Scripting_DeclareFunc("sendData",    CC_Server_SendData,   1),
+	Scripting_DeclareFunc("getAddress",  CC_Server_GetAddress, 0),
+	Scripting_DeclareFunc("getPort",     CC_Server_GetPort,    0),
 	Scripting_DeclareFunc("isSingleplayer", CC_Server_IsSingleplayer, 0),
 	SCRIPTING_NULL_FUNC
 };
