@@ -14,6 +14,7 @@
 #define SCRIPTING_ARGS lua_State* L
 #define SCRIPTING_CALL L
 #define SCRIPTING_RESULT int
+#define SCRIPTING_FUNC const struct luaL_Reg
 #define Scripting_DeclareFunc(name, func, num_args) { name, func }
 
 #define Scripting_ReturnVoid() return 0;
@@ -135,16 +136,6 @@ static void Backend_RaiseChat(const char* groupName, const char* funcName, const
 /*########################################################################################################################*
 *-------------------------------------------------Plugin implementation---------------------------------------------------*
 *#########################################################################################################################*/
-static const struct luaL_Reg blockFuncs[]     = { CC_BLOCK_FUNCS,     SCRIPTING_NULL_FUNC };
-static const struct luaL_Reg cameraFuncs[]    = { CC_CAMERA_FUNCS,    SCRIPTING_NULL_FUNC };
-static const struct luaL_Reg chatFuncs[]      = { CC_CHAT_FUNCS,      SCRIPTING_NULL_FUNC };
-static const struct luaL_Reg inventoryFuncs[] = { CC_INVENTORY_FUNCS, SCRIPTING_NULL_FUNC };
-static const struct luaL_Reg playerFuncs[]    = { CC_PLAYER_FUNCS,    SCRIPTING_NULL_FUNC };
-static const struct luaL_Reg serverFuncs[]    = { CC_SERVER_FUNCS,    SCRIPTING_NULL_FUNC };
-static const struct luaL_Reg tablistFuncs[]   = { CC_TABLIST_FUNCS,   SCRIPTING_NULL_FUNC };
-static const struct luaL_Reg worldFuncs[]     = { CC_WORLD_FUNCS,     SCRIPTING_NULL_FUNC };
-static const struct luaL_Reg windowFuncs[]    = { CC_WINDOW_FUNCS,    SCRIPTING_NULL_FUNC };
-
 static void LuaPlugin_Register(lua_State* L) {
 	luaL_newlib(L, blockFuncs);     lua_setglobal(L, "block");
 	luaL_newlib(L, cameraFuncs);    lua_setglobal(L, "camera");

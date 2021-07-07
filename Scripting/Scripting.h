@@ -80,8 +80,10 @@ static SCRIPTING_RESULT CC_Block_Parse(SCRIPTING_ARGS) {
 	Scripting_ReturnInt(block);
 }
 
-#define CC_BLOCK_FUNCS \
-	Scripting_DeclareFunc("parse", CC_Block_Parse, 1)
+static SCRIPTING_FUNC blockFuncs[] = {     
+	Scripting_DeclareFunc("parse", CC_Block_Parse, 1),
+	SCRIPTING_NULL_FUNC 
+};
 
 
 /*########################################################################################################################*
@@ -117,10 +119,12 @@ static void CC_Chat_Hook(void) {
 	Event_Register_(&ChatEvents.ChatSending,  NULL, CC_Chat_OnSent);
 }
 
-#define CC_CHAT_FUNCS \
-	Scripting_DeclareFunc("add",   CC_Chat_Add,   1), \
-	Scripting_DeclareFunc("addOf", CC_Chat_AddOf, 2), \
-	Scripting_DeclareFunc("send",  CC_Chat_Send,  1)
+static SCRIPTING_FUNC chatFuncs[] = {
+	Scripting_DeclareFunc("add",   CC_Chat_Add,   1),
+	Scripting_DeclareFunc("addOf", CC_Chat_AddOf, 2),
+	Scripting_DeclareFunc("send",  CC_Chat_Send,  1),
+	SCRIPTING_NULL_FUNC
+};
 
 
 /*########################################################################################################################*
@@ -153,14 +157,16 @@ static SCRIPTING_RESULT CC_Camera_GetPitch(SCRIPTING_ARGS) {
 	Scripting_ReturnNum(orientation.Y);
 }
 
-#define CC_CAMERA_FUNCS \
-	Scripting_DeclareFunc("getFOV",   CC_Camera_GetFOV,   0), \
-	Scripting_DeclareFunc("isThird",  CC_Camera_IsThird,  0), \
-	Scripting_DeclareFunc("getX",     CC_Camera_GetX,     0), \
-	Scripting_DeclareFunc("getY",     CC_Camera_GetY,     0), \
-	Scripting_DeclareFunc("getZ",     CC_Camera_GetZ,     0), \
-	Scripting_DeclareFunc("getYaw",   CC_Camera_GetYaw,   0), \
-	Scripting_DeclareFunc("getPitch", CC_Camera_GetPitch, 0)
+static SCRIPTING_FUNC cameraFuncs[] = {
+	Scripting_DeclareFunc("getFOV",   CC_Camera_GetFOV,   0),
+	Scripting_DeclareFunc("isThird",  CC_Camera_IsThird,  0),
+	Scripting_DeclareFunc("getX",     CC_Camera_GetX,     0),
+	Scripting_DeclareFunc("getY",     CC_Camera_GetY,     0),
+	Scripting_DeclareFunc("getZ",     CC_Camera_GetZ,     0),
+	Scripting_DeclareFunc("getYaw",   CC_Camera_GetYaw,   0),
+	Scripting_DeclareFunc("getPitch", CC_Camera_GetPitch, 0),
+	SCRIPTING_NULL_FUNC
+};
 
 
 /*########################################################################################################################*
@@ -170,8 +176,10 @@ static SCRIPTING_RESULT CC_Inventory_GetSelected(SCRIPTING_ARGS) {
 	Scripting_ReturnInt(Inventory_SelectedBlock);
 }
 
-#define CC_INVENTORY_FUNCS \
-	Scripting_DeclareFunc("getSelected", CC_Inventory_GetSelected, 0)
+static SCRIPTING_FUNC inventoryFuncs[] = {
+	Scripting_DeclareFunc("getSelected", CC_Inventory_GetSelected, 0),
+	SCRIPTING_NULL_FUNC
+};
 
 
 /*########################################################################################################################*
@@ -204,13 +212,15 @@ static SCRIPTING_RESULT CC_Player_GetPitch(SCRIPTING_ARGS) {
 	Scripting_ReturnNum(e->Pitch);
 }
 
-#define CC_PLAYER_FUNCS \
-	Scripting_DeclareFunc("getReach", CC_Player_GetReach, 0), \
-	Scripting_DeclareFunc("getX",     CC_Player_GetX,     0), \
-	Scripting_DeclareFunc("getY",     CC_Player_GetY,     0), \
-	Scripting_DeclareFunc("getZ",     CC_Player_GetZ,     0), \
-	Scripting_DeclareFunc("getYaw",   CC_Player_GetYaw,   0), \
-	Scripting_DeclareFunc("getPitch", CC_Player_GetPitch, 0)
+static SCRIPTING_FUNC playerFuncs[] = {
+	Scripting_DeclareFunc("getReach", CC_Player_GetReach, 0),
+	Scripting_DeclareFunc("getX",     CC_Player_GetX,     0),
+	Scripting_DeclareFunc("getY",     CC_Player_GetY,     0),
+	Scripting_DeclareFunc("getZ",     CC_Player_GetZ,     0),
+	Scripting_DeclareFunc("getYaw",   CC_Player_GetYaw,   0),
+	Scripting_DeclareFunc("getPitch", CC_Player_GetPitch, 0),
+	SCRIPTING_NULL_FUNC
+};
 
 
 /*########################################################################################################################*
@@ -255,13 +265,15 @@ static void CC_Server_Hook(void) {
 	Event_Register_(&NetEvents.Disconnected, NULL, CC_Server_OnDisconnected);
 }
 
-#define CC_SERVER_FUNCS \
-	Scripting_DeclareFunc("getMotd",     CC_Server_GetMotd,    0), \
-	Scripting_DeclareFunc("getName",     CC_Server_GetName,    0), \
-	Scripting_DeclareFunc("getAppName",  CC_Server_GetAppName, 0), \
-	Scripting_DeclareFunc("setAppName",  CC_Server_SetAppName, 1), \
-	Scripting_DeclareFunc("sendData",    CC_Server_SendData,   1), \
-	Scripting_DeclareFunc("isSingleplayer", CC_Server_IsSingleplayer, 0)
+static SCRIPTING_FUNC serverFuncs[] = {
+	Scripting_DeclareFunc("getMotd",     CC_Server_GetMotd,    0),
+	Scripting_DeclareFunc("getName",     CC_Server_GetName,    0),
+	Scripting_DeclareFunc("getAppName",  CC_Server_GetAppName, 0),
+	Scripting_DeclareFunc("setAppName",  CC_Server_SetAppName, 1),
+	Scripting_DeclareFunc("sendData",    CC_Server_SendData,   1),
+	Scripting_DeclareFunc("isSingleplayer", CC_Server_IsSingleplayer, 0),
+	SCRIPTING_NULL_FUNC
+};
 
 
 /*########################################################################################################################*
@@ -313,13 +325,15 @@ static SCRIPTING_RESULT CC_Tablist_Set(SCRIPTING_ARGS) {
 	Scripting_ReturnVoid();
 }
 
-#define CC_TABLIST_FUNCS \
-	Scripting_DeclareFunc("getPlayer", CC_Tablist_GetPlayer, 1), \
-	Scripting_DeclareFunc("getName",   CC_Tablist_GetName,   1), \
-	Scripting_DeclareFunc("getGroup",  CC_Tablist_GetGroup,  1), \
-	Scripting_DeclareFunc("getRank",   CC_Tablist_GetRank,   1), \
-	Scripting_DeclareFunc("remove",    CC_Tablist_Remove,    1), \
-	Scripting_DeclareFunc("set",       CC_Tablist_Set,       5)
+static SCRIPTING_FUNC tablistFuncs[] = {
+	Scripting_DeclareFunc("getPlayer", CC_Tablist_GetPlayer, 1),
+	Scripting_DeclareFunc("getName",   CC_Tablist_GetName,   1),
+	Scripting_DeclareFunc("getGroup",  CC_Tablist_GetGroup,  1),
+	Scripting_DeclareFunc("getRank",   CC_Tablist_GetRank,   1),
+	Scripting_DeclareFunc("remove",    CC_Tablist_Remove,    1),
+	Scripting_DeclareFunc("set",       CC_Tablist_Set,       5),
+	SCRIPTING_NULL_FUNC
+};
 
 
 /*########################################################################################################################*
@@ -355,11 +369,13 @@ static void CC_World_Hook(void) {
 	Event_Register_(&WorldEvents.MapLoaded, NULL, CC_World_OnMapLoaded);
 }
 
-#define CC_WORLD_FUNCS \
-	Scripting_DeclareFunc("getWidth",  CC_World_GetWidth,  0), \
-	Scripting_DeclareFunc("getHeight", CC_World_GetHeight, 0), \
-	Scripting_DeclareFunc("getLength", CC_World_GetLength, 0), \
-	Scripting_DeclareFunc("getBlock",  CC_World_GetBlock,  3)
+static SCRIPTING_FUNC worldFuncs[] = {
+	Scripting_DeclareFunc("getWidth",  CC_World_GetWidth,  0),
+	Scripting_DeclareFunc("getHeight", CC_World_GetHeight, 0),
+	Scripting_DeclareFunc("getLength", CC_World_GetLength, 0),
+	Scripting_DeclareFunc("getBlock",  CC_World_GetBlock,  3),
+	SCRIPTING_NULL_FUNC
+};
 
 
 /*########################################################################################################################*
@@ -375,9 +391,11 @@ static SCRIPTING_RESULT CC_Window_GetHandle(SCRIPTING_ARGS) {
 	Scripting_ReturnPtr(WindowInfo.Handle);
 }
 
-#define CC_WINDOW_FUNCS \
-	Scripting_DeclareFunc("setTitle",  CC_Window_SetTitle,  1), \
-	Scripting_DeclareFunc("getHandle", CC_Window_GetHandle, 0)
+static SCRIPTING_FUNC windowFuncs[] = {
+	Scripting_DeclareFunc("setTitle",  CC_Window_SetTitle,  1),
+	Scripting_DeclareFunc("getHandle", CC_Window_GetHandle, 0), 
+	SCRIPTING_NULL_FUNC
+};
 
 
 /*########################################################################################################################*

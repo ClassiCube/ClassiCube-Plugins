@@ -5,6 +5,7 @@
 #define SCRIPTING_ARGS PyObject* self, PyObject* args
 #define SCRIPTING_CALL self, args
 #define SCRIPTING_RESULT PyObject*
+#define SCRIPTING_FUNC PyMethodDef
 #define Scripting_DeclareFunc(name, func, num_args) { name, func, METH_VARARGS, "" }
 
 #define Scripting_ReturnVoid() Py_RETURN_NONE // https://docs.python.org/3/c-api/none.html
@@ -12,6 +13,7 @@
 #define Scripting_ReturnBool(value) return PyBool_FromLong(value)
 #define Scripting_ReturnStr(buffer, len) return PyBytes_FromStringAndSize(buffer, len)
 #define Scripting_ReturnPtr(value) return PyLong_FromVoidPtr(value)
+#define Scripting_ReturnNum(value) return PyFloat_FromDouble(value)
 
 #include "../../Scripting.h"
 
@@ -71,27 +73,21 @@ static void Backend_RaiseChat(const char* groupName, const char* funcName, const
 /*########################################################################################################################*
 *-------------------------------------------------Plugin implementation---------------------------------------------------*
 *#########################################################################################################################*/
-static PyMethodDef blockFuncs[] = { CC_BLOCK_FUNCS, SCRIPTING_NULL_FUNC };
 static PyModuleDef blockModule  = { PyModuleDef_HEAD_INIT, "block", NULL, -1, blockFuncs, NULL, NULL, NULL, NULL };
 static PyObject* PyInit_block(void) { return PyModule_Create(&blockModule); }
 
-static PyMethodDef chatFuncs[] = { CC_CHAT_FUNCS, SCRIPTING_NULL_FUNC };
 static PyModuleDef chatModule  = { PyModuleDef_HEAD_INIT, "chat", NULL, -1, chatFuncs, NULL, NULL, NULL, NULL };
 static PyObject* PyInit_chat(void) { return PyModule_Create(&chatModule); }
 
-static PyMethodDef serverFuncs[] = { CC_SERVER_FUNCS, SCRIPTING_NULL_FUNC };
 static PyModuleDef serverModule  = { PyModuleDef_HEAD_INIT, "server", NULL, -1, serverFuncs, NULL, NULL, NULL, NULL };
 static PyObject* PyInit_server(void) { return PyModule_Create(&serverModule); }
 
-static PyMethodDef tablistFuncs[] = { CC_TABLIST_FUNCS, SCRIPTING_NULL_FUNC };
 static PyModuleDef tablistModule  = { PyModuleDef_HEAD_INIT, "tablist", NULL, -1, tablistFuncs, NULL, NULL, NULL, NULL };
 static PyObject* PyInit_tablist(void) { return PyModule_Create(&tablistModule); }
 
-static PyMethodDef worldFuncs[] = { CC_WORLD_FUNCS, SCRIPTING_NULL_FUNC };
 static PyModuleDef worldModule  = { PyModuleDef_HEAD_INIT, "world", NULL, -1, worldFuncs, NULL, NULL, NULL, NULL };
 static PyObject* PyInit_world(void) { return PyModule_Create(&worldModule); }
 
-static PyMethodDef windowFuncs[] = { CC_WINDOW_FUNCS, SCRIPTING_NULL_FUNC };
 static PyModuleDef windowModule  = { PyModuleDef_HEAD_INIT, "window", NULL, -1, windowFuncs, NULL, NULL, NULL, NULL };
 static PyObject* PyInit_window(void) { return PyModule_Create(&windowModule); }
 

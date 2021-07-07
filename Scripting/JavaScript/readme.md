@@ -16,5 +16,3 @@ Additionally, any `.js` files in the `js` folder will be automatically loaded an
 ### API
 
 See the [common API documentation](../readme.md)
-
-**Note:** `bytearray` arguments can be either a string (characters are treated as bytes) or a table (treated as an array of bytes)

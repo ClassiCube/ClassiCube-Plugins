@@ -20,5 +20,3 @@ Executes the given text as a Python script
 ### API
 
 See the [common API documentation](../readme.md)
-
-**Note:** `bytearray` arguments can be either a string (characters are treated as bytes) or a table (treated as an array of bytes)
