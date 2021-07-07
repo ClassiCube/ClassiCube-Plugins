@@ -32,3 +32,11 @@ Lets you export the world to a .schematic file, which can be imported into MCEdi
 ## LUA scripting
 
 (not finished yet)
+
+## JavaScript scripting
+
+(not finished yet)
+
+## Python scripting
+
+(not finished yet)

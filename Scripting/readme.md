@@ -1,5 +1,5 @@
 Scripting plugins for various scripting languages are provided here:
-* [JavaScript](../../Scripting/Javascript) - powered by [duktake](https://duktape.org/)
+* [JavaScript](../../Scripting/Javascript) - powered by [duktape](https://duktape.org/)
 * [LUA](../../Scripting//LUA) - powered by LUA (https://www.lua.org/)
 * [Python](../../Scripting//Python) - powered by Python (https://www.python.org/)
 
@@ -140,7 +140,7 @@ Returns the current application name (the name that appears in /clients)
 
 Sets the application name (the name that appears in /clients)
 
-Note: This only takes effect when set before connected to the server
+Note: This is only sent to the server on initial connection
 
 ```boolean isSingleplayer()```
 
