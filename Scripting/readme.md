@@ -7,6 +7,46 @@ Scripting plugins for various scripting languages are provided here:
 
 The following functionality is available to scripts:
 
+### block module
+
+#### Functions
+
+```int parse(string value)```
+
+Attempts to parse the input as either a block ID or block name
+
+### camera module
+
+#### Functions
+
+```int getFOV()```
+
+Returns the current field of view of the camera in degrees
+
+```boolean isThird()```
+
+Returns whether the current camera is a third person camera
+
+```number getX()```
+
+Returns the current X position of the camera
+
+```number getY()```
+
+Returns the current Y position of the camera (vertical)
+
+```number getZ()```
+
+Returns the current Z position of the camera
+
+```number getYaw()```
+
+Returns the current yaw of the camera in degrees
+
+```number getPitch()```
+
+Returns the current pitch of the camera in degrees
+
 ### chat module
 
 #### Functions
@@ -35,6 +75,42 @@ Called whenever a chat message has been received (including user input)
 ```onSent(string text)```
 
 Called whenever a chat message has been sent to the server
+
+### inventory module
+
+#### Functions
+
+```int getSelected()```
+
+Returns the block ID the player is currently holding in their hand
+
+### player module
+
+#### Functions
+
+```number getReach()```
+
+Returns the current reach distance of the player
+
+```number getX()```
+
+Returns the current X position of the player
+
+```number getY()```
+
+Returns the current Y position of the player (vertical)
+
+```number getZ()```
+
+Returns the current Z position of the player
+
+```number getYaw()```
+
+Returns the current yaw of the player in degrees
+
+```number getPitch()```
+
+Returns the current pitch of the player in degrees
 
 ### server module
 
@@ -67,6 +143,10 @@ Raised when the user successfully connects to the server
 ```onDisconnected()```
 
 Raises when the user is disconnected from the server
+
+### inventory module
+
+### player module
 
 ### tablist module
 

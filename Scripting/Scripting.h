@@ -149,12 +149,12 @@ static SCRIPTING_RESULT CC_Camera_GetZ(SCRIPTING_ARGS) {
 }
 
 static SCRIPTING_RESULT CC_Camera_GetYaw(SCRIPTING_ARGS) {
-	Vec2 orientation = Camera.Active->GetOrientation();
-	Scripting_ReturnNum(orientation.X);
+	Vec2 ori = Camera.Active->GetOrientation();
+	Scripting_ReturnNum(ori.X * MATH_RAD2DEG);
 }
 static SCRIPTING_RESULT CC_Camera_GetPitch(SCRIPTING_ARGS) {
-	Vec2 orientation = Camera.Active->GetOrientation();
-	Scripting_ReturnNum(orientation.Y);
+	Vec2 ori = Camera.Active->GetOrientation();
+	Scripting_ReturnNum(ori.Y * MATH_RAD2DEG);
 }
 
 static SCRIPTING_FUNC cameraFuncs[] = {
