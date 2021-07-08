@@ -136,6 +136,28 @@ static void Backend_RaiseChat(const char* groupName, const char* funcName, const
 /*########################################################################################################################*
 *-------------------------------------------------Plugin implementation---------------------------------------------------*
 *#########################################################################################################################*/
+/* LUA core libraries, see linit.c for more details */
+/*  io/os libraries are removed for security, remaining libaries are left unaltered */
+static const luaL_Reg loadedlibs[] = {
+	{ "_G", luaopen_base },
+	{ LUA_LOADLIBNAME, luaopen_package },
+	{ LUA_COLIBNAME,   luaopen_coroutine },
+	{ LUA_TABLIBNAME,  luaopen_table },
+	{ LUA_STRLIBNAME,  luaopen_string },
+	{ LUA_MATHLIBNAME, luaopen_math },
+	{ LUA_UTF8LIBNAME, luaopen_utf8 },
+	{ LUA_DBLIBNAME,   luaopen_debug },
+	{ NULL, NULL }
+};
+static void LuaPlugin_RegisterCore(lua_State* L) {
+	const luaL_Reg *lib;
+	/* "require" functions from 'loadedlibs' and set results to global table */
+	for (lib = loadedlibs; lib->func; lib++) {
+		luaL_requiref(L, lib->name, lib->func, 1);
+		lua_pop(L, 1);  /* remove lib */
+	}
+}
+
 static void LuaPlugin_Register(lua_State* L) {
 	luaL_newlib(L, blockFuncs);     lua_setglobal(L, "block");
 	luaL_newlib(L, cameraFuncs);    lua_setglobal(L, "camera");
@@ -150,7 +172,7 @@ static void LuaPlugin_Register(lua_State* L) {
 
 static lua_State* LuaPlugin_New(void) {
 	lua_State* L = luaL_newstate();
-	luaL_openlibs(L);
+	LuaPlugin_RegisterCore(L);
 	LuaPlugin_Register(L);
 	return L;
 }

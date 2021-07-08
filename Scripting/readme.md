@@ -15,6 +15,8 @@ The following functionality is available to scripts:
 
 Attempts to parse the input as either a block ID or block name
 
+Returns `-1` if the input failed to be parsed
+
 ### camera module
 
 #### Functions
@@ -161,10 +163,6 @@ Raised when the user successfully connects to the server
 ```onDisconnected()```
 
 Raises when the user is disconnected from the server
-
-### inventory module
-
-### player module
 
 ### tablist module
 
