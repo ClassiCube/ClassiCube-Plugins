@@ -70,6 +70,36 @@ static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg);
 static int       Scripting_GetInt(SCRIPTING_ARGS, int arg);
 static void      Scripting_FreeBuf(sc_buffer* buffer);
 
+#define GetPlayer() ((struct LocalPlayer*)Entities.List[ENTITIES_SELF_ID])
+
+static cc_string CanModifyBlock(int x, int y, int z, int newBlock) {
+	struct LocalPlayer* p = GetPlayer();
+	float reach = p->ReachDistance + 1;
+	float dx    = x - p->Base.Position.X;
+	float dy    = y - p->Base.Position.Y;
+	float dz    = z - p->Base.Position.Z;
+
+	if (dx * dx + dy * dy + dz * dz >= reach * reach)
+		return (cc_string)String_FromConst("Coordinates too far away from player");
+
+	if (!p->Hacks.CanAnyHacks)
+		return (cc_string)String_FromConst("Scripting cannot modify blocks when -hax");
+	if (!p->Hacks.CanFly)
+		return (cc_string)String_FromConst("Scripting cannot modify blocks when -fly");
+	if (!p->Hacks.CanNoclip)
+		return (cc_string)String_FromConst("Scripting cannot modify blocks when -noclip");
+	if (!p->Hacks.CanSpeed)
+		return (cc_string)String_FromConst("Scripting cannot modify blocks when -speed");
+	
+	int curBlock = World_GetBlock(x, y, z);
+	if (!Blocks.CanPlace[newBlock])
+		return (cc_string)String_FromConst("Cannot place new block");
+	if (!Blocks.CanDelete[curBlock])
+		return (cc_string)String_FromConst("Cannot delete old block");
+
+	return emptyStr;
+}
+
 
 /*########################################################################################################################*
 *--------------------------------------------------------Block api--------------------------------------------------------*
@@ -170,6 +200,38 @@ static SCRIPTING_FUNC chatFuncs[] = {
 
 
 /*########################################################################################################################*
+*--------------------------------------------------------Game api---------------------------------------------------------*
+*#########################################################################################################################*/
+static SCRIPTING_RESULT CC_Game_SetBlock(SCRIPTING_ARGS) {
+	int x  = Scripting_GetInt(SCRIPTING_CALL, 0);
+	int y  = Scripting_GetInt(SCRIPTING_CALL, 1);
+	int z  = Scripting_GetInt(SCRIPTING_CALL, 2);
+	int id = Scripting_GetInt(SCRIPTING_CALL, 3);
+
+	cc_string error = CanModifyBlock(x, y, z, id);
+	if (!error.length) Game_UpdateBlock(x, y, z, id);
+	Scripting_ReturnStr(error.buffer, error.length);
+}
+
+static SCRIPTING_RESULT CC_Game_ChangeBlock(SCRIPTING_ARGS) {
+	int x  = Scripting_GetInt(SCRIPTING_CALL, 0);
+	int y  = Scripting_GetInt(SCRIPTING_CALL, 1);
+	int z  = Scripting_GetInt(SCRIPTING_CALL, 2);
+	int id = Scripting_GetInt(SCRIPTING_CALL, 3);
+
+	cc_string error = CanModifyBlock(x, y, z, id);
+	if (!error.length) Game_ChangeBlock(x, y, z, id);
+	Scripting_ReturnStr(error.buffer, error.length);
+}
+
+static SCRIPTING_FUNC gameFuncs[] = {
+	Scripting_DeclareFunc("setBlock",    CC_Game_SetBlock,    4),
+	Scripting_DeclareFunc("changeBlock", CC_Game_ChangeBlock, 4),
+	SCRIPTING_NULL_FUNC
+};
+
+
+/*########################################################################################################################*
 *-----------------------------------------------------Inventory api-------------------------------------------------------*
 *#########################################################################################################################*/
 static SCRIPTING_RESULT CC_Inventory_GetSelected(SCRIPTING_ARGS) {
@@ -186,30 +248,30 @@ static SCRIPTING_FUNC inventoryFuncs[] = {
 *-------------------------------------------------------Player api--------------------------------------------------------*
 *#########################################################################################################################*/
 static SCRIPTING_RESULT CC_Player_GetReach(SCRIPTING_ARGS) {
-	struct LocalPlayer* p = (struct LocalPlayer*)Entities.List[ENTITIES_SELF_ID];
+	struct LocalPlayer* p = GetPlayer();
 	Scripting_ReturnNum(p->ReachDistance);
 }
 
 static SCRIPTING_RESULT CC_Player_GetX(SCRIPTING_ARGS) {
-	struct Entity* e = Entities.List[ENTITIES_SELF_ID];
-	Scripting_ReturnNum(e->Position.X);
+	struct LocalPlayer* p = GetPlayer();
+	Scripting_ReturnNum(p->Base.Position.X);
 }
 static SCRIPTING_RESULT CC_Player_GetY(SCRIPTING_ARGS) {
-	struct Entity* e = Entities.List[ENTITIES_SELF_ID];
-	Scripting_ReturnNum(e->Position.Y);
+	struct LocalPlayer* p = GetPlayer();
+	Scripting_ReturnNum(p->Base.Position.Y);
 }
 static SCRIPTING_RESULT CC_Player_GetZ(SCRIPTING_ARGS) {
-	struct Entity* e = Entities.List[ENTITIES_SELF_ID];
-	Scripting_ReturnNum(e->Position.Z);
+	struct LocalPlayer* p = GetPlayer();
+	Scripting_ReturnNum(p->Base.Position.Z);
 }
 
 static SCRIPTING_RESULT CC_Player_GetYaw(SCRIPTING_ARGS) {
-	struct Entity* e = Entities.List[ENTITIES_SELF_ID];
-	Scripting_ReturnNum(e->Yaw);
+	struct LocalPlayer* p = GetPlayer();
+	Scripting_ReturnNum(p->Base.Yaw);
 }
 static SCRIPTING_RESULT CC_Player_GetPitch(SCRIPTING_ARGS) {
-	struct Entity* e = Entities.List[ENTITIES_SELF_ID];
-	Scripting_ReturnNum(e->Pitch);
+	struct LocalPlayer* p = GetPlayer();
+	Scripting_ReturnNum(p->Base.Pitch);
 }
 
 static SCRIPTING_FUNC playerFuncs[] = {

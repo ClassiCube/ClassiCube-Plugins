@@ -162,6 +162,7 @@ static void LuaPlugin_Register(lua_State* L) {
 	luaL_newlib(L, blockFuncs);     lua_setglobal(L, "block");
 	luaL_newlib(L, cameraFuncs);    lua_setglobal(L, "camera");
 	luaL_newlib(L, chatFuncs);      lua_setglobal(L, "chat");
+	luaL_newlib(L, gameFuncs);      lua_setglobal(L, "game");
 	luaL_newlib(L, inventoryFuncs); lua_setglobal(L, "inventory");
 	luaL_newlib(L, playerFuncs);    lua_setglobal(L, "player");
 	luaL_newlib(L, serverFuncs);    lua_setglobal(L, "server");

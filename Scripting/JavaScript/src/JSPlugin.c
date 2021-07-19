@@ -123,6 +123,7 @@ static void JSPlugin_Register(duk_context* ctx) {
 	JSPlugin_RegisterModule(ctx, "block",     blockFuncs);
 	JSPlugin_RegisterModule(ctx, "camera",    cameraFuncs);
 	JSPlugin_RegisterModule(ctx, "chat",      chatFuncs);
+	JSPlugin_RegisterModule(ctx, "game",      chatFuncs);
 	JSPlugin_RegisterModule(ctx, "inventory", inventoryFuncs);
 	JSPlugin_RegisterModule(ctx, "player",    playerFuncs);
 	JSPlugin_RegisterModule(ctx, "server",    serverFuncs);
