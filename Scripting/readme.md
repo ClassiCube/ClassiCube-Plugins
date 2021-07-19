@@ -78,6 +78,28 @@ Called whenever a chat message has been received (including user input)
 
 Called whenever a chat message has been sent to the server
 
+### game module
+
+#### Functions
+
+```string setBlock(int x, int y, int z, int blockID)```
+
+Attempts to set the block at the given coordinates to the given block ID
+
+*Note:* Returns empty string if the block was successfully updated.<br>
+Otherwise returns reason why the block change failed. (e.g. too far away, -hax in MOTD)
+
+*Note:* Clientside change only - the server **is not** informed of the change
+
+```string changeBlock(int x, int y, int z, int blockID)```
+
+Attempts to change the block at the given coordinates to the given block ID
+
+*Note:* Returns empty string if the block was successfully updated.<br>
+Otherwise returns reason why the block change failed. (e.g. too far away, -hax in MOTD)
+
+*Note:* The server **is** informed of the change
+
 ### inventory module
 
 #### Functions
@@ -142,7 +164,7 @@ Returns the current application name (the name that appears in /clients)
 
 Sets the application name (the name that appears in /clients)
 
-Note: This is only sent to the server on initial connection
+*Note:* This is only sent to the server on initial connection
 
 ```boolean isSingleplayer()```
 
@@ -222,7 +244,7 @@ Raised when the current world is unloaded
 
 Raised when a new world has finished loading
 
-Note: This event is still raised even when an unsuccessful load occurs<br>
+*Note:* This event is still raised even when an unsuccessful load occurs<br>
 (e.g. due to insufficient memory)
 
 ### window module
