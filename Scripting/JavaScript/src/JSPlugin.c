@@ -33,6 +33,10 @@ static int Scripting_GetInt(SCRIPTING_ARGS, int arg) {
 	return duk_to_int(ctx, arg);
 }
 
+static double Scripting_GetNum(SCRIPTING_ARGS, int arg) {
+	return duk_to_number(ctx, arg);
+}
+
 static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg) {
 	sc_buffer buffer;
 	duk_size_t size;
@@ -122,6 +126,7 @@ static void JSPlugin_RegisterModule(duk_context* ctx, const char* name, const du
 static void JSPlugin_Register(duk_context* ctx) {
 	JSPlugin_RegisterModule(ctx, "block",     blockFuncs);
 	JSPlugin_RegisterModule(ctx, "camera",    cameraFuncs);
+	JSPlugin_RegisterModule(ctx, "env",       envFuncs);
 	JSPlugin_RegisterModule(ctx, "chat",      chatFuncs);
 	JSPlugin_RegisterModule(ctx, "game",      gameFuncs);
 	JSPlugin_RegisterModule(ctx, "inventory", inventoryFuncs);

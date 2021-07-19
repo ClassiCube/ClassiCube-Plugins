@@ -68,6 +68,7 @@ typedef struct cc_string_ cc_string;
 static cc_string Scripting_GetStr(SCRIPTING_ARGS, int arg);
 static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg);
 static int       Scripting_GetInt(SCRIPTING_ARGS, int arg);
+static double    Scripting_GetNum(SCRIPTING_ARGS, int arg);
 static void      Scripting_FreeBuf(sc_buffer* buffer);
 
 #define GetPlayer() ((struct LocalPlayer*)Entities.List[ENTITIES_SELF_ID])
@@ -88,7 +89,7 @@ static cc_string CanModifyBlock(int x, int y, int z, int newBlock) {
 	if (newBlock < 0 || newBlock >= BLOCK_COUNT)
 		return (cc_string)String_FromConst("Invalid block ID");
 
-	// don't allow user to abuse changing blocks on restricted blocks
+	// don't allow user to abuse changing blocks on restricted levels
 	if (!p->Hacks.CanAnyHacks)
 		return (cc_string)String_FromConst("Scripting cannot modify blocks when -hax");
 	if (!p->Hacks.CanFly)
@@ -204,6 +205,77 @@ static SCRIPTING_FUNC chatFuncs[] = {
 	Scripting_DeclareFunc("add",   CC_Chat_Add,   1),
 	Scripting_DeclareFunc("addOf", CC_Chat_AddOf, 2),
 	Scripting_DeclareFunc("send",  CC_Chat_Send,  1),
+	SCRIPTING_NULL_FUNC
+};
+
+
+/*########################################################################################################################*
+*-----------------------------------------------------Environment api-----------------------------------------------------*
+*#########################################################################################################################*/
+static SCRIPTING_RESULT CC_Env_SetEdgeBlock(SCRIPTING_ARGS) {
+	int block = Scripting_GetInt(SCRIPTING_CALL, 0);
+	if (GetPlayer()->Hacks.CanAnyHacks) Env_SetEdgeBlock(block);
+	Scripting_ReturnVoid();
+}
+
+static SCRIPTING_RESULT CC_Env_SetEdgeHeight(SCRIPTING_ARGS) {
+	int height = Scripting_GetInt(SCRIPTING_CALL, 0);
+	if (GetPlayer()->Hacks.CanAnyHacks) Env_SetEdgeHeight(height);
+	Scripting_ReturnVoid();
+}
+
+static SCRIPTING_RESULT CC_Env_SetSidesBlock(SCRIPTING_ARGS) {
+	int block = Scripting_GetInt(SCRIPTING_CALL, 0);
+	if (GetPlayer()->Hacks.CanAnyHacks) Env_SetSidesBlock(block);
+	Scripting_ReturnVoid();
+}
+
+static SCRIPTING_RESULT CC_Env_SetSidesOffset(SCRIPTING_ARGS) {
+	int offset = Scripting_GetInt(SCRIPTING_CALL, 0);
+	if (GetPlayer()->Hacks.CanAnyHacks) Env_SetSidesOffset(offset);
+	Scripting_ReturnVoid();
+}
+
+static SCRIPTING_RESULT CC_Env_SetCloudsHeight(SCRIPTING_ARGS) {
+	int height = Scripting_GetInt(SCRIPTING_CALL, 0);
+	if (GetPlayer()->Hacks.CanAnyHacks) Env_SetCloudsHeight(height);
+	Scripting_ReturnVoid();
+}
+
+static SCRIPTING_RESULT CC_Env_SetCloudsSpeed(SCRIPTING_ARGS) {
+	double speed = Scripting_GetNum(SCRIPTING_CALL, 0);
+	if (GetPlayer()->Hacks.CanAnyHacks) Env_SetCloudsSpeed(speed);
+	Scripting_ReturnVoid();
+}
+
+static SCRIPTING_RESULT CC_Env_SetWeather(SCRIPTING_ARGS) {
+	int mode = Scripting_GetInt(SCRIPTING_CALL, 0);
+	if (GetPlayer()->Hacks.CanAnyHacks) Env_SetWeather(mode);
+	Scripting_ReturnVoid();
+}
+
+static SCRIPTING_RESULT CC_Env_SetWeatherSpeed(SCRIPTING_ARGS) {
+	double speed = Scripting_GetNum(SCRIPTING_CALL, 0);
+	if (GetPlayer()->Hacks.CanAnyHacks) Env_SetWeatherSpeed(speed);
+	Scripting_ReturnVoid();
+}
+
+static SCRIPTING_RESULT CC_Env_SetWeatherFade(SCRIPTING_ARGS) {
+	double rate = Scripting_GetNum(SCRIPTING_CALL, 0);
+	if (GetPlayer()->Hacks.CanAnyHacks) Env_SetWeatherFade(rate);
+	Scripting_ReturnVoid();
+}
+
+static SCRIPTING_FUNC envFuncs[] = {
+	Scripting_DeclareFunc("setEdgeBlock",    CC_Env_SetEdgeBlock,    1),
+	Scripting_DeclareFunc("setEdgeHeight",   CC_Env_SetEdgeHeight,   1),
+	Scripting_DeclareFunc("setSidesBlock",   CC_Env_SetSidesBlock,   1),
+	Scripting_DeclareFunc("setSidesOffset",  CC_Env_SetSidesOffset,  1),
+	Scripting_DeclareFunc("setCloudsHeight", CC_Env_SetCloudsHeight, 1),
+	Scripting_DeclareFunc("setCloudsSpeed",  CC_Env_SetCloudsSpeed,  1),
+	Scripting_DeclareFunc("setWeather",      CC_Env_SetWeather,      1),
+	Scripting_DeclareFunc("setWeatherSpeed", CC_Env_SetWeatherSpeed, 1),
+	Scripting_DeclareFunc("setWeatherFade",  CC_Env_SetWeatherFade,  1),
 	SCRIPTING_NULL_FUNC
 };
 

@@ -44,6 +44,10 @@ static int Scripting_GetInt(SCRIPTING_ARGS, int arg) {
 	return (int)lua_tointeger(L, arg + 1);
 }
 
+static double Scripting_GetNum(SCRIPTING_ARGS, int arg) {
+	return lua_tonumber(L, arg + 1);
+}
+
 static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg) {
 	sc_buffer buffer = { 0 };
 	size_t len;
@@ -162,6 +166,7 @@ static void LuaPlugin_Register(lua_State* L) {
 	luaL_newlib(L, blockFuncs);     lua_setglobal(L, "block");
 	luaL_newlib(L, cameraFuncs);    lua_setglobal(L, "camera");
 	luaL_newlib(L, chatFuncs);      lua_setglobal(L, "chat");
+	luaL_newlib(L, envFuncs);       lua_setglobal(L, "env");
 	luaL_newlib(L, gameFuncs);      lua_setglobal(L, "game");
 	luaL_newlib(L, inventoryFuncs); lua_setglobal(L, "inventory");
 	luaL_newlib(L, playerFuncs);    lua_setglobal(L, "player");
