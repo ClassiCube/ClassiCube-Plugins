@@ -82,6 +82,13 @@ static cc_string CanModifyBlock(int x, int y, int z, int newBlock) {
 	if (dx * dx + dy * dy + dz * dz >= reach * reach)
 		return (cc_string)String_FromConst("Coordinates too far away from player");
 
+	// try to save the user from themselves
+	if (!World_Contains(x, y, z))
+		return (cc_string)String_FromConst("Coordinates outside the map");
+	if (newBlock < 0 || newBlock >= BLOCK_COUNT)
+		return (cc_string)String_FromConst("Invalid block ID");
+
+	// don't allow user to abuse changing blocks on restricted blocks
 	if (!p->Hacks.CanAnyHacks)
 		return (cc_string)String_FromConst("Scripting cannot modify blocks when -hax");
 	if (!p->Hacks.CanFly)
@@ -91,6 +98,8 @@ static cc_string CanModifyBlock(int x, int y, int z, int newBlock) {
 	if (!p->Hacks.CanSpeed)
 		return (cc_string)String_FromConst("Scripting cannot modify blocks when -speed");
 	
+	// although server should be checking permissions anyways, this is also restricted
+	//  here to prevent seeing areas shouldn't be able to by clientside deleting blocks
 	int curBlock = World_GetBlock(x, y, z);
 	if (!Blocks.CanPlace[newBlock])
 		return (cc_string)String_FromConst("Cannot place new block");
