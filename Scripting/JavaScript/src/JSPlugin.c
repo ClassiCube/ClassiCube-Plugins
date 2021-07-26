@@ -145,33 +145,19 @@ static duk_context* JSPlugin_New(void) {
 	return ctx;
 }
 
-static cc_result JSPlugin_LoadFile(duk_context* ctx, const cc_string* path) {
-	// TODO: What's error checking anyways?
-	struct Stream s;
-	cc_result res;
-	if ((res = Stream_OpenFile(&s, path))) return res;
-
-	cc_uint32 length;
-	s.Length(&s, &length);
-
-	void* data = Mem_Alloc(length, 1, "JS file");
-	Stream_Read(&s, data, length);
-	duk_push_lstring(ctx, data, length);
-
-	s.Close(&s);
-	return 0;
-}
-
 static void Backend_Load(const cc_string* path, void* obj) {
 	static cc_string ext = String_FromConst(".js");
 	if (!String_CaselessEnds(path, &ext)) return;
-	int res;
+	cc_result res;
+
+	sc_buffer mem;
+	// TODO: What's error checking anyways?
+	// TODO: leaking memory here
+	res = Scripting_LoadFile(path, &mem);
+	if (res) return;
 
 	duk_context* ctx = JSPlugin_New();
-	res = JSPlugin_LoadFile(ctx, path);
-	if (res) {
-		duk_destroy_heap(ctx); return;
-	}
+	duk_push_lstring(ctx, mem.data, mem.len);
 
 	if (duk_peval(ctx) != 0) {
 		JSPlugin_LogError(ctx, "executing script", path, NULL);

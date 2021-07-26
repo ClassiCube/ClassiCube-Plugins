@@ -570,6 +570,27 @@ static SCRIPTING_FUNC windowFuncs[] = {
 /*########################################################################################################################*
 *-------------------------------------------------Plugin implementation---------------------------------------------------*
 *#########################################################################################################################*/
+static cc_result Scripting_LoadFile(const cc_string* path, sc_buffer* mem) {
+	mem->len  = 0;
+	mem->data = NULL;
+
+	struct Stream s;
+	cc_result res;
+	if ((res = Stream_OpenFile(&s, path))) return res;
+
+	cc_uint32 length;
+	s.Length(&s, &length);
+
+	mem->len  = length;
+	mem->data = Mem_Alloc(mem->len + 1, 1, "JS file");
+	res = Stream_Read(&s, mem->data, mem->len);
+
+	// null terminate for string
+	((char*)mem->data)[mem->len] = '\0';
+	s.Close(&s);
+	return res;
+}
+
 static void Scripting_Init(void) {
 	const static cc_string dir = String_FromConst(SCRIPTING_DIRECTORY);
 	Directory_Create(&dir);
