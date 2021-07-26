@@ -21,40 +21,64 @@
 /*########################################################################################################################*
 *--------------------------------------------------------Backend----------------------------------------------------------*
 *#########################################################################################################################*/
-static cc_string Scripting_GetStr(SCRIPTING_ARGS, int arg) {
-	cc_string str = emptyStr;
-	Py_ssize_t nargs = PyTuple_GET_SIZE(args);
-	if (arg >= nargs) return str;
-
-	
-	PyObject* obj = PyTuple_GET_ITEM(args, arg);
-	str.buffer    = PyBytes_AsString(obj);
-	str.length   = PyBytes_Size(obj);
+static sc_buffer emptyBuf;
+static cc_string MakeString(const char* buffer, int len) {
+	cc_string str;
+	str.buffer    = buffer;
+	str.length   = len;
 	str.capacity = 0;
 	return str;
+}
+
+static cc_string Scripting_GetStr(SCRIPTING_ARGS, int arg) {
+	Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+	if (arg >= nargs) return emptyStr;
+	PyObject* obj = PyTuple_GET_ITEM(args, arg);
+
+	if (PyBytes_Check(obj)) {
+		const char* buf = PyBytes_AsString(obj);
+		int len         = PyBytes_Size(obj);
+		return MakeString(buf, len);
+	} else {
+		PyObject* repr = PyObject_Repr(obj);
+		Py_XDECREF(repr);
+		return emptyStr;
+	}
 }
 
 static int Scripting_GetInt(SCRIPTING_ARGS, int arg) {
 	Py_ssize_t nargs = PyTuple_GET_SIZE(args);
 	if (arg >= nargs) return 0;
-
 	PyObject* obj = PyTuple_GET_ITEM(args, arg);
+
 	return PyLong_AsLong(obj);
 }
 
-static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg) {
-	sc_buffer buffer = { 0 };
+static double Scripting_GetNum(SCRIPTING_ARGS, int arg) {
 	Py_ssize_t nargs = PyTuple_GET_SIZE(args);
-	if (arg >= nargs) return buffer;
-
+	if (arg >= nargs) return 0;
 	PyObject* obj = PyTuple_GET_ITEM(args, arg);
+
+	return PyFloat_AsDouble(obj);
+}
+
+static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg) {	
+	Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+	if (arg >= nargs) return emptyBuf;
+	PyObject* obj = PyTuple_GET_ITEM(args, arg);
+
+	sc_buffer buffer;
 	buffer.data = PyByteArray_AsString(obj);
 	buffer.len  = PyByteArray_Size(obj);
 	return buffer;
 }
 
-static void Scripting_FreeBuf(sc_buffer* buffer) {
-	/* no need to manually free the memory here */
+static void Scripting_FreeStr(cc_string* str) {
+	// no need to manually free the memory here
+}
+
+static void Scripting_FreeBuf(sc_buffer* buf) {
+	// no need to manually free the memory here
 }
 
 /*########################################################################################################################*
@@ -73,31 +97,36 @@ static void Backend_RaiseChat(const char* groupName, const char* funcName, const
 /*########################################################################################################################*
 *-------------------------------------------------Plugin implementation---------------------------------------------------*
 *#########################################################################################################################*/
-static PyModuleDef blockModule  = { PyModuleDef_HEAD_INIT, "block", NULL, -1, blockFuncs, NULL, NULL, NULL, NULL };
-static PyObject* PyInit_block(void) { return PyModule_Create(&blockModule); }
+#define STR(x) #x
+#define PluginModule(modname) \
+	static PyModuleDef modname ## Module = \
+	{ PyModuleDef_HEAD_INIT, STR(modname), NULL, -1, modname ## Funcs, NULL, NULL, NULL, NULL }; \
+	static PyObject* PyInit_ ## modname(void) { return PyModule_Create(&modname ## Module); }
 
-static PyModuleDef chatModule  = { PyModuleDef_HEAD_INIT, "chat", NULL, -1, chatFuncs, NULL, NULL, NULL, NULL };
-static PyObject* PyInit_chat(void) { return PyModule_Create(&chatModule); }
-
-static PyModuleDef serverModule  = { PyModuleDef_HEAD_INIT, "server", NULL, -1, serverFuncs, NULL, NULL, NULL, NULL };
-static PyObject* PyInit_server(void) { return PyModule_Create(&serverModule); }
-
-static PyModuleDef tablistModule  = { PyModuleDef_HEAD_INIT, "tablist", NULL, -1, tablistFuncs, NULL, NULL, NULL, NULL };
-static PyObject* PyInit_tablist(void) { return PyModule_Create(&tablistModule); }
-
-static PyModuleDef worldModule  = { PyModuleDef_HEAD_INIT, "world", NULL, -1, worldFuncs, NULL, NULL, NULL, NULL };
-static PyObject* PyInit_world(void) { return PyModule_Create(&worldModule); }
-
-static PyModuleDef windowModule  = { PyModuleDef_HEAD_INIT, "window", NULL, -1, windowFuncs, NULL, NULL, NULL, NULL };
-static PyObject* PyInit_window(void) { return PyModule_Create(&windowModule); }
+PluginModule(block)
+PluginModule(camera)
+PluginModule(chat)
+PluginModule(env)
+PluginModule(game)
+PluginModule(inventory)
+PluginModule(player)
+PluginModule(server)
+PluginModule(tablist)
+PluginModule(world)
+PluginModule(window)
 
 static void PythonPlugin_Register(void) {
-	PyImport_AppendInittab("block",   &PyInit_block);
-	PyImport_AppendInittab("chat",    &PyInit_chat);
-	PyImport_AppendInittab("server",  &PyInit_server);
-	PyImport_AppendInittab("tablist", &PyInit_tablist);
-	PyImport_AppendInittab("world",   &PyInit_world);
-	PyImport_AppendInittab("window",  &PyInit_window);
+	PyImport_AppendInittab("block",     &PyInit_block);
+	PyImport_AppendInittab("camera",    &PyInit_camera);
+	PyImport_AppendInittab("chat",      &PyInit_chat);
+	PyImport_AppendInittab("env",       &PyInit_env);
+	PyImport_AppendInittab("game",      &PyInit_game);
+	PyImport_AppendInittab("inventory", &PyInit_inventory);
+	PyImport_AppendInittab("player",    &PyInit_player);
+	PyImport_AppendInittab("server",    &PyInit_server);
+	PyImport_AppendInittab("tablist",   &PyInit_tablist);
+	PyImport_AppendInittab("world",     &PyInit_world);
+	PyImport_AppendInittab("window",    &PyInit_window);
 }
 
 static void Backend_Load(const cc_string* path, void* obj) {
