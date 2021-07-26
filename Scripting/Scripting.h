@@ -41,6 +41,8 @@ static void Backend_RaiseChat(const char* groupName, const char* funcName, const
 static void Backend_Load(const cc_string* origName, void* obj);
 static void Backend_ExecScript(const cc_string* script);
 static void Backend_Init(void);
+// retrieves last error from the scripting context
+static cc_string Backend_GetError(SCRIPTING_ARGS);
 
 /*
 Backends must provide the following defines:
@@ -61,7 +63,7 @@ NOTE that SCRIPTING_ARGS is implicitly available to all of the following macros:
 
 #define SCRIPTING_NULL_FUNC Scripting_DeclareFunc(NULL, NULL, 0)
 static const cc_string emptyStr = { "", 0, 0 };
-struct sc_buffer_ { void* data; int len, meta; };
+struct sc_buffer_ { char* data; int len, meta; };
 
 typedef struct sc_buffer_ sc_buffer;
 typedef struct cc_string_ cc_string;
@@ -570,6 +572,28 @@ static SCRIPTING_FUNC windowFuncs[] = {
 /*########################################################################################################################*
 *-------------------------------------------------Plugin implementation---------------------------------------------------*
 *#########################################################################################################################*/
+
+/* Argument format: */
+/*  arg1 & arg2: char* (module) and char* (function) */
+/*  just arg1:   string* (script name) */
+static void Scripting_LogError(SCRIPTING_ARGS, const char* place, const void* arg1, const void* arg2) {
+	char buffer[256];
+	cc_string str = String_FromArray(buffer);
+
+	// kinda hacky and hardcoded but it works
+	if (arg1 && arg2) {
+		String_Format4(&str, "&cError %c (at %c.%c)", place, arg1, arg2, NULL);
+	} else if (arg1) {
+		String_Format4(&str, "&cError %c (%s)", place, arg1, NULL, NULL);
+	} else {
+		String_Format4(&str, "&cError %c", place, NULL, NULL, NULL);
+	}
+	Chat_Add(&str);
+
+	str = Backend_GetError(SCRIPTING_CALL);
+	Chat_Add(&str);
+}
+
 static cc_result Scripting_LoadFile(const cc_string* path, sc_buffer* mem) {
 	mem->len  = 0;
 	mem->data = NULL;

@@ -83,22 +83,8 @@ struct LuaPlugin;
 typedef struct LuaPlugin { lua_State* L; struct LuaPlugin* next; } LuaPlugin;
 static LuaPlugin* pluginsHead;
 
-static void LuaPlugin_LogError(lua_State* L, const char* place, const void* arg1, const void* arg2) {
-	char buffer[256];
-	cc_string str = String_FromArray(buffer);
-	
-	// kinda hacky and hardcoded but it works
-	if (arg1 && arg2) {
-		String_Format4(&str, "&cError %c (at %c.%c)", place, arg1, arg2, NULL);
-	} else if (arg1) {
-		String_Format4(&str, "&cError %c (%s)", place, arg1, NULL, NULL);
-	} else {
-		String_Format4(&str, "&cError", place, NULL, NULL, NULL);
-	}
-
-	Chat_Add(&str);
-	str = Scripting_GetStr(L, -2); // really -1, but _GetStr adds 1
-	Chat_Add(&str);
+static cc_string Backend_GetError(SCRIPTING_ARGS) {
+	return Scripting_GetStr(L, -2); // really -1, but _GetStr adds 1
 }
 
 // macro to avoid verbose code duplication
@@ -121,7 +107,7 @@ static void LuaPlugin_LogError(lua_State* L, const char* place, const void* arg1
 static void Backend_RaiseVoid(const char* groupName, const char* funcName) {
 	LuaPlugin_RaiseCommonBegin
 		int ret = lua_pcall(L, 0, 0, 0); // call implicitly pops function
-		if (ret) LuaPlugin_LogError(L, "running callback", groupName, funcName);
+		if (ret) Scripting_LogError(L, "running callback", groupName, funcName);
 	LuaPlugin_RaiseCommonEnd
 }
 
@@ -130,7 +116,7 @@ static void Backend_RaiseChat(const char* groupName, const char* funcName, const
 		lua_pushlstring(L, msg->buffer, msg->length);
 		lua_pushinteger(L, msgType);
 		int ret = lua_pcall(L, 2, 0, 0); // call implicitly pops function
-		if (ret) LuaPlugin_LogError(L, "running callback", groupName, funcName);
+		if (ret) Scripting_LogError(L, "running callback", groupName, funcName);
 	LuaPlugin_RaiseCommonEnd
 }
 
@@ -195,13 +181,13 @@ static void Backend_Load(const cc_string* origName, void* obj) {
 	//luaL_dofile(L, "test.lua");
 	res = luaL_loadfile(L, name.buffer);
 	if (res) {
-		LuaPlugin_LogError(L, "loading script", &name, NULL);
+		Scripting_LogError(L, "loading script", &name, NULL);
 		lua_close(L); return;
 	}
 
 	res = lua_pcall(L, 0, LUA_MULTRET, 0);
 	if (res) {
-		LuaPlugin_LogError(L, "executing script", &name, NULL);
+		Scripting_LogError(L, "executing script", &name, NULL);
 		lua_close(L); return;
 	}	
 
@@ -216,10 +202,10 @@ static void Backend_ExecScript(const cc_string* script) {
 	lua_State* L  = LuaPlugin_New();
 	cc_result res = luaL_loadbuffer(L, script->buffer, script->length, "@tmp");
 	if (res) {
-		LuaPlugin_LogError(L, "loading script", script, NULL);
+		Scripting_LogError(L, "loading script", script, NULL);
 	} else {
 		res = lua_pcall(L, 0, LUA_MULTRET, 0);
-		if (res) LuaPlugin_LogError(L, "executing script", script, NULL);
+		if (res) Scripting_LogError(L, "executing script", script, NULL);
 	}
 	lua_close(L);
 }

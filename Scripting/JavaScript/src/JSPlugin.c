@@ -60,22 +60,8 @@ struct JSPlugin;
 typedef struct JSPlugin { duk_context* ctx; struct JSPlugin* next; } JSPlugin;
 static JSPlugin* pluginsHead;
 
-static void JSPlugin_LogError(duk_context* ctx, const char* place, const void* arg1, const void* arg2) {
-	char buffer[256];
-	cc_string str = String_FromArray(buffer);
-	
-	// kinda hacky and hardcoded but it works
-	if (arg1 && arg2) {
-		String_Format4(&str, "&cError %c (at %c.%c)", place, arg1, arg2, NULL);
-	} else if (arg1) {
-		String_Format4(&str, "&cError %c (%s)", place, arg1, NULL, NULL);
-	} else {
-		String_Format4(&str, "&cError %c", place, NULL, NULL, NULL);
-	}
-	Chat_Add(&str);
-
-	str = String_FromReadonly(duk_safe_to_string(ctx, -1));
-	Chat_Add(&str);
+static cc_string Backend_GetError(SCRIPTING_ARGS) {
+	return String_FromReadonly(duk_safe_to_string(ctx, -1));
 }
 
 
