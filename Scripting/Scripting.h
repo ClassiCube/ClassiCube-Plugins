@@ -69,7 +69,8 @@ static cc_string Scripting_GetStr(SCRIPTING_ARGS, int arg);
 static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg);
 static int       Scripting_GetInt(SCRIPTING_ARGS, int arg);
 static double    Scripting_GetNum(SCRIPTING_ARGS, int arg);
-static void      Scripting_FreeBuf(sc_buffer* buffer);
+static void      Scripting_FreeStr(cc_string* str);
+static void      Scripting_FreeBuf(sc_buffer* buf);
 
 #define GetPlayer() ((struct LocalPlayer*)Entities.List[ENTITIES_SELF_ID])
 
@@ -117,6 +118,8 @@ static cc_string CanModifyBlock(int x, int y, int z, int newBlock) {
 static SCRIPTING_RESULT CC_Block_Parse(SCRIPTING_ARGS) {
 	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
 	int block     = Block_Parse(&str);
+
+	Scripting_FreeStr(&str);
 	Scripting_ReturnInt(block);
 }
 
@@ -174,6 +177,8 @@ static SCRIPTING_FUNC cameraFuncs[] = {
 static SCRIPTING_RESULT CC_Chat_Add(SCRIPTING_ARGS) {
 	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
 	Chat_Add(&str);
+
+	Scripting_FreeStr(&str);
 	Scripting_ReturnVoid();
 }
 
@@ -181,12 +186,16 @@ static SCRIPTING_RESULT CC_Chat_AddOf(SCRIPTING_ARGS) {
 	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
 	int msgType   = Scripting_GetInt(SCRIPTING_CALL, 1);
 	Chat_AddOf(&str, msgType);
+
+	Scripting_FreeStr(&str);
 	Scripting_ReturnVoid();
 }
 
 static SCRIPTING_RESULT CC_Chat_Send(SCRIPTING_ARGS) {
 	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
 	Chat_Send(&str, false);
+
+	Scripting_FreeStr(&str);
 	Scripting_ReturnVoid();
 }
 
@@ -382,6 +391,8 @@ static SCRIPTING_RESULT CC_Server_GetAppName(SCRIPTING_ARGS) {
 static SCRIPTING_RESULT CC_Server_SetAppName(SCRIPTING_ARGS) {
 	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
 	String_Copy(&Server.AppName, &str);
+
+	Scripting_FreeStr(&str);
 	Scripting_ReturnVoid();
 }
 
@@ -475,6 +486,9 @@ static SCRIPTING_RESULT CC_Tablist_Set(SCRIPTING_ARGS) {
 	int groupRank    = Scripting_GetInt(SCRIPTING_CALL, 4);
 	TabList_Set(id, &player, &list, &group, groupRank);
 
+	Scripting_FreeStr(&player);
+	Scripting_FreeStr(&list);
+	Scripting_FreeStr(&group);
 	Scripting_ReturnVoid();
 }
 
@@ -537,6 +551,8 @@ static SCRIPTING_FUNC worldFuncs[] = {
 static SCRIPTING_RESULT CC_Window_SetTitle(SCRIPTING_ARGS) {
 	cc_string str = Scripting_GetStr(SCRIPTING_CALL, 0);
 	Window_SetTitle(&str);
+
+	Scripting_FreeStr(&str);
 	Scripting_ReturnVoid();
 }
 

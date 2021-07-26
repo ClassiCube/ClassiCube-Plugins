@@ -32,7 +32,6 @@ static cc_string Scripting_GetStr(SCRIPTING_ARGS, int arg) {
 static int Scripting_GetInt(SCRIPTING_ARGS, int arg) {
 	return duk_to_int(ctx, arg);
 }
-
 static double Scripting_GetNum(SCRIPTING_ARGS, int arg) {
 	return duk_to_number(ctx, arg);
 }
@@ -46,7 +45,10 @@ static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg) {
 	return buffer;
 }
 
-static void Scripting_FreeBuf(sc_buffer* buffer) {
+static void Scripting_FreeStr(cc_string* str) {
+	/* no need to manually free */
+}
+static void Scripting_FreeBuf(sc_buffer* buf) {
 	/* no need to manually free */
 }
 

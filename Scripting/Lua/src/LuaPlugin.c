@@ -43,7 +43,6 @@ static cc_string Scripting_GetStr(SCRIPTING_ARGS, int arg) {
 static int Scripting_GetInt(SCRIPTING_ARGS, int arg) {
 	return (int)lua_tointeger(L, arg + 1);
 }
-
 static double Scripting_GetNum(SCRIPTING_ARGS, int arg) {
 	return lua_tonumber(L, arg + 1);
 }
@@ -72,9 +71,12 @@ static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg) {
 	return buffer;
 }
 
-static void Scripting_FreeBuf(sc_buffer* buffer) {
+static void Scripting_FreeStr(cc_string* str) {
+	/* no need to manually free */
+}
+static void Scripting_FreeBuf(sc_buffer* buf) {
 	/* only need to free memory when data was a table */
-	if (buffer->meta) Mem_Free(buffer->data);
+	if (buf->meta) Mem_Free(buf->data);
 }
 
 
