@@ -141,28 +141,22 @@ static void PythonPlugin_Register(void) {
 }
 
 static void Backend_Load(const cc_string* path, void* obj) {
-/*	static cc_string ext = String_FromConst(".dll");
+	static cc_string ext = String_FromConst(".py");
 	if (!String_CaselessEnds(path, &ext)) return;
-	int res;
+	cc_result res;
 	
-	char buffer[256]; cc_string str;
-	String_InitArray_NT(str, buffer);
-	String_Copy(&str, path);
-	buffer[str.length] = '\0';
-
-	MonoAssembly* assembly = mono_domain_assembly_open(domain, buffer);
-	if (!assembly) {
-		puts("failed to load"); return;
-	}
-
-	char* arg0 = "ClassiCube";
-	mono_jit_exec(domain, assembly, 1, &arg0);
+	sc_buffer mem;
+	// TODO: What's error checking anyways?
+	// TODO: leaking memory here
+	res = Scripting_LoadFile(path, &mem);
+	if (res) return;
+	PyRun_SimpleString(mem.data);
 
 	// no need to bother freeing
-	PythonPlugin* plugin = Mem_Alloc(1, sizeof(PythonPlugin), "net plugin");
-	plugin->ctx  = assembly;
+	PythonPlugin* plugin = Mem_Alloc(1, sizeof(PythonPlugin), "python plugin");
+	plugin->ctx  = NULL;
 	plugin->next = pluginsHead;
-	pluginsHead  = plugin;*/
+	pluginsHead  = plugin;
 }
 
 static void Backend_ExecScript(const cc_string* script) {
