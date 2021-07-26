@@ -1,14 +1,10 @@
-// Since we are building an external plugin dll, we need to import from ClassiCube lib instead of exporting these
-#define CC_API __declspec(dllimport)
-#define CC_VAR __declspec(dllimport)
-
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
 
-/* LUA handles most of the complicated work already: */
-/*  resets stack before C function called - https://www.lua.org/pil/26.html */
-/*  clears stack after  C function returns - https://stackoverflow.com/questions/1217423/how-to-use-lua-pop-function-correctly */
+// LUA handles most of the complicated work already: */
+//  resets stack before C function called - https://www.lua.org/pil/26.html */
+//  clears stack after  C function returns - https://stackoverflow.com/questions/1217423/how-to-use-lua-pop-function-correctly */
 
 #define SCRIPTING_DIRECTORY "lua"
 #define SCRIPTING_ARGS lua_State* L
@@ -25,7 +21,7 @@
 #define Scripting_ReturnNum(value) lua_pushnumber(L, value); return 1;
 
 #include "../../Scripting.h"
-/* Scripting_GetXYZ functions: don't forget to add 1 to arg, because LUA stack starts at 1 */
+// Scripting_GetXYZ functions: don't forget to add 1 to arg, because LUA stack starts at 1
 
 /*########################################################################################################################*
 *--------------------------------------------------------Backend----------------------------------------------------------*
@@ -72,10 +68,10 @@ static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg) {
 }
 
 static void Scripting_FreeStr(cc_string* str) {
-	/* no need to manually free */
+	// no need to manually free
 }
 static void Scripting_FreeBuf(sc_buffer* buf) {
-	/* only need to free memory when data was a table */
+	// only need to free memory when data was a table
 	if (buf->meta) Mem_Free(buf->data);
 }
 
@@ -101,7 +97,7 @@ static void LuaPlugin_LogError(lua_State* L, const char* place, const void* arg1
 	}
 
 	Chat_Add(&str);
-	str = Scripting_GetStr(L, -2); /* really -1, but _GetStr adds 1 */
+	str = Scripting_GetStr(L, -2); // really -1, but _GetStr adds 1
 	Chat_Add(&str);
 }
 
@@ -124,7 +120,7 @@ static void LuaPlugin_LogError(lua_State* L, const char* place, const void* arg1
 
 static void Backend_RaiseVoid(const char* groupName, const char* funcName) {
 	LuaPlugin_RaiseCommonBegin
-		int ret = lua_pcall(L, 0, 0, 0); /* call implicitly pops function */
+		int ret = lua_pcall(L, 0, 0, 0); // call implicitly pops function
 		if (ret) LuaPlugin_LogError(L, "running callback", groupName, funcName);
 	LuaPlugin_RaiseCommonEnd
 }
@@ -133,7 +129,7 @@ static void Backend_RaiseChat(const char* groupName, const char* funcName, const
 	LuaPlugin_RaiseCommonBegin
 		lua_pushlstring(L, msg->buffer, msg->length);
 		lua_pushinteger(L, msgType);
-		int ret = lua_pcall(L, 2, 0, 0); /* call implicitly pops function */
+		int ret = lua_pcall(L, 2, 0, 0); // call implicitly pops function
 		if (ret) LuaPlugin_LogError(L, "running callback", groupName, funcName);
 	LuaPlugin_RaiseCommonEnd
 }
@@ -142,8 +138,8 @@ static void Backend_RaiseChat(const char* groupName, const char* funcName, const
 /*########################################################################################################################*
 *-------------------------------------------------Plugin implementation---------------------------------------------------*
 *#########################################################################################################################*/
-/* LUA core libraries, see linit.c for more details */
-/*  io/os libraries are removed for security, remaining libaries are left unaltered */
+// LUA core libraries, see linit.c for more details
+//  io/os libraries are removed for security, remaining libaries are left unaltered
 static const luaL_Reg loadedlibs[] = {
 	{ "_G", luaopen_base },
 	{ LUA_LOADLIBNAME, luaopen_package },
@@ -157,10 +153,10 @@ static const luaL_Reg loadedlibs[] = {
 };
 static void LuaPlugin_RegisterCore(lua_State* L) {
 	const luaL_Reg *lib;
-	/* "require" functions from 'loadedlibs' and set results to global table */
+	// "require" functions from 'loadedlibs' and set results to global table
 	for (lib = loadedlibs; lib->func; lib++) {
 		luaL_requiref(L, lib->name, lib->func, 1);
-		lua_pop(L, 1);  /* remove lib */
+		lua_pop(L, 1); // remove lib
 	}
 }
 

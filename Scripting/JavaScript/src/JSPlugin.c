@@ -46,10 +46,10 @@ static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg) {
 }
 
 static void Scripting_FreeStr(cc_string* str) {
-	/* no need to manually free */
+	// no need to manually free
 }
 static void Scripting_FreeBuf(sc_buffer* buf) {
-	/* no need to manually free */
+	// no need to manually free
 }
 
 
@@ -146,7 +146,7 @@ static duk_context* JSPlugin_New(void) {
 }
 
 static cc_result JSPlugin_LoadFile(duk_context* ctx, const cc_string* path) {
-	/* TODO: What's error checking anyways? */
+	// TODO: What's error checking anyways?
 	struct Stream s;
 	cc_result res;
 	if ((res = Stream_OpenFile(&s, path))) return res;
@@ -192,7 +192,7 @@ static void Backend_ExecScript(const cc_string* script) {
 	if (duk_peval(ctx) != 0) {
 		JSPlugin_LogError(ctx, "loading script", script, NULL);
 	}
-	/* TODO: Compile and call */
+	// TODO: Compile and call
 	duk_destroy_heap(ctx);
 }
 
