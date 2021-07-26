@@ -79,7 +79,7 @@ static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg) {
 	PyObject* obj = PyTuple_GET_ITEM(args, arg);
 
 	sc_buffer buffer;
-	buffer.data = PyByteArray_AsString(obj);
+	buffer.data = (cc_uint8*)PyByteArray_AsString(obj);
 	buffer.len  = PyByteArray_Size(obj);
 	return buffer;
 }
@@ -98,6 +98,10 @@ static void Scripting_FreeBuf(sc_buffer* buf) {
 struct PythonPlugin;
 typedef struct PythonPlugin { void* ctx; struct PythonPlugin* next; } PythonPlugin;
 static PythonPlugin* pluginsHead;
+
+static cc_string Backend_GetError(SCRIPTING_ARGS) {
+	return emptyStr;
+}
 
 static void Backend_RaiseVoid(const char* groupName, const char* funcName) {
 }
@@ -140,6 +144,47 @@ static void PythonPlugin_Register(void) {
 	PyImport_AppendInittab("window",    &PyInit_window);
 }
 
+static void LogFailure(void) {
+	PyObject* err_type;
+	PyObject* err_val;
+	PyObject* tb;
+		
+	PyErr_Fetch(&err_type, &err_val, &tb);	
+	PyErr_NormalizeException(&err_type, &err_val, &tb);
+	if (tb) PyException_SetTraceback(err_val, tb);
+
+	// TODO: actually display error here
+	PyObject* repr = PyObject_Repr(err_val);
+	cc_string str  = DecodeUni(repr);
+	Py_XDECREF(repr);
+	Scripting_LogError(NULL, NULL, "in script", &str, NULL);
+
+	PyErr_Restore(err_type, err_val, tb);
+	PyErr_Print();
+
+	Py_XDECREF(err_type);
+	Py_XDECREF(err_val);
+	Py_XDECREF(tb);
+}
+
+static void RunScript(const char* script) {
+	PyObject* _main;
+	_main = PyImport_AddModule("__main__");
+	if (!_main) {
+		Scripting_LogError(NULL, NULL, "importing main", NULL, NULL);
+		return;
+	}
+
+	PyObject* vars = PyModule_GetDict(_main);
+	PyObject* obj  = PyRun_StringFlags(script, Py_file_input, vars, vars, NULL);
+
+	if (!obj) {
+		LogFailure();
+		return;
+	}
+	Py_XDECREF(obj);
+}
+
 static void Backend_Load(const cc_string* path, void* obj) {
 	static cc_string ext = String_FromConst(".py");
 	if (!String_CaselessEnds(path, &ext)) return;
@@ -150,7 +195,7 @@ static void Backend_Load(const cc_string* path, void* obj) {
 	// TODO: leaking memory here
 	res = Scripting_LoadFile(path, &mem);
 	if (res) return;
-	PyRun_SimpleString(mem.data);
+	RunScript((char*)mem.data);
 
 	// no need to bother freeing
 	PythonPlugin* plugin = Mem_Alloc(1, sizeof(PythonPlugin), "python plugin");
@@ -162,14 +207,13 @@ static void Backend_Load(const cc_string* path, void* obj) {
 static void Backend_ExecScript(const cc_string* script) {
 	char buffer[NATIVE_STR_LEN+1];
 	int i, len = min(NATIVE_STR_LEN, script->length);
-
 	memcpy(buffer, script->buffer, len); buffer[len] = '\0';
+
 	// newlines are pretty important in python
 	for (i = 0; i < len; i++) {
 		if (buffer[i] == '#') buffer[i] = '\n';
 	}
-
-	PyRun_SimpleString(buffer);
+	RunScript(buffer);
 }
 
 static struct ChatCommand PythonPlugin_Cmd = {

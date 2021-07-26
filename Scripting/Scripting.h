@@ -63,7 +63,7 @@ NOTE that SCRIPTING_ARGS is implicitly available to all of the following macros:
 
 #define SCRIPTING_NULL_FUNC Scripting_DeclareFunc(NULL, NULL, 0)
 static const cc_string emptyStr = { "", 0, 0 };
-struct sc_buffer_ { char* data; int len, meta; };
+struct sc_buffer_ { cc_uint8* data; int len, meta; };
 
 typedef struct sc_buffer_ sc_buffer;
 typedef struct cc_string_ cc_string;
@@ -591,7 +591,7 @@ static void Scripting_LogError(SCRIPTING_ARGS, const char* place, const void* ar
 	Chat_Add(&str);
 
 	str = Backend_GetError(SCRIPTING_CALL);
-	Chat_Add(&str);
+	if (str.length) Chat_Add(&str);
 }
 
 static cc_result Scripting_LoadFile(const cc_string* path, sc_buffer* mem) {
@@ -610,7 +610,7 @@ static cc_result Scripting_LoadFile(const cc_string* path, sc_buffer* mem) {
 	res = Stream_Read(&s, mem->data, mem->len);
 
 	// null terminate for string
-	((char*)mem->data)[mem->len] = '\0';
+	mem->data[mem->len] = '\0';
 	s.Close(&s);
 	return res;
 }
