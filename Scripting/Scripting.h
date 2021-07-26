@@ -61,7 +61,7 @@ NOTE that SCRIPTING_ARGS is implicitly available to all of the following macros:
 
 #define SCRIPTING_NULL_FUNC Scripting_DeclareFunc(NULL, NULL, 0)
 static const cc_string emptyStr = { "", 0, 0 };
-struct sc_buffer_ { cc_uint8* data; int len, meta; };
+struct sc_buffer_ { void* data; int len, meta; };
 
 typedef struct sc_buffer_ sc_buffer;
 typedef struct cc_string_ cc_string;

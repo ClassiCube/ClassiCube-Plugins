@@ -22,11 +22,17 @@
 *--------------------------------------------------------Backend----------------------------------------------------------*
 *#########################################################################################################################*/
 static sc_buffer emptyBuf;
-static cc_string MakeString(const char* buffer, int len) {
+static cc_string DecodeUni(PyObject* obj) {
+	const char* buf;
+	Py_ssize_t len;
 	cc_string str;
-	str.buffer    = buffer;
-	str.length   = len;
-	str.capacity = 0;
+
+	buf = PyUnicode_AsUTF8AndSize(obj, &len);	
+	str.buffer    = Mem_Alloc(len, 1, "python string");
+	str.length   = 0;
+	str.capacity = len;
+
+	String_AppendUtf8(&str, buf, len);
 	return str;
 }
 
@@ -35,15 +41,20 @@ static cc_string Scripting_GetStr(SCRIPTING_ARGS, int arg) {
 	if (arg >= nargs) return emptyStr;
 	PyObject* obj = PyTuple_GET_ITEM(args, arg);
 
+	cc_string str;
 	if (PyBytes_Check(obj)) {
-		const char* buf = PyBytes_AsString(obj);
-		int len         = PyBytes_Size(obj);
-		return MakeString(buf, len);
-	} else {
-		PyObject* repr = PyObject_Repr(obj);
-		Py_XDECREF(repr);
-		return emptyStr;
+		str.buffer    = PyBytes_AsString(obj);
+		str.length   = PyBytes_Size(obj);
+		str.capacity = 0;
+		return str;
+	} else if (PyUnicode_Check(obj)) {
+		return DecodeUni(obj);
 	}
+
+	PyObject* repr = PyObject_Repr(obj);
+	str = DecodeUni(repr);
+	Py_XDECREF(repr);
+	return str;
 }
 
 static int Scripting_GetInt(SCRIPTING_ARGS, int arg) {
@@ -74,7 +85,7 @@ static sc_buffer Scripting_GetBuf(SCRIPTING_ARGS, int arg) {
 }
 
 static void Scripting_FreeStr(cc_string* str) {
-	// no need to manually free the memory here
+	if (str->capacity) Mem_Free(str->buffer);
 }
 
 static void Scripting_FreeBuf(sc_buffer* buf) {
