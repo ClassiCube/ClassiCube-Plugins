@@ -153,7 +153,9 @@ static void LogFailure(void) {
 	PyErr_NormalizeException(&err_type, &err_val, &tb);
 	if (tb) PyException_SetTraceback(err_val, tb);
 
-	// TODO: actually display error here
+	// TODO: display traceback here
+	// https://stackoverflow.com/questions/62926538/how-to-get-an-error-message-as-string-in-cpython
+	// https://stackoverflow.com/questions/25658959/how-to-redirect-python-syntax-error-into-a-textbox-in-mfc-or-other-gui-framwork
 	PyObject* repr = PyObject_Repr(err_val);
 	cc_string str  = DecodeUni(repr);
 	Py_XDECREF(repr);
