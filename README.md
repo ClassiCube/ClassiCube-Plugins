@@ -40,3 +40,8 @@ Lets you export the world to a .schematic file, which can be imported into MCEdi
 ## Python scripting
 
 (not finished yet)
+
+## Other plugins available
+https://github.com/SpiralP/classicube-cef-loader-plugin
+
+https://github.com/SpiralP/classicube-chatsounds-plugin
