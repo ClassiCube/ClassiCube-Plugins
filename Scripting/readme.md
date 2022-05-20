@@ -3,86 +3,148 @@ Scripting plugins for various scripting languages are provided here:
 * [LUA](../../Scripting//LUA) - powered by LUA (https://www.lua.org/)
 * [Python](../../Scripting//Python) - powered by Python (https://www.python.org/)
 
-## API
+# API
 
 The following functionality is available to scripts:
 
-### block module
+## `block` module
 
-#### Functions
+### Functions
 
-```int parse(string value)```
+#### `int parse(string value)`
 
 Attempts to parse the input as either a block ID or block name
 
 Returns `-1` if the input failed to be parsed
 
-### camera module
+## `camera` module
 
-#### Functions
+### Functions
 
-```int getFOV()```
+#### `int getFOV()`
 
 Returns the current field of view of the camera in degrees
 
-```boolean isThird()```
+#### `boolean isThird()`
 
 Returns whether the current camera is a third person camera
 
-```number getX()```
+#### `number getX()`
 
 Returns the current X position of the camera
 
-```number getY()```
+#### `number getY()`
 
 Returns the current Y position of the camera (vertical)
 
-```number getZ()```
+#### `number getZ()`
 
 Returns the current Z position of the camera
 
-```number getYaw()```
+#### `number getYaw()`
 
 Returns the current yaw of the camera in degrees
 
-```number getPitch()```
+#### `number getPitch()`
 
 Returns the current pitch of the camera in degrees
 
-### chat module
+## `chat` module
 
-#### Functions
+### Functions
 
-```add(string text)```
+#### `add(string text)`
 
 Adds a chat message
 
-```addOf(string text, int type)```
+#### `addOf(string text, int type)`
 
 Adds a chat message with the given type (See [here](https://github.com/UnknownShadow200/ClassiCube/blob/master/src/Chat.h#L11))
 
-```send(string text)```
+#### `send(string text)`
 
 Sends the given chat message to the server
 
 Note: If server is singleplayer, this method is the same as `add`<br>
 Note: `/client` is always interpreted as client-side commands
 
-#### Events
+### Events
 
-```onReceived(string text, int type)```
+#### `onReceived(string text, int type)`
 
 Called whenever a chat message has been received (including user input) 
 
-```onSent(string text)```
+#### `onSent(string text)`
 
 Called whenever a chat message has been sent to the server
 
-### game module
+## `env` module
 
-#### Functions
+### Functions
 
-```string setBlock(int x, int y, int z, int blockID)```
+#### `setEdgeBlock(int block)`
+
+Sets the block of the horizon that surrounds the world
+
+Default: `Water` block
+
+#### `setEdgeHeight(int height)`
+
+Sets the elevation of the horizon that surrounds the world
+
+Default: `world.getHeight() / 2`
+
+#### `setSidesBlock(int block)`
+
+Sets the block of the borders around the world
+
+Default: `Bedrock` block
+
+#### `setSidesOffset(int offset)`
+
+Sets the offset of borders elevation from horizon elevation
+
+Default: `-2`
+
+#### `setCloudsHeight(int height)`
+
+Sets the elevation of the clouds
+
+Default: `world.getHeight() + 2`
+
+#### `setCloudsSpeed(number speed)`
+
+Sets the speed that clouds move at
+
+Default: `1.0`
+
+#### `setWeather(int weather)`
+
+Sets the weather of the world (sunny/rainy/snowy)
+
+Default: `0 (sunny)`
+
+#### `setWeatherSpeed(number speed)`
+
+Sets the speed that rain/snow falls at
+
+Default: `1.0`
+
+Note: negative values 'fall upwards' instead
+
+#### `setWeatherFade(number speed)`
+
+Sets how quickly rain/snow fades out over distance
+
+Default: `1.0`
+
+Note: Smaller values make rain/snow appear thicker
+
+## `game` module
+
+### Functions
+
+#### `string setBlock(int x, int y, int z, int blockID)`
 
 Attempts to set the block at the given coordinates to the given block ID
 
@@ -91,7 +153,7 @@ Otherwise returns reason why the block change failed. (e.g. too far away, -hax i
 
 *Note:* Clientside change only - the server **is not** informed of the change
 
-```string changeBlock(int x, int y, int z, int blockID)```
+#### `string changeBlock(int x, int y, int z, int blockID)`
 
 Attempts to change the block at the given coordinates to the given block ID
 
@@ -100,161 +162,161 @@ Otherwise returns reason why the block change failed. (e.g. too far away, -hax i
 
 *Note:* The server **is** informed of the change
 
-### inventory module
+## `inventory` module
 
-#### Functions
+### Functions
 
-```int getSelected()```
+#### `int getSelected()`
 
 Returns the block ID the player is currently holding in their hand
 
-### player module
+## `player` module
 
-#### Functions
+### Functions
 
-```number getReach()```
+#### `number getReach()`
 
 Returns the current reach distance of the player
 
-```number getX()```
+#### `number getX()`
 
 Returns the current X position of the player
 
-```number getY()```
+#### `number getY()`
 
 Returns the current Y position of the player (vertical)
 
-```number getZ()```
+#### `number getZ()`
 
 Returns the current Z position of the player
 
-```number getYaw()```
+#### `number getYaw()`
 
 Returns the current yaw of the player in degrees
 
-```number getPitch()```
+#### `number getPitch()`
 
 Returns the current pitch of the player in degrees
 
-### server module
+## `server` module
 
-#### Functions
+### Functions
 
-```string getMotd()```
+#### `string getMotd()`
 
 Returns the current server MOTD (usually this is the second line in the loading map screen)
 
-```string getName()```
+#### `string getName()`
 
 Returns the current server name (usually this is the first line in the loading map screen)
 
-```string getAddress()```
+#### `string getAddress()`
 
 Returns the address of the server (e.g. `127.0.0.1`)
 
-```int getPort()```
+#### `int getPort()`
 
 Returns the port of the server (e.g. `25565`)
 
-```string getAppName```
+#### `string getAppName`
 
 Returns the current application name (the name that appears in /clients)
 
-```void setAppName(string name)```
+#### `setAppName(string name)`
 
 Sets the application name (the name that appears in /clients)
 
 *Note:* This is only sent to the server on initial connection
 
-```boolean isSingleplayer()```
+#### `boolean isSingleplayer()`
 
 Returns whether the server is the internal singleplayer server
 
-```sendData(bytearray data)```
+#### `sendData(bytearray data)`
 
 Sends the given raw bytes to the server
 
 Note: Does nothing if server is singleplayer
 
-#### Events
+### Events
 
-```onConnected()```
+#### `onConnected()`
 
 Raised when the user successfully connects to the server
 
-```onDisconnected()```
+#### `onDisconnected()`
 
 Raises when the user is disconnected from the server
 
-### tablist module
+## `tablist` module
 
-#### Functions
+### Functions
 
-```string getPlayer(int id)```
+#### `string getPlayer(int id)`
 
 Returns the player name of the given tablist entry (e.g. `TestName`)
 
-```string getName(int id)```
+#### `string getName(int id)`
 
 Returns the formatted name of the given tablist entry (e.g. `&a[OP] Test&bName`)
 
-```string getGroup(int id)```
+#### `string getGroup(int id)`
 
 Returns the group name of the given tablist entry (e.g. `Players`)
 
-```int getRank(int id)```
+#### `int getRank(int id)`
 
 Returns the rank of the given tablist entry within the group (e.g. `10`)
  
-```remove(int id)```
+#### `remove(int id)`
 
 Returns the tablist entry with the given ID 
 
-```set(int id, string player, string name, string group, int groupRank)```
+#### `set(int id, string player, string name, string group, int groupRank)`
 
 Creates or updates the tablist entry with the given ID
 
-### world module
+## `world` module
 
-#### Functions
+### Functions
 
-```int getWidth()```
+#### `int getWidth()`
 
 Returns the width of the current world
 
-```int getHeight()```
+#### `int getHeight()`
 
 Returns the height of the current world
 
-```int getLength()```
+#### `int getLength()`
 
 Returns the length of the current world
 
-```int getBlock(int x, int y, int z)```
+#### `int getBlock(int x, int y, int z)`
 
 Returns the block at the given coordinates in the current world
 
-#### Events
+### Events
 
-```onNewMap```
+#### `onNewMap`
 
 Raised when the current world is unloaded
 
-```onNewMapLoaded```
+#### `onNewMapLoaded`
 
 Raised when a new world has finished loading
 
 *Note:* This event is still raised even when an unsuccessful load occurs<br>
 (e.g. due to insufficient memory)
 
-### window module
+## `window` module
 
-#### Functions
+### Functions
 
-```setTitle(string title)```
+#### `setTitle(string title)`
 
 Sets the text that appears in the window's titlebar
 
-```pointer getHandle()```
+#### `pointer getHandle()`
 
 Returns the native window handle
