@@ -8,6 +8,8 @@
 // https://www.rubyguides.com/2018/03/write-ruby-c-extension/
 // https://stackoverflow.com/questions/228648/how-do-you-list-the-currently-available-objects-in-the-current-scope-in-ruby
 // https://sonots.github.io/ruby-capi/d9/d2d/sprintf_8c_source.html#l01452
+// https://stackoverflow.com/questions/25488902/what-happens-when-you-use-string-interpolation-in-ruby
+// https://github.com/ruby/ruby/blob/96db72ce38b27799dd8e80ca00696e41234db6ba/doc/extension.rdoc#encapsulate-c-data-into-a-ruby-object
 
 typedef struct ruby_function {
 	const char* name;
@@ -23,7 +25,7 @@ typedef struct ruby_function {
 
 #define Scripting_ReturnVoid() return Qnil
 #define Scripting_ReturnInt(value) return rb_int_new(value)
-#define Scripting_ReturnBool(value) return rb_int_new(value)
+#define Scripting_ReturnBool(value) return value ? Qtrue : Qfalse
 #define Scripting_ReturnStr(buffer, len) return rb_str_new(buffer, len)
 #define Scripting_ReturnPtr(value) return rb_ll2inum((LONG_LONG)value)
 #define Scripting_ReturnNum(value) return rb_float_new(value)
@@ -120,6 +122,7 @@ static void RubyPlugin_RegisterModule(const char* name, const ruby_function* fun
 }
 
 static void RubyPlugin_Register(void) {
+	// lowercase module names don't work
 	RubyPlugin_RegisterModule("Block",     blockFuncs);
 	RubyPlugin_RegisterModule("Camera",    cameraFuncs);
 	RubyPlugin_RegisterModule("Env",       envFuncs);
