@@ -14,6 +14,19 @@
 // - Importing CC_VAR forces mingw to use runtime relocation, which bloats the dll (twice the size) on Windows
 // See the bottom of the file for the actual ugly importing
 static void LoadSymbolsFromGame(void);
+
+static FP_Chat_Add Chat_Add_;
+static FP_Commands_Register Commands_Register_;
+
+static FP_GZip_MakeStream GZip_MakeStream_;
+
+static FP_String_Format1 String_Format1_;
+static FP_String_Format2 String_Format2_;
+static FP_String_Format3 String_Format3_;
+
+static FP_Stream_CreateFile Stream_CreateFile_;
+static FP_Stream_Write Stream_Write_;
+
 static struct _WorldData* World_;
 
 
@@ -24,8 +37,8 @@ static void SendChat(const char* format, const void* arg1, const void* arg2, con
 	cc_string msg; char msgBuffer[256];
 	String_InitArray(msg, msgBuffer);
 
-	String_Format3(&msg, format, arg1, arg2, arg3);
-	Chat_Add(&msg);
+	String_Format3_(&msg, format, arg1, arg2, arg3);
+	Chat_Add_(&msg);
 }
 
 static void WarnChat(cc_result res, const char* place, const cc_string* path) {
@@ -121,26 +134,28 @@ static cc_result SaveSchematic(struct Stream* stream) {
 	SetU16_BE(&sc_begin[50], World_->Height);
 	SetU16_BE(&sc_begin[61], World_->Length);
 	SetU32_BE(&sc_begin[72], volume);
-	if ((res = Stream_Write(stream, sc_begin, sizeof(sc_begin)))) return res;
+	if ((res = Stream_Write_(stream, sc_begin, sizeof(sc_begin)))) return res;
 	
-	for (i = 0; i < volume; i += sizeof(chunk)) {
+	for (i = 0; i < volume; i += sizeof(chunk)) 
+	{
 		count = volume - i; count = min(count, sizeof(chunk));
 
 		for (j = 0; j < count; j++) { chunk[j] = beta_data[blocks[i + j]]; }
-		if ((res = Stream_Write(stream, chunk, count))) return res;
+		if ((res = Stream_Write_(stream, chunk, count))) return res;
 	}
 
 	SetU32_BE(&sc_data[7], volume);
-	if ((res = Stream_Write(stream, sc_data, sizeof(sc_data)))) return res;
+	if ((res = Stream_Write_(stream, sc_data, sizeof(sc_data)))) return res;
 
-	for (i = 0; i < volume; i += sizeof(chunk)) {
+	for (i = 0; i < volume; i += sizeof(chunk)) 
+	{
 		count = volume - i; count = min(count, sizeof(chunk));
 
 		for (j = 0; j < count; j++) { chunk[j] = beta_meta[blocks[i + j]]; }
-		if ((res = Stream_Write(stream, chunk, count))) return res;
+		if ((res = Stream_Write_(stream, chunk, count))) return res;
 	}
 
-	return Stream_Write(stream, sc_end, sizeof(sc_end));
+	return Stream_Write_(stream, sc_end, sizeof(sc_end));
 }
 
 static void SaveMap(const cc_string* path) {
@@ -148,9 +163,9 @@ static void SaveMap(const cc_string* path) {
 	struct GZipState state;
 	cc_result res;
 
-	res = Stream_CreateFile(&stream, path);
+	res = Stream_CreateFile_(&stream, path);
 	if (res) { WarnChat(res, "creating", path); return; }
-	GZip_MakeStream(&compStream, &state, &stream);
+	GZip_MakeStream_(&compStream, &state, &stream);
 
 	res = SaveSchematic(&compStream);
 
@@ -167,7 +182,7 @@ static void SaveMap(const cc_string* path) {
 	res = stream.Close(&stream);
 	if (res) { WarnChat(res, "closing", path); return; }
 
-	SendChat("&Exported map to: %s", path, NULL, NULL);
+	SendChat("&eExported map to: %s", path, NULL, NULL);
 }
 
 
@@ -180,7 +195,7 @@ static void SchematicExportCmd_Execute(const cc_string* args, int argsCount) {
 	char pathBuffer[FILENAME_SIZE];
 	cc_string path = String_FromArray(pathBuffer);
 
-	String_Format1(&path, "maps/%s.schematic", args);
+	String_Format1_(&path, "maps/%s.schematic", args);
 	SaveMap(&path);
 }
 
@@ -194,8 +209,8 @@ static struct ChatCommand SchematicExportCmd = {
 };
 
 static void SchematicExporter_Init(void) {
-	Commands_Register(&SchematicExportCmd);
 	LoadSymbolsFromGame();
+	Commands_Register_(&SchematicExportCmd);
 }
 
 
@@ -227,7 +242,7 @@ PLUGIN_EXPORT struct IGameComponent Plugin_Component = {
 #define NOMCX
 #define NOIME
 #include <windows.h>
-#define LoadSymbol(name) name ## _ = GetProcAddress(app, QUOTE(name))
+#define LoadSymbol(name) name ## _ = GetProcAddress(GetModuleHandleA(NULL), QUOTE(name))
 #else
 #define _GNU_SOURCE
 #include <dlfcn.h>
@@ -235,8 +250,17 @@ PLUGIN_EXPORT struct IGameComponent Plugin_Component = {
 #endif
 
 static void LoadSymbolsFromGame(void) {
-#ifdef CC_BUILD_WIN
-	HMODULE app = GetModuleHandle(NULL);
-#endif
+	LoadSymbol(Chat_Add);
+	LoadSymbol(Commands_Register);
+	
+	LoadSymbol(String_Format1);
+	LoadSymbol(String_Format2);
+	LoadSymbol(String_Format3);
+	
+	LoadSymbol(Stream_CreateFile);
+	LoadSymbol(Stream_Write);
+	
+	LoadSymbol(GZip_MakeStream);
+	
 	LoadSymbol(World);
 }
