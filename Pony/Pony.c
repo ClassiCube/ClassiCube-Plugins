@@ -24,10 +24,15 @@
 // - Importing CC_VAR forces mingw to use runtime relocation, which bloats the dll (twice the size) on Windows
 // See the bottom of the file for the actual ugly importing
 static void LoadSymbolsFromGame(void);
-static struct _ServerConnectionData* Server_;
 static struct _BlockLists* Blocks_;
-static struct _ModelsData* Models_;
+
 static struct _GameData* Game_;
+
+static struct _ModelsData* Models_;
+
+static struct _ServerConnectionData* Server_;
+
+static FP_String_AppendConst String_AppendConst_;
 
 
 /*########################################################################################################################*
@@ -540,7 +545,7 @@ static void Pony_Init(void) {
 	Models_->MaxVertices = 24 * 20;
 	Models_->Vb = Gfx_CreateDynamicVb(VERTEX_FORMAT_TEXTURED, Models_->MaxVertices);
 
-	String_AppendConst(&Server_->AppName, " + Ponies v2.1");
+	String_AppendConst_(&Server_->AppName, " + Ponies v2.1");
 }
 
 #ifdef CC_BUILD_WIN
@@ -568,7 +573,7 @@ PLUGIN_EXPORT struct IGameComponent Plugin_Component = {
 #define NOMCX
 #define NOIME
 #include <windows.h>
-#define LoadSymbol(name) name ## _ = GetProcAddress(app, QUOTE(name))
+#define LoadSymbol(name) name ## _ = GetProcAddress(GetModuleHandleA(NULL), QUOTE(name))
 #else
 #define _GNU_SOURCE
 #include <dlfcn.h>
@@ -576,11 +581,13 @@ PLUGIN_EXPORT struct IGameComponent Plugin_Component = {
 #endif
 
 static void LoadSymbolsFromGame(void) {
-#ifdef CC_BUILD_WIN
-	HMODULE app = GetModuleHandle(NULL);
-#endif
-	LoadSymbol(Server); 
 	LoadSymbol(Blocks);
-	LoadSymbol(Models); 
+	
 	LoadSymbol(Game);
+	
+	LoadSymbol(Models);
+	
+	LoadSymbol(Server); 
+
+	LoadSymbol(String_AppendConst);
 }
