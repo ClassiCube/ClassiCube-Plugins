@@ -1,12 +1,21 @@
 #include "imgui.h"
-#include "../src/Bitmap.h"
-#include "../src/Chat.h"
-#include "../src/Event.h"
-#include "../src/Game.h"
-#include "../src/Graphics.h"
-#include "../src/String.h"
-#include "../src/Platform.h"
-#include "../src/Window.h"
+#ifdef _WIN32
+#define CC_API __declspec(dllimport)
+#define CC_VAR __declspec(dllimport)
+#pragma comment(lib, "C:/Tools/Git/repos/ClassiCube/src/x86/Debug/ClassiCube.lib")
+#else
+#define CC_API
+#define CC_VAR
+#endif
+
+#include "../ClassiCube/src/Bitmap.h"
+#include "../ClassiCube/src/Chat.h"
+#include "../ClassiCube/src/Event.h"
+#include "../ClassiCube/src/Game.h"
+#include "../ClassiCube/src/Graphics.h"
+#include "../ClassiCube/src/String.h"
+#include "../ClassiCube/src/Platform.h"
+#include "../ClassiCube/src/Window.h"
 static GfxResourceID font_tex;
 
 static void AllocFontTexture(void) {
@@ -30,7 +39,7 @@ static void SetupState(ImDrawData* draw_data) {
 }
 
 static void FillIB(cc_uint16* indices, int count, void* obj) {
-	Mem_Copy(indices, obj, count * 2);
+	memcpy(indices, obj, count * 2);
 }
 
 static void DrawCommand(const ImDrawCmd* pCmd, const ImDrawList* cmd_list, ImDrawData* draw_data) {
@@ -61,7 +70,7 @@ static void DrawCommand(const ImDrawCmd* pCmd, const ImDrawList* cmd_list, ImDra
 		GfxResourceID ib = Gfx_CreateIb2(pCmd->ElemCount, FillIB, &cmd_list->IdxBuffer.Data[pCmd->IdxOffset]);
 		Gfx_BindIb(ib);
 
-		Gfx_DrawVb_IndexedTris_Range(pCmd->VtxOffset, pCmd->ElemCount * 4 / 6);
+		Gfx_DrawVb_IndexedTris_Range(pCmd->ElemCount * 4 / 6, pCmd->VtxOffset);
 
 		Gfx_DeleteIb(&ib);
 	}
@@ -76,8 +85,8 @@ static void Render2D(void) {
     {
         const ImDrawList* cmd_list = draw_data->CmdLists[n];
 
-		GfxResourceID vb = Gfx_CreateVb(VERTEX_FORMAT_TEXTURED, cmd_list->VtxBuffer.Size);
-		void* tmp = Gfx_LockVb(vb, VERTEX_FORMAT_TEXTURED, cmd_list->VtxBuffer.Size);
+		GfxResourceID vb = Gfx_CreateDynamicVb(VERTEX_FORMAT_TEXTURED, cmd_list->VtxBuffer.Size);
+		void* tmp = Gfx_LockDynamicVb(vb, VERTEX_FORMAT_TEXTURED, cmd_list->VtxBuffer.Size);
 		struct VertexTextured* dst = (struct VertexTextured*)tmp;
 
         for (int i = 0; i < cmd_list->VtxBuffer.Size; i++, dst++)
@@ -91,7 +100,7 @@ static void Render2D(void) {
 			dst->V   = src_v->uv.y;
 			dst->Col = src_v->col;
         }
-		Gfx_UnlockVb(vb);
+		Gfx_UnlockDynamicVb(vb);
 
         for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
         {
@@ -160,6 +169,8 @@ static void TestPlugin_Init(void) {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 
+    Chat_Add1("%c", "imgui plugin loaded okay");
+
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags  |= ImGuiConfigFlags_NavEnableKeyboard;
 	io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
@@ -168,5 +179,13 @@ static void TestPlugin_Init(void) {
 	Event_Register_(&GfxEvents.ContextLost, NULL, OnContextLost);
 }
 
-int Plugin_ApiVersion = 1;
-struct IGameComponent Plugin_Component = { TestPlugin_Init };
+#ifdef CC_BUILD_WIN
+    // special attribute to get symbols exported on Windows
+    #define PLUGIN_EXPORT extern "C" __declspec(dllexport)
+#else
+    // public symbols already exported when compiling shared lib with GCC
+    #define PLUGIN_EXPORT
+#endif
+
+PLUGIN_EXPORT int Plugin_ApiVersion = 1;
+PLUGIN_EXPORT struct IGameComponent Plugin_Component = { TestPlugin_Init };
