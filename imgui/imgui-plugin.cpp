@@ -13,6 +13,7 @@
 #include "../ClassiCube/src/Event.h"
 #include "../ClassiCube/src/Game.h"
 #include "../ClassiCube/src/Graphics.h"
+#include "../ClassiCube/src/Input.h"
 #include "../ClassiCube/src/String.h"
 #include "../ClassiCube/src/Platform.h"
 #include "../ClassiCube/src/Window.h"
@@ -165,6 +166,64 @@ static void OnContextLost(void* obj) {
 	Gfx_DeleteTexture(&font_tex);
 }
 
+
+static void OnMouseWheel(void* obj, float argument) {
+    ImGuiIO& io = ImGui::GetIO();
+    io.AddMouseWheelEvent(0, argument);
+}
+
+static void OnPointerMoved(void* obj, int i) {
+    ImGuiIO& io = ImGui::GetIO();
+    io.AddMousePosEvent(Pointers[i].x, Pointers[i].y);
+}
+
+static void ProcessInput(int key, bool pressed) {
+    ImGuiIO& io = ImGui::GetIO();
+
+    switch (key) {
+    case CCMOUSE_L:  io.AddMouseButtonEvent(0, pressed); return;
+    case CCMOUSE_R:  io.AddMouseButtonEvent(1, pressed); return;
+    case CCMOUSE_M:  io.AddMouseButtonEvent(2, pressed); return;
+    case CCMOUSE_X1: io.AddMouseButtonEvent(3, pressed); return;
+    case CCMOUSE_X2: io.AddMouseButtonEvent(4, pressed); return;
+
+    case CCKEY_BACKSPACE: io.AddKeyEvent(ImGuiKey_Backspace, pressed);
+    }
+}
+
+static void OnInputDown(void* obj, int key, cc_bool was, struct InputDevice* device) {
+    if (device->type != INPUT_DEVICE_NORMAL) return;
+    ProcessInput(key, true);
+}
+
+static void OnInputUp(void* obj, int key, cc_bool was, struct InputDevice* device) {
+    if (device->type != INPUT_DEVICE_NORMAL) return;
+    ProcessInput(key, false);
+}
+
+static void OnInputPress(void* obj, int value) {
+    ImGuiIO& io = ImGui::GetIO();
+    io.AddInputCharacter(value);
+}
+
+static char clipboard_buffer[NATIVE_STR_LEN];
+static const char* GetClipboardText(void*) {
+    char buffer[1024];
+    cc_string str = String_FromArray(buffer);
+    Clipboard_GetText(&str);
+
+    String_EncodeUtf8(clipboard_buffer, &str);
+    return clipboard_buffer;
+}
+
+static void SetClipboardText(void*, const char* text) {
+    char buffer[1024];
+    cc_string str = String_FromArray(buffer);
+    String_AppendUtf8(&str, text, strlen(text));
+
+    Clipboard_SetText(&str);
+}
+
 static void TestPlugin_Init(void) {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -174,9 +233,19 @@ static void TestPlugin_Init(void) {
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags  |= ImGuiConfigFlags_NavEnableKeyboard;
 	io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
+
+    io.GetClipboardTextFn = GetClipboardText;
+    io.SetClipboardTextFn = SetClipboardText;
 	Game.Draw2DHooks[0] = Hook2D;
 
 	Event_Register_(&GfxEvents.ContextLost, NULL, OnContextLost);
+    
+    Event_Register_(&InputEvents.Down2,   NULL, OnInputDown);
+    Event_Register_(&InputEvents.Up2,     NULL, OnInputUp);
+    Event_Register_(&InputEvents.Press,   NULL, OnInputPress);
+
+    Event_Register_(&InputEvents.Wheel,   NULL, OnMouseWheel);
+    Event_Register_(&PointerEvents.Moved, NULL, OnPointerMoved);
 }
 
 #ifdef CC_BUILD_WIN
