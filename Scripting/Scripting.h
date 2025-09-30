@@ -2,23 +2,16 @@
 //  are kept up to date with the Scripting.h file in the root folder
 // ====================================================================
 
-// Since we are building an external plugin dll, we need to import from ClassiCube lib instead of exporting these
-#ifdef _WIN32
-  #define CC_API __declspec(dllimport)
-  #define CC_VAR __declspec(dllimport)
-  #ifdef _WIN64
-    #pragma comment(lib, "../../../../ClassicalSharp/src/x64/Debug/ClassiCube.lib")
-  #else
-    #pragma comment(lib, "../../../../ClassicalSharp/src/x86/Debug/ClassiCube.lib")
-  #endif
-#else
-  #define CC_API
-  #define CC_VAR
-#endif
-
 // The proper way would be to add 'additional include directories' and 'additional libs' in Visual Studio Project properties
 // Or, you can just be lazy and change these paths for your own system. 
 // You must compile ClassiCube in both x86 and x64 configurations to generate the .lib file.
+#include "../../ClassicalSharp/src/PluginAPI.h"
+#if defined _WIN64
+	#pragma comment(lib, "../../../../ClassicalSharp/src/x64/Debug/ClassiCube.lib")
+#elif defined _WIN32
+	#pragma comment(lib, "../../../../ClassicalSharp/src/x86/Debug/ClassiCube.lib")
+#endif
+
 #include "../../ClassicalSharp/src/Game.h"
 #include "../../ClassicalSharp/src/String.h"
 #include "../../ClassicalSharp/src/Block.h"
@@ -641,14 +634,6 @@ static void Scripting_Handle(const cc_string* args, int argsCount) {
 	}
 	Backend_ExecScript(&tmp);
 }
-
-#ifdef CC_BUILD_WIN
-// special attribute to get symbols exported on Windows
-#define PLUGIN_EXPORT __declspec(dllexport)
-#else
-// public symbols already exported when compiling shared lib with GCC
-#define PLUGIN_EXPORT
-#endif
 
 PLUGIN_EXPORT int Plugin_ApiVersion = 1;
 PLUGIN_EXPORT struct IGameComponent Plugin_Component = {

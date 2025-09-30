@@ -1,3 +1,5 @@
+#include "PluginAPI.h"
+
 #include "World.h"
 #include "Deflate.h"
 #include "Stream.h"
@@ -217,14 +219,6 @@ static void SchematicExporter_Init(void) {
 /*########################################################################################################################*
 *----------------------------------------------------Plugin boilerplate---------------------------------------------------*
 *#########################################################################################################################*/
-#ifdef CC_BUILD_WIN
-// special attribute to get symbols exported with Visual Studio
-#define PLUGIN_EXPORT __declspec(dllexport)
-#else
-// public symbols already exported when compiling shared lib with GCC
-#define PLUGIN_EXPORT
-#endif
-
 PLUGIN_EXPORT int Plugin_ApiVersion = 1;
 PLUGIN_EXPORT struct IGameComponent Plugin_Component = {
 	SchematicExporter_Init /* Init */

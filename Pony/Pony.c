@@ -1,12 +1,4 @@
-// Since we are building an external plugin dll, we need to import from ClassiCube lib instead of exporting these
-#ifdef CC_BUILD_WIN
-// need to specifically declare as imported for Visual Studio
-#define CC_API __declspec(dllimport)
-#define CC_VAR __declspec(dllimport)
-#else
-#define CC_API
-#define CC_VAR
-#endif
+#include "PluginAPI.h"
 
 #include "Model.h"
 #include "Graphics.h"
@@ -547,14 +539,6 @@ static void Pony_Init(void) {
 
 	String_AppendConst_(&Server_->AppName, " + Ponies v2.1");
 }
-
-#ifdef CC_BUILD_WIN
-// special attribute to get symbols exported with Visual Studio
-#define PLUGIN_EXPORT __declspec(dllexport)
-#else
-// public symbols already exported when compiling shared lib with GCC
-#define PLUGIN_EXPORT
-#endif
 
 PLUGIN_EXPORT int Plugin_ApiVersion = 1;
 PLUGIN_EXPORT struct IGameComponent Plugin_Component = {
