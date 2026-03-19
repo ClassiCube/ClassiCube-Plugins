@@ -60,11 +60,11 @@ jobs:
 
       - name: Compile plugin
         run: |
-         WIN32_DT = "i686-w64-mingw32-dlltool"
-         WIN64_DT = "x86_64-w64-mingw32-dlltool"
-         WIN32_CC = "i686-w64-mingw32-gcc"
-         WIN64_CC = "x86_64-w64-mingw32-gcc"
-         WIN_INCS = "-I ./ClassiCube-master/src/"
+         WIN32_DT= "i686-w64-mingw32-dlltool"
+         WIN64_DT= "x86_64-w64-mingw32-dlltool"
+         WIN32_CC= "i686-w64-mingw32-gcc"
+         WIN64_CC= "x86_64-w64-mingw32-gcc"
+         WIN_INCS= "-I ./ClassiCube-master/src/"
          WIN_FLAGS="-O1 -shared -s -fno-stack-protector -fno-math-errno -Qn -Werror -L. -lClassiCube"
 
          if [[ ${{ matrix.win_lite }} == "true" ]]; then
@@ -136,10 +136,10 @@ jobs:
 
       - name: Compile plugin
         run: |
-         LIN32_CC  = "gcc -m32"
-         LIN64_CC  = "gcc -m64"
-         LIN_INCS  = "-I ./ClassiCube-master/src/"
-         LIN_FLAGS = "-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror --unresolved-symbols=ignore-in-shared-libs"
+         LIN32_CC=  "gcc -m32"
+         LIN64_CC=  "gcc -m64"
+         LIN_INCS=  "-I ./ClassiCube-master/src/"
+         LIN_FLAGS= "-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror"
    
          cd ${{ matrix.directory }}
          $LIN32_CC *.c $LIN_INCS $LIN_FLAGS -o ${{ matrix.out_name }}_32.so
@@ -190,10 +190,10 @@ jobs:
 
       - name: Compile plugin
         run: |  
-         MACINT_CC = "clang -arch x86_64"
-         MACARM_CC = "clang -arch arm64"
-         MAC_INCS  = "-I ./ClassiCube-master/src/"
-         MAC_FLAGS = "-O1 -g -fno-stack-protector -fno-math-errno -Qn -shared -Werror -undefined dynamic_lookup -Wno-string-plus-int"
+         MACINT_CC= "clang -arch x86_64"
+         MACARM_CC= "clang -arch arm64"
+         MAC_INCS=  "-I ./ClassiCube-master/src/"
+         MAC_FLAGS= "-O1 -g -fno-stack-protector -fno-math-errno -Qn -shared -Werror -undefined dynamic_lookup -Wno-string-plus-int"
        
          cd ${{ matrix.directory }}
          $MACINT_CC *.c $MAC_INCS $MAC_FLAGS -o ${{ matrix.out_name }}_int64.dylib
@@ -240,9 +240,9 @@ jobs:
 
       - name: Compile plugin
         run: |        
-         RPI_CC    = "gcc"
-         RPI_INCS  ="-I ./ClassiCube-master/src/"
-         RPI_FLAGS ="-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror"
+         RPI_CC=    "gcc"
+         RPI_INCS=  "-I ./ClassiCube-master/src/"
+         RPI_FLAGS= "-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror"
  
          cd ${{ matrix.directory }}
          $RPI_CC *.c $RPI_INCS $RPI_FLAGS -o ${{ matrix.out_name }}_32.so
