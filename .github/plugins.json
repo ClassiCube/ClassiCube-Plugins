@@ -4,27 +4,32 @@
 		{
 			"directory": "Pony", 
 			"out_name" : "Pony",
-			"win_lite" : true
+			"win_lite" : true,
+			"unix_libs": ""
 		},
 		{
 			"directory": "SchematicExporter", 
 			"out_name" : "SchematicExporter",
-			"win_lite" : true
+			"win_lite" : true,
+			"unix_libs": ""
 		},
 		{
 			"directory": "ObjExporter", 
 			"out_name" : "ObjExporter",
-			"win_lite" : true
+			"win_lite" : true,
+			"unix_libs": ""
 		},
 		{
 			"directory": "Scripting/Lua/src", 
 			"out_name" : "LuaScripting",
-			"win_lite" : false
+			"win_lite" : false,
+			"unix_libs": "-lm"
 		},
 		{
 			"directory": "Scripting/JavaScript/src", 
 			"out_name" : "JSScripting",
-			"win_lite" : false
+			"win_lite" : false,
+			"unix_libs": "-lm"
 		}
 	]
 }

@@ -59,29 +59,30 @@ jobs:
          wget https://cs.classicube.net/client/latest/ClassiCube.64.exe -O cc-64.exe
 
       - name: Compile plugin
-        env:
-          WIN32_CC: "i686-w64-mingw32-gcc"
-          WIN64_CC: "x86_64-w64-mingw32-gcc"
-          INCS:  "-I ./ClassiCube-master/src/"
-          FLAGS: "-O1 -shared -s -fno-stack-protector -fno-math-errno -Qn -Werror -L. -lClassiCube"
-        run: |         
-         cd ${{ matrix.directory }}
-         WIN_FLAGS="${{ env.FLAGS }}"
+        run: |
+         WIN32_DT = "i686-w64-mingw32-dlltool"
+         WIN64_DT = "x86_64-w64-mingw32-dlltool"
+         WIN32_CC = "i686-w64-mingw32-gcc"
+         WIN64_CC = "x86_64-w64-mingw32-gcc"
+         WIN_INCS = "-I ./ClassiCube-master/src/"
+         WIN_FLAGS="-O1 -shared -s -fno-stack-protector -fno-math-errno -Qn -Werror -L. -lClassiCube"
+
          if [[ ${{ matrix.win_lite }} == "true" ]]; then
            WIN_FLAGS="$WIN_FLAGS -nostartfiles -Wl,--entry=0"
-         fi
+         fi   
+         cd ${{ matrix.directory }}
 
          rm -f ClassiCube.exe ClassiCube.def libClassiCube.a
          cp cc-32.exe ClassiCube.exe
          gendef ClassiCube.exe
-         i686-w64-mingw32-dlltool -d ClassiCube.def -l libClassiCube.a -D ClassiCube.exe
-         ${{ env.WIN32_CC }} *.c ${{ env.INCS }} $WIN_FLAGS -o ${{ matrix.out_name }}_32.dll
+         $WIN32_DT -d ClassiCube.def -l libClassiCube.a -D ClassiCube.exe
+         $WIN32_CC *.c $WIN_INCS $WIN_FLAGS -o ${{ matrix.out_name }}_32.dll
 
          rm -f ClassiCube.exe ClassiCube.def libClassiCube.a
          cp cc-64.exe ClassiCube.exe
          gendef ClassiCube.exe
-         x86_64-w64-mingw32-dlltool -d ClassiCube.def -l libClassiCube.a -D ClassiCube.exe
-         ${{ env.WIN64_CC }} *.c ${{ env.INCS }} $WIN_FLAGS -o ${{ matrix.out_name }}_64.dll
+         $WIN64_DT -d ClassiCube.def -l libClassiCube.a -D ClassiCube.exe
+         $WIN64_CC *.c $WIN_INCS $WIN_FLAGS -o ${{ matrix.out_name }}_64.dll
           
 
       - uses: ./.github/actions/upload_build
@@ -134,15 +135,15 @@ jobs:
          unzip -q master.zip
 
       - name: Compile plugin
-        env:
-          LIN32_CC: "gcc -m32"
-          LIN64_CC: "gcc -m64"
-          INCS:  "-I ./ClassiCube-master/src/"
-          FLAGS: "-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror"
-        run: |         
+        run: |
+         LIN32_CC  = "gcc -m32"
+         LIN64_CC  = "gcc -m64"
+         LIN_INCS  = "-I ./ClassiCube-master/src/"
+         LIN_FLAGS = "-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror --unresolved-symbols=ignore-in-shared-libs"
+   
          cd ${{ matrix.directory }}
-         ${{ env.LIN32_CC }} *.c ${{ env.INCS }} ${{ env.FLAGS }} -o ${{ matrix.out_name }}_32.so
-         ${{ env.LIN64_CC }} *.c ${{ env.INCS }} ${{ env.FLAGS }} -o ${{ matrix.out_name }}_64.so
+         $LIN32_CC *.c $LIN_INCS $LIN_FLAGS -o ${{ matrix.out_name }}_32.so
+         $LIN64_CC *.c $LIN_INCS $LIN_FLAGS -o ${{ matrix.out_name }}_64.so
           
 
       - uses: ./.github/actions/upload_build
@@ -188,15 +189,15 @@ jobs:
          unzip -q master.zip
 
       - name: Compile plugin
-        env:
-          MACINT_CC: "clang -arch x86_64"
-          MACARM_CC: "clang -arch arm64"
-          INCS:  "-I ./ClassiCube-master/src/"
-          FLAGS: "-O1 -g -fno-stack-protector -fno-math-errno -Qn -shared -Werror -undefined dynamic_lookup -Wno-string-plus-int"
-        run: |         
+        run: |  
+         MACINT_CC = "clang -arch x86_64"
+         MACARM_CC = "clang -arch arm64"
+         MAC_INCS  = "-I ./ClassiCube-master/src/"
+         MAC_FLAGS = "-O1 -g -fno-stack-protector -fno-math-errno -Qn -shared -Werror -undefined dynamic_lookup -Wno-string-plus-int"
+       
          cd ${{ matrix.directory }}
-         ${{ env.MACINT_CC }} *.c ${{ env.INCS }} ${{ env.FLAGS }} -o ${{ matrix.out_name }}_int64.dylib
-         ${{ env.MACARM_CC }} *.c ${{ env.INCS }} ${{ env.FLAGS }} -o ${{ matrix.out_name }}_arm64.dylib
+         $MACINT_CC *.c $MAC_INCS $MAC_FLAGS -o ${{ matrix.out_name }}_int64.dylib
+         $MACARM_CC *.c $MAC_INCS $MAC_FLAGS -o ${{ matrix.out_name }}_arm64.dylib
          lipo -create -output ${{ matrix.out_name }}_64.dylib ${{ matrix.out_name }}_int64.dylib ${{ matrix.out_name }}_arm64.dylib
 
 
@@ -238,13 +239,13 @@ jobs:
          unzip -q master.zip
 
       - name: Compile plugin
-        env:
-          RPI_CC: "gcc"
-          INCS:   "-I ./ClassiCube-master/src/"
-          FLAGS:  "-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror"
-        run: |         
+        run: |        
+         RPI_CC    = "gcc"
+         RPI_INCS  ="-I ./ClassiCube-master/src/"
+         RPI_FLAGS ="-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror"
+ 
          cd ${{ matrix.directory }}
-         ${{ env.RPI_CC }} *.c ${{ env.INCS }} ${{ env.FLAGS }} -o ${{ matrix.out_name }}_32.so
+         $RPI_CC *.c $RPI_INCS $RPI_FLAGS -o ${{ matrix.out_name }}_32.so
           
 
       - uses: ./.github/actions/upload_build
