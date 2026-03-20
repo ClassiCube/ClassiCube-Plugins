@@ -139,7 +139,7 @@ jobs:
          LIN32_CC="gcc -m32"
          LIN64_CC="gcc -m64"
          LIN_INCS="-I ./ClassiCube-master/src/"
-         LIN_FLGS="-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror"
+         LIN_FLGS="-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror ${{ matrix.unix_libs }}"
    
          cd ${{ matrix.directory }}
          $LIN32_CC *.c $LIN_INCS $LIN_FLGS -o ${{ matrix.out_name }}_32.so
@@ -242,7 +242,7 @@ jobs:
         run: |        
          RPI32_CC="gcc"
          RPI_INCS="-I ./ClassiCube-master/src/"
-         RPI_FLGS="-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror"
+         RPI_FLGS="-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror ${{ matrix.unix_libs }}"
  
          cd ${{ matrix.directory }}
          $RPI32_CC *.c $RPI_INCS $RPI_FLGS -o ${{ matrix.out_name }}_32.so
