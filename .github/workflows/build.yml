@@ -60,12 +60,12 @@ jobs:
 
       - name: Compile plugin
         run: |
-         WIN32_DT= "i686-w64-mingw32-dlltool"
-         WIN64_DT= "x86_64-w64-mingw32-dlltool"
-         WIN32_CC= "i686-w64-mingw32-gcc"
-         WIN64_CC= "x86_64-w64-mingw32-gcc"
-         WIN_INCS= "-I ./ClassiCube-master/src/"
-         WIN_FLAGS="-O1 -shared -s -fno-stack-protector -fno-math-errno -Qn -Werror -L. -lClassiCube"
+         WIN32_DT="i686-w64-mingw32-dlltool"
+         WIN64_DT="x86_64-w64-mingw32-dlltool"
+         WIN32_CC="i686-w64-mingw32-gcc"
+         WIN64_CC="x86_64-w64-mingw32-gcc"
+         WIN_INCS="-I ./ClassiCube-master/src/"
+         WIN_FLGS="-O1 -shared -s -fno-stack-protector -fno-math-errno -Qn -Werror -L. -lClassiCube"
 
          if [[ ${{ matrix.win_lite }} == "true" ]]; then
            WIN_FLAGS="$WIN_FLAGS -nostartfiles -Wl,--entry=0"
@@ -76,13 +76,13 @@ jobs:
          cp cc-32.exe ClassiCube.exe
          gendef ClassiCube.exe
          $WIN32_DT -d ClassiCube.def -l libClassiCube.a -D ClassiCube.exe
-         $WIN32_CC *.c $WIN_INCS $WIN_FLAGS -o ${{ matrix.out_name }}_32.dll
+         $WIN32_CC *.c $WIN_INCS $WIN_FLGS -o ${{ matrix.out_name }}_32.dll
 
          rm -f ClassiCube.exe ClassiCube.def libClassiCube.a
          cp cc-64.exe ClassiCube.exe
          gendef ClassiCube.exe
          $WIN64_DT -d ClassiCube.def -l libClassiCube.a -D ClassiCube.exe
-         $WIN64_CC *.c $WIN_INCS $WIN_FLAGS -o ${{ matrix.out_name }}_64.dll
+         $WIN64_CC *.c $WIN_INCS $WIN_FLGS -o ${{ matrix.out_name }}_64.dll
           
 
       - uses: ./.github/actions/upload_build
@@ -136,14 +136,14 @@ jobs:
 
       - name: Compile plugin
         run: |
-         LIN32_CC=  "gcc -m32"
-         LIN64_CC=  "gcc -m64"
-         LIN_INCS=  "-I ./ClassiCube-master/src/"
-         LIN_FLAGS= "-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror"
+         LIN32_CC="gcc -m32"
+         LIN64_CC="gcc -m64"
+         LIN_INCS="-I ./ClassiCube-master/src/"
+         LIN_FLGS="-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror"
    
          cd ${{ matrix.directory }}
-         $LIN32_CC *.c $LIN_INCS $LIN_FLAGS -o ${{ matrix.out_name }}_32.so
-         $LIN64_CC *.c $LIN_INCS $LIN_FLAGS -o ${{ matrix.out_name }}_64.so
+         $LIN32_CC *.c $LIN_INCS $LIN_FLGS -o ${{ matrix.out_name }}_32.so
+         $LIN64_CC *.c $LIN_INCS $LIN_FLGS -o ${{ matrix.out_name }}_64.so
           
 
       - uses: ./.github/actions/upload_build
@@ -190,14 +190,14 @@ jobs:
 
       - name: Compile plugin
         run: |  
-         MACINT_CC= "clang -arch x86_64"
-         MACARM_CC= "clang -arch arm64"
-         MAC_INCS=  "-I ./ClassiCube-master/src/"
-         MAC_FLAGS= "-O1 -g -fno-stack-protector -fno-math-errno -Qn -shared -Werror -undefined dynamic_lookup -Wno-string-plus-int"
+         MACINT_CC="clang -arch x86_64"
+         MACARM_CC="clang -arch arm64"
+         MAC_INCS_="-I ./ClassiCube-master/src/"
+         MAC_FLAGS="-O1 -g -fno-stack-protector -fno-math-errno -Qn -shared -Werror -undefined dynamic_lookup -Wno-string-plus-int"
        
          cd ${{ matrix.directory }}
-         $MACINT_CC *.c $MAC_INCS $MAC_FLAGS -o ${{ matrix.out_name }}_int64.dylib
-         $MACARM_CC *.c $MAC_INCS $MAC_FLAGS -o ${{ matrix.out_name }}_arm64.dylib
+         $MACINT_CC *.c $MAC_INCS_ $MAC_FLAGS -o ${{ matrix.out_name }}_int64.dylib
+         $MACARM_CC *.c $MAC_INCS_ $MAC_FLAGS -o ${{ matrix.out_name }}_arm64.dylib
          lipo -create -output ${{ matrix.out_name }}_64.dylib ${{ matrix.out_name }}_int64.dylib ${{ matrix.out_name }}_arm64.dylib
 
 
@@ -240,12 +240,12 @@ jobs:
 
       - name: Compile plugin
         run: |        
-         RPI_CC=    "gcc"
-         RPI_INCS=  "-I ./ClassiCube-master/src/"
-         RPI_FLAGS= "-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror"
+         RPI32_CC="gcc"
+         RPI_INCS="-I ./ClassiCube-master/src/"
+         RPI_FLGS="-O1 -g -fno-stack-protector -fno-math-errno -Qn -fvisibility=hidden -nostartfiles -Wl,--entry=0 -shared -fPIC -Werror"
  
          cd ${{ matrix.directory }}
-         $RPI_CC *.c $RPI_INCS $RPI_FLAGS -o ${{ matrix.out_name }}_32.so
+         $RPI32_CC *.c $RPI_INCS $RPI_FLGS -o ${{ matrix.out_name }}_32.so
           
 
       - uses: ./.github/actions/upload_build
