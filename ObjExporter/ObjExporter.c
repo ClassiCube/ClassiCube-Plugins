@@ -473,10 +473,14 @@ PLUGIN_EXPORT struct IGameComponent Plugin_Component = {
 #define LoadSymbol(name) name ## _ = (void*)GetProcAddress(GetModuleHandleA(NULL), QUOTE(name))
 #else
 #include <dlfcn.h>
-#define LoadSymbol(name) name ## _ = dlsym(0, QUOTE(name))
+static void* cc_handle;
+#define LoadSymbol(name) name ## _ = dlsym(cc_handle, QUOTE(name))
 #endif
 
 static void LoadSymbolsFromGame(void) {
+	#ifndef CC_BUILD_WIN
+	cc_handle = dlopen(NULL, RTLD_LAZY);
+	#endif
 	LoadSymbol(Atlas2D); 
 	
 	LoadSymbol(Blocks);
