@@ -473,7 +473,7 @@ PLUGIN_EXPORT struct IGameComponent Plugin_Component = {
 #define LoadSymbol(name) name ## _ = (void*)GetProcAddress(GetModuleHandleA(NULL), QUOTE(name))
 #else
 #include <dlfcn.h>
-#define LoadSymbol(name) name ## _ = dlsym(0, QUOTE(name))
+#define LoadSymbol(name) name ## _ = dlsym(RTLD_DEFAULT, QUOTE(name))
 #endif
 
 static void LoadSymbolsFromGame(void) {
